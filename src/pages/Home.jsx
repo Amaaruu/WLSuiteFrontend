@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from '../components/organisms/Navbar';
 import Button from '../components/atoms/Button';
+import ContactSection from '../components/organisms/ContactSection'; // <-- 1. Importamos el nuevo organismo
 
 const Home = () => {
   return (
@@ -13,7 +14,6 @@ const Home = () => {
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-sapphire-50 rounded-full blur-3xl opacity-50" />
           <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-sapphire-100 rounded-full blur-3xl opacity-30" />
         </div>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl lg:text-7xl font-extrabold text-sapphire-900 mb-8 tracking-tight">
@@ -36,6 +36,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/*Renderizamos cualquier seccion aqui abajo*/} 
+
     </div>
   );
 };
