@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Button from '../atoms/Button';
 import logo from '../../assets/WebLandingSuiteLogo.webp';
 
@@ -15,11 +16,12 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // 2. Actualizamos las rutas del menú
   const navLinks = [
-    { name: 'Inicio', href: '#' },
-    { name: 'Características', href: '#features' },
-    { name: 'Precios', href: '#pricing' },
-    { name: 'Contacto', href: '#contact' },
+    { name: 'Inicio', path: '/' },
+    { name: 'Características', path: '/#features' },
+    { name: 'Precios', path: '/#pricing' },
+    { name: 'Contacto', path: '/contacto' },
   ];
 
   return (
@@ -30,27 +32,23 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-20">
           
           {/* LOGO */}
-          <div className="flex items-center gap-3">
-            <img 
-              src={logo} 
-              alt="WebLandingSuite Logo" 
-              className="h-10 w-auto object-contain" 
-            />
+          <Link to="/" className="flex items-center gap-3 cursor-pointer">
+            <img src={logo} alt="WebLandingSuite Logo" className="h-10 w-auto object-contain" />
             <span className="text-xl font-bold text-sapphire-900 tracking-tight hidden sm:block">
               WebLanding<span className="text-sapphire-600">Suite</span>
             </span>
-          </div>
+          </Link>
 
           {/* NAVEGACIÓN DESKTOP */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
-                href={link.href}
+                to={link.path} // <-- 3. Usamos <Link to="..."> en lugar de <a href="...">
                 className="text-sm font-medium text-gray-600 hover:text-sapphire-600 transition-colors"
               >
                 {link.name}
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -76,7 +74,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* BARRA DE SEPARACIÓN*/}
       <div className="w-full h-[2px] bg-sapphire-900/10 shadow-sm" />
 
       {/* MENÚ MÓVIL */}
@@ -84,13 +81,14 @@ const Navbar = () => {
         <div className="md:hidden bg-white border-b border-gray-100">
           <div className="px-4 pt-2 pb-6 space-y-1">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
-                href={link.href}
+                to={link.path}
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="block px-3 py-3 text-base font-medium text-gray-600 hover:text-sapphire-600"
               >
                 {link.name}
-              </a>
+              </Link>
             ))}
             <div className="pt-4 flex flex-col gap-3">
               <Button variant="outline" className="w-full">Iniciar Sesión</Button>
