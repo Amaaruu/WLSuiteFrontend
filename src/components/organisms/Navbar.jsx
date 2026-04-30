@@ -20,7 +20,7 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Inicio', path: '/' },
     { name: 'Características', path: '/#features' },
-    { name: 'Precios', path: '/#pricing' },
+    { name: 'Planes', path: '/planes' },
     { name: 'Contacto', path: '/contacto' },
   ];
 
