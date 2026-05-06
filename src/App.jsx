@@ -4,6 +4,7 @@ import Contact from './pages/Contact';
 import Plans from "./pages/Plans";
 import Templates from "./pages/Templates";
 import Register from "./pages/Register";
+import Login from "./pages/Login"; // <-- Página de login que crearemos después
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
         <Route path="/planes" element={<Plans />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/register" element={<Register />} />
-        {/* Aquí agregaremos /login, /dashboard después */}
+        <Route path="/login" element={<Login />} />
       </Routes>
     </Router>
   );
