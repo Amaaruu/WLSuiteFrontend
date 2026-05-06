@@ -20,6 +20,7 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Inicio', path: '/' },
     { name: 'Características', path: '/#features' },
+    { name: 'Plantillas', path: '/templates' }, // <-- Nueva ruta para plantillas
     { name: 'Planes', path: '/planes' },
     { name: 'Contacto', path: '/contacto' },
   ];
@@ -57,9 +58,11 @@ const Navbar = () => {
             <button className="text-sm font-semibold text-sapphire-900 hover:text-sapphire-600 transition-colors">
               Iniciar Sesión
             </button>
+            <Link to="/register">
             <Button variant="primary" className="text-sm py-2 px-5">
-              Comenzar gratis
+              Registrarse
             </Button>
+            </Link>
           </div>
 
           {/* BOTÓN MÓVIL */}
