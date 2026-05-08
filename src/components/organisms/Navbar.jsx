@@ -19,8 +19,8 @@ const Navbar = () => {
   // 2. Actualizamos las rutas del menú
   const navLinks = [
     { name: 'Inicio', path: '/' },
-    { name: 'Características', path: '/#features' },
-    { name: 'Plantillas', path: '/templates' }, // <-- Nueva ruta para plantillas
+    { name: 'Plantillas', path: '/templates' },
+    {name: 'Nosotros', path: '/about'},
     { name: 'Planes', path: '/planes' },
     { name: 'Contacto', path: '/contacto' },
   ];

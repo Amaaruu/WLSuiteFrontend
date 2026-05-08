@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/organisms/Navbar';
 import PricingCard from '../components/organisms/PricingCard';
+import Footer from '../components/organisms/Footer';
 
 const Plans = () => {
   const [plans, setPlans] = useState([]);
@@ -31,7 +32,6 @@ const Plans = () => {
 
       <main className="flex-grow container mx-auto px-4 py-20">
         
-        {/* Cabecera de la Página */}
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-900 mb-6">
             Precios Transparentes, Resultados Increíbles
@@ -41,7 +41,6 @@ const Plans = () => {
           </p>
         </div>
 
-        {/* Manejo de Estados: Loading, Error o Éxito */}
         {isLoading ? (
           <div className="flex flex-col justify-center items-center py-20 space-y-4">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
@@ -64,6 +63,7 @@ const Plans = () => {
           </div>
         )}
       </main>
+      <Footer/>
     </div>
   );
 };
