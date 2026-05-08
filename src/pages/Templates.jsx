@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../components/organisms/Navbar';
 import TemplateCard from '../components/organisms/TemplateCard';
+import Footer from '../components/organisms/Footer';
 
 // Datos de prueba temporales (Mock Data)
 const mockTemplates = [
@@ -64,7 +65,6 @@ const Templates = () => {
 
       <main className="flex-grow container mx-auto px-4 py-24">
         
-        {/* Cabecera */}
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">
             Explora nuestros diseños
@@ -74,7 +74,6 @@ const Templates = () => {
           </p>
         </div>
 
-        {/* Filtros de Categorías (Pills) */}
         <div className="flex flex-wrap justify-center gap-3 mb-12">
           {categories.map((cat) => (
             <button
@@ -91,7 +90,6 @@ const Templates = () => {
           ))}
         </div>
 
-        {/* Grid de Plantillas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {filteredTemplates.map((template) => (
             <TemplateCard key={template.id} template={template} />
@@ -99,6 +97,7 @@ const Templates = () => {
         </div>
 
       </main>
+      <Footer />
     </div>
   );
 };

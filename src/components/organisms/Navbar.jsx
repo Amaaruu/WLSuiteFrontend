@@ -37,8 +37,8 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Inicio', path: '/' },
-    { name: 'Características', path: '/#features' },
     { name: 'Plantillas', path: '/templates' },
+    {name: 'Nosotros', path: '/about'},
     { name: 'Planes', path: '/planes' },
     { name: 'Contacto', path: '/contacto' },
   ];
