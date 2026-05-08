@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../atoms/Button';
 import logo from '../../assets/WebLandingSuiteLogo.webp';
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,7 +19,22 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 2. Actualizamos las rutas del menú
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+      const storedName = localStorage.getItem('userName');
+    if (token) {
+      setIsAuthenticated(true);
+      if (storedName) setUserName(storedName);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    setIsAuthenticated(false);
+    navigate('/');
+  };
+
   const navLinks = [
     { name: 'Inicio', path: '/' },
     { name: 'Plantillas', path: '/templates' },
@@ -45,7 +63,7 @@ const Navbar = () => {
             {navLinks.map((link) => (
               <Link
                 key={link.name}
-                to={link.path} // <-- 3. Usamos <Link to="..."> en lugar de <a href="...">
+                to={link.path}
                 className="text-sm font-medium text-gray-600 hover:text-sapphire-600 transition-colors"
               >
                 {link.name}
@@ -53,19 +71,40 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* ACTIONS */}
+          {/* ACTIONS DESKTOP */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="text-sm font-semibold text-sapphire-900 hover:text-sapphire-600 transition-colors">
-              Iniciar Sesión
-            </button>
-            <Link to="/register">
-            <Button variant="primary" className="text-sm py-2 px-5">
-              Registrarse
-            </Button>
-            </Link>
+            {isAuthenticated ? (
+              /* Muestra esto si el usuario ESTÁ logueado */
+              <>
+                <span className="text-sm font-semibold text-sapphire-900">
+                  ¡Hola, Bienvenido {userName}!
+                </span>
+                <Button 
+                  variant="outline" 
+                  onClick={handleLogout} 
+                  className="text-sm py-2 px-4 border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  Cerrar Sesión
+                </Button>
+              </>
+            ) : (
+              /* Muestra esto si el usuario NO está logueado */
+              <>
+                <Link to="/login">
+                  <button className="text-sm font-semibold text-sapphire-900 hover:text-sapphire-600 transition-colors">
+                    Iniciar Sesión
+                  </button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="primary" className="text-sm py-2 px-5">
+                    Registrarse
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* BOTÓN MÓVIL */}
+          {/* BOTÓN MÓVIL (Hamburguesa) */}
           <div className="md:hidden">
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -93,10 +132,39 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
+            
+            {/* ACTIONS MÓVIL */}
             <div className="pt-4 flex flex-col gap-3">
-              <Button variant="outline" className="w-full">Iniciar Sesión</Button>
-              <Button variant="primary" className="w-full">Registrarse</Button>
+              {isAuthenticated ? (
+                 /* Muestra esto si ESTÁ logueado (en el celular) */
+                <>
+                  <span className="block px-3 py-2 text-base font-medium text-sapphire-900 text-center">
+                    ¡Hola, Bienvenido {userName}!
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }} 
+                    className="w-full border-red-500 text-red-600 hover:bg-red-50"
+                  >
+                    Cerrar Sesión
+                  </Button>
+                </>
+              ) : (
+                /* Muestra esto si NO está logueado (en el celular) */
+                <>
+                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Iniciar Sesión</Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="primary" className="w-full">Registrarse</Button>
+                  </Link>
+                </>
+              )}
             </div>
+
           </div>
         </div>
       )}

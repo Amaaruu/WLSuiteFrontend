@@ -17,7 +17,7 @@ function App() {
         <Route path="/planes" element={<Plans />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/register" element={<Register />} />
-        {/* Aquí agregaremos /login, /dashboard después */}
+        <Route path="/login" element={<Login />} />
       </Routes>
     </Router>
   );
