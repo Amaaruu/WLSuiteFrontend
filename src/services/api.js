@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Instancia global configurada con la URL del .env
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || 'https://landingbackend-s1rk.onrender.com/api/v1',
     headers: {
@@ -8,7 +7,6 @@ const api = axios.create({
     }
 });
 
-// Interceptor: Busca el JWT en el navegador y lo añade a la cabecera 'Authorization'
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -17,7 +15,17 @@ api.interceptors.request.use(
         }
         return config;
     }, 
+    (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+    (response) => response,
     (error) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userName');
+            window.location.href = '/login'; 
+        }
         return Promise.reject(error);
     }
 );

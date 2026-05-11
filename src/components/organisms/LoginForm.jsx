@@ -21,7 +21,7 @@ const LoginForm = () => {
     const result = await login(email, password);
 
     if (result.success) {
-      navigate('/templates'); // O hacia el Dashboard principal de tu SaaS
+      navigate('/templates'); 
     } else {
       setErrorMsj(result.message);
     }
@@ -49,7 +49,10 @@ const LoginForm = () => {
           name="email"
           placeholder="admin@weblanding.com" 
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (errorMsj) setErrorMsj('');
+          }}
           required
         />
         <Input 
@@ -58,8 +61,12 @@ const LoginForm = () => {
           name="password"
           placeholder="••••••••" 
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (errorMsj) setErrorMsj('');
+          }}
           required
+          minLength={8}
         />
       </div>
 
