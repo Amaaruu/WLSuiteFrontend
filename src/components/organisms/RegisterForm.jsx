@@ -57,6 +57,10 @@ const RegisterForm = () => {
         password: '',
         role: 'user'
       });
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000); 
       
     } catch (err) {
       setError(err.message);
