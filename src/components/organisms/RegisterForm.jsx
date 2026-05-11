@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { CheckCircle2 } from 'lucide-react'; // Importamos el ícono de tu compañero
+import { CheckCircle2 } from 'lucide-react'; 
 import FormField from '../molecules/FormField'; 
 import Button from '../atoms/Button'; 
+import api from '../../services/api'; 
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const RegisterForm = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false); // 1. Nuevo estado para el éxito
+  const [submitSuccess, setSubmitSuccess] = useState(false); 
 
   const handleChange = (e) => {
     setFormData({
@@ -25,7 +26,6 @@ const RegisterForm = () => {
       [e.target.name]: e.target.value
     });
     
-    // Si el usuario empieza a escribir de nuevo, ocultamos los mensajes
     if (error) setError(null);
     if (submitSuccess) setSubmitSuccess(false);
   };
@@ -37,18 +37,8 @@ const RegisterForm = () => {
     setSubmitSuccess(false);
 
     try {
-      const response = await fetch('http://localhost:8080/api/v1/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      const response = await api.post('/auth/register', formData);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Error al registrar. Intenta con otro correo.');
-      }
-
-      // 2. Si todo sale bien, mostramos el mensaje de éxito y limpiamos el formulario
       setSubmitSuccess(true);
       setFormData({
         name: '',
@@ -63,7 +53,7 @@ const RegisterForm = () => {
       }, 2000); 
       
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || 'Error al registrar. Intenta con otro correo.');
     } finally {
       setIsLoading(false);
     }
@@ -76,14 +66,12 @@ const RegisterForm = () => {
         <p className="text-gray-500">Únete a WebLandingSuite hoy mismo</p>
       </div>
 
-      {/* Recuadro de Error (Rojo) */}
       {error && (
         <div className="mb-6 p-3 bg-red-50 text-red-600 rounded-lg text-sm text-center font-medium border border-red-100">
           {error}
         </div>
       )}
 
-      {/* 3. Recuadro de Éxito (Verde) */}
       {submitSuccess && (
         <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center justify-center gap-3">
           <CheckCircle2 className="w-5 h-5 text-green-600" />
