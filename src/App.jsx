@@ -9,6 +9,7 @@ const Templates = lazy(() => import('./pages/Templates'));
 const Register = lazy(() => import('./pages/Register'));
 const Login = lazy(() => import('./pages/Login'));
 const About = lazy(() => import('./pages/About'));
+const CreateLanding = lazy(() => import('./pages/CreateLanding'));
 
 const PageLoader = () => (
   <div className="flex h-screen w-screen items-center justify-center">
@@ -40,6 +41,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Templates />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/create-landing" 
+              element={
+                <ProtectedRoute>
+                  <CreateLanding />
                 </ProtectedRoute>
               } 
             />

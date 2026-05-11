@@ -1,17 +1,26 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../atoms/Button';
 import PlanFeatureItem from '../molecules/PlanFeatureItem';
 
 const PricingCard = ({ plan, isPopular }) => {
-  // Si el backend aún no envía la lista de 'features', usamos unas por defecto para que no se rompa
-  const features = plan.features || ['Soporte estándar', 'Generación web con IA', 'Hosting incluido en la plataforma'];
+  const navigate = useNavigate();
+  const features = plan.features || ['Soporte estándar', 'Generación web con IA', 'Hosting incluido'];
+
+  const handleSelectPlan = () => {
+    if (plan.name.toLowerCase() === 'básico' || plan.name.toLowerCase() === 'basico') {
+      navigate('/create-landing', { state: { selectedPlan: plan } });
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
-    <div className={`relative flex flex-col p-8 bg-white rounded-2xl shadow-xl transition-transform duration-300 hover:-translate-y-2 ${isPopular ? 'border-2 border-primary' : 'border border-gray-100'}`}>
+    <div className={`relative flex flex-col p-8 bg-white rounded-2xl shadow-xl transition-transform duration-300 hover:-translate-y-2 ${isPopular ? 'border-2 border-blue-600' : 'border border-gray-100'}`}>
       
       {isPopular && (
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <span className="bg-primary text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider shadow-md">
+          <span className="bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider shadow-md">
             Más Popular
           </span>
         </div>
@@ -35,7 +44,8 @@ const PricingCard = ({ plan, isPopular }) => {
 
       <div className="mt-auto">
         <Button 
-          className={`w-full py-4 text-lg font-bold rounded-xl transition-all ${isPopular ? 'bg-primary text-white hover:bg-blue-700 hover:shadow-lg' : 'bg-gray-50 text-gray-900 hover:bg-gray-200'}`}
+          onClick={handleSelectPlan}
+          className={`w-full py-4 text-lg font-bold rounded-xl transition-all ${isPopular ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-50 text-gray-900 hover:bg-gray-200'}`}
         >
           Elegir {plan.name}
         </Button>
