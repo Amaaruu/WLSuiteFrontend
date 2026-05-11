@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/organisms/Navbar';
 import PricingCard from '../components/organisms/PricingCard';
 import Footer from '../components/organisms/Footer';
+import api from '../services/api'; 
 
 const Plans = () => {
   const [plans, setPlans] = useState([]);
@@ -11,13 +12,10 @@ const Plans = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/v1/plans');
-        if (!response.ok) throw new Error('No se pudieron cargar los planes desde el servidor.');
-        
-        const data = await response.json();
-        setPlans(data);
+        const response = await api.get('/plans');
+        setPlans(response.data);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'No se pudieron cargar los planes desde el servidor.');
       } finally {
         setIsLoading(false);
       }
@@ -43,7 +41,7 @@ const Plans = () => {
 
         {isLoading ? (
           <div className="flex flex-col justify-center items-center py-20 space-y-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
             <p className="text-gray-500 font-medium">Cargando planes...</p>
           </div>
         ) : error ? (
