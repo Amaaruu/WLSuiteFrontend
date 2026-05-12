@@ -79,7 +79,7 @@ const LandingForm = () => {
 
     try {
       const response = await api.post('/projects', payload);
-      navigate('/resultado', { state: { project: response.data } });
+      navigate('/project-result', { state: { project: response.data } });
     } catch (err) {
       setError(
         err.response?.data?.message ||

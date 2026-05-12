@@ -13,7 +13,6 @@ const PricingCard = ({ plan, isPopular }) => {
 
   const features = plan.features || ['Soporte estándar', 'Generación web con IA', 'Hosting incluido'];
 
-  console.log('Plan objeto completo:', plan);
   const handleSelectPlan = async () => {
     // Si no está logueado, lo mandamos a login primero
     if (!user) {
