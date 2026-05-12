@@ -6,14 +6,15 @@ import {
   PlusCircle, 
   LogOut, 
   ShieldCheck,
-  CreditCard,
-  Users
+  Users,
+  Activity
 } from 'lucide-react';
 
 const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const userRole = user?.role?.toUpperCase();
 
   const handleLogout = () => {
     logout();
@@ -28,7 +29,7 @@ const Sidebar = () => {
   const adminItems = [
     { label: 'Panel General', path: '/admin', icon: ShieldCheck, roles: ['ADMIN'] },
     { label: 'Usuarios', path: '/admin/users', icon: Users, roles: ['ADMIN'] },
-    { label: 'Logs del Sistema', path: '/admin/logs', icon: ShieldCheck, roles: ['ADMIN'] },
+    { label: 'Logs del Sistema', path: '/admin/logs', icon: Activity, roles: ['ADMIN'] },
   ];
 
   const LinkItem = ({ item }) => (
@@ -55,11 +56,11 @@ const Sidebar = () => {
 
       <nav className="flex-grow space-y-2">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">Menú Principal</p>
-        {menuItems.filter(i => i.roles.includes(user?.role)).map((item) => (
+        {menuItems.filter(i => i.roles.includes(userRole)).map((item) => (
           <LinkItem key={item.path} item={item} />
         ))}
 
-        {user?.role === 'ADMIN' && (
+        {userRole === 'ADMIN' && (
           <div className="pt-8 space-y-2">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">Administración</p>
             {adminItems.map((item) => <LinkItem key={item.path} item={item} />)}
@@ -72,7 +73,7 @@ const Sidebar = () => {
           <div className="w-10 h-10 rounded-full bg-sapphire-100 flex items-center justify-center text-sapphire-700 font-bold uppercase">
             {user?.name?.charAt(0) || 'U'}
           </div>
-          <div className="overflow-hidden">
+          <div className="overflow-hidden text-left">
             <p className="text-sm font-bold text-gray-900 truncate">{user?.name || 'Usuario'}</p>
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>

@@ -29,7 +29,10 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   
   if (!user) return <Navigate to="/login" replace />;
   
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+  // Normalizamos a mayúsculas para evitar errores de coincidencia
+  const userRole = user.role?.toUpperCase();
+  
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
     return <Navigate to="/" replace />; 
   }
   

@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   }, []);
 
   const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm text-left">
       <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center mb-6`}>
         <Icon size={24} className="text-white" />
       </div>
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       <main className="flex-grow ml-64 p-10">
-        <header className="mb-12">
+        <header className="mb-12 text-left">
           <h1 className="text-3xl font-black text-sapphire-950">Panel de Administración</h1>
           <p className="text-gray-500">Métricas globales y salud del sistema.</p>
         </header>
@@ -54,10 +54,10 @@ const AdminDashboard = () => {
           <StatCard title="Eventos" value={stats.logs} icon={Activity} color="bg-sapphire-600" />
         </div>
 
-        <div className="mt-12 bg-sapphire-900 rounded-3xl p-10 text-white relative overflow-hidden">
+        <div className="mt-12 bg-sapphire-900 rounded-3xl p-10 text-white relative overflow-hidden text-left">
           <div className="relative z-10">
             <h2 className="text-2xl font-bold mb-2">Sistema Operativo</h2>
-            <p className="opacity-80">La conexión con los servicios de IA y Base de Datos es estable.</p>
+            <p className="opacity-80">La conexión con los servicios de IA es estable.</p>
           </div>
           <ShieldCheck className="absolute right-[-20px] bottom-[-20px] text-white opacity-10" size={200} />
         </div>
