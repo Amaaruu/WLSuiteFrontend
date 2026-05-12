@@ -49,15 +49,15 @@ const AdminDashboard = () => {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <StatCard title="Usuarios Totales" value={stats.users} icon={Users} color="bg-blue-600" />
-          <StatCard title="Landings Generadas" value={stats.projects} icon={Layout} color="bg-indigo-600" />
-          <StatCard title="Eventos Auditados" value={stats.logs} icon={Activity} color="bg-sapphire-600" />
+          <StatCard title="Usuarios" value={stats.users} icon={Users} color="bg-blue-600" />
+          <StatCard title="Landings" value={stats.projects} icon={Layout} color="bg-indigo-600" />
+          <StatCard title="Eventos" value={stats.logs} icon={Activity} color="bg-sapphire-600" />
         </div>
 
         <div className="mt-12 bg-sapphire-900 rounded-3xl p-10 text-white relative overflow-hidden">
           <div className="relative z-10">
-            <h2 className="text-2xl font-bold mb-2">Estado del Sistema: Operativo</h2>
-            <p className="opacity-80">Todos los servicios de IA y base de datos están respondiendo correctamente.</p>
+            <h2 className="text-2xl font-bold mb-2">Sistema Operativo</h2>
+            <p className="opacity-80">La conexión con los servicios de IA y Base de Datos es estable.</p>
           </div>
           <ShieldCheck className="absolute right-[-20px] bottom-[-20px] text-white opacity-10" size={200} />
         </div>

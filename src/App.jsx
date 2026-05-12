@@ -26,10 +26,13 @@ const PageLoader = () => (
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user } = useContext(AuthContext);
+  
   if (!user) return <Navigate to="/login" replace />;
+  
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />; 
   }
+  
   return children;
 };
 
@@ -74,6 +77,8 @@ function App() {
             <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
             <Route path="/create-landing" element={<ProtectedRoute><CreateLanding /></ProtectedRoute>} />
             <Route path="/project-result" element={<ProtectedRoute><ProjectResult /></ProtectedRoute>} />
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </Router>
