@@ -11,6 +11,7 @@ const Login = lazy(() => import('./pages/Login'));
 const About = lazy(() => import('./pages/About'));
 const CreateLanding = lazy(() => import('./pages/CreateLanding'));
 const ProjectResult = lazy(() => import('./pages/ProjectResult'));
+const LandingViewer = lazy(() => import('./pages/LandingViewer'));
 
 const PageLoader = () => (
   <div className="flex h-screen w-screen items-center justify-center">
@@ -36,6 +37,7 @@ function App() {
             <Route path="/planes" element={<Plans />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/landings/:id" element={<LandingViewer />} />
             
             <Route 
               path="/templates" 
