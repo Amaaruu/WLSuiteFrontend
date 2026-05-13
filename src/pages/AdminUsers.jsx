@@ -12,7 +12,7 @@ const AdminUsers = () => {
         const response = await api.get('/users');
         setUsers(response.data);
       } catch (err) {
-        console.error("Error al obtener usuarios:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -24,7 +24,7 @@ const AdminUsers = () => {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       <main className="flex-grow ml-64 p-10">
-        <header className="mb-10">
+        <header className="mb-10 text-left">
           <h1 className="text-3xl font-black text-sapphire-950">Usuarios Registrados</h1>
           <p className="text-gray-500">Gestión de cuentas y niveles de acceso.</p>
         </header>
@@ -40,7 +40,7 @@ const AdminUsers = () => {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {users.map((u) => (
-                <tr key={u.userId} className="hover:bg-gray-50/50 transition-colors">
+                <tr key={u.userId} className="hover:bg-gray-50/50">
                   <td className="px-8 py-5 font-bold text-gray-900">{u.name}</td>
                   <td className="px-8 py-5 text-gray-500">{u.email}</td>
                   <td className="px-8 py-5">

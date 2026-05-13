@@ -21,7 +21,7 @@ const AdminDashboard = () => {
           logs: l.data.length || 0
         });
       } catch (err) {
-        console.error("Error cargando estadísticas:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }

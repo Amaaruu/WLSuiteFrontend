@@ -14,7 +14,7 @@ const UserDashboard = () => {
         const response = await api.get('/projects');
         setProjects(response.data.content || response.data);
       } catch (err) {
-        console.error("Error al cargar proyectos:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }

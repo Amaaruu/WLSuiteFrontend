@@ -14,7 +14,8 @@ const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
-  const userRole = user?.role?.toUpperCase();
+
+  const userRole = user?.role ? String(user.role).toUpperCase().trim() : '';
 
   const handleLogout = () => {
     logout();
@@ -56,6 +57,7 @@ const Sidebar = () => {
 
       <nav className="flex-grow space-y-2">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">Menú Principal</p>
+        
         {menuItems.filter(i => i.roles.includes(userRole)).map((item) => (
           <LinkItem key={item.path} item={item} />
         ))}

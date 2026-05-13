@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -9,48 +8,60 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-    const storedName = localStorage.getItem('userName');
-    const storedUserId = localStorage.getItem('userId');
 
-    if (token) {
-      setUser({
-        name: storedName || 'Usuario',
-        token,
-        userId: storedUserId ? parseInt(storedUserId) : null,
-      });
+    if (storedUser && token) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.role) {
+          parsedUser.role = String(parsedUser.role).toUpperCase().trim();
+        }
+        setUser(parsedUser);
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (error) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
     }
     setLoading(false);
   }, []);
 
   const login = async (email, password) => {
-    try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token, name, userId } = response.data;
-
-      localStorage.setItem('token', token);
-      localStorage.setItem('userName', name);
-      if (userId) localStorage.setItem('userId', userId);
-
-      setUser({ name, token, userId: userId || null });
-
-      return { success: true };
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Error al conectar con el servidor.';
-      return { success: false, message: errorMessage };
+    const response = await api.post('/auth/login', { email, password });
+    const { token, ...userData } = response.data;
+    
+    if (userData.role) {
+      userData.role = String(userData.role).toUpperCase().trim();
     }
+    
+    const fullUser = { ...userData, token };
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(fullUser));
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setUser(fullUser);
+
+    return { success: true, user: fullUser };
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userId');
+    localStorage.removeItem('user');
+    delete api.defaults.headers.common['Authorization'];
     setUser(null);
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-sapphire-600 border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };
