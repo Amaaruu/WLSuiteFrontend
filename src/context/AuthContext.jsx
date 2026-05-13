@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 export const AuthContext = createContext();
@@ -10,13 +10,19 @@ const decodeJwtPayload = (token) => {
     const jsonPayload = decodeURIComponent(
       atob(base64)
         .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
     return JSON.parse(jsonPayload);
   } catch {
     return null;
   }
+};
+
+const isTokenExpired = (token) => {
+  const payload = decodeJwtPayload(token);
+  if (!payload || !payload.exp) return true;
+  return Date.now() >= payload.exp * 1000;
 };
 
 const extractRoleFromToken = (token) => {
@@ -36,44 +42,64 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const clearSession = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userId');
+    setUser(null);
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedName = localStorage.getItem('userName');
     const storedUserId = localStorage.getItem('userId');
+
     if (token) {
-      const role = extractRoleFromToken(token);
-      setUser({
-        name: storedName || 'Usuario',
-        userId: storedUserId ? parseInt(storedUserId) : null,
-        token,
-        role,
-      });
+      if (isTokenExpired(token)) {
+        clearSession();
+      } else {
+        const role = extractRoleFromToken(token);
+        setUser({
+          name: storedName || 'Usuario',
+          userId: storedUserId ? parseInt(storedUserId) : null,
+          token,
+          role,
+        });
+      }
     }
     setLoading(false);
-  }, []);
+  }, [clearSession]);
+
+  useEffect(() => {
+    const handleAuthError = () => clearSession();
+    window.addEventListener('auth-error', handleAuthError);
+    return () => window.removeEventListener('auth-error', handleAuthError);
+  }, [clearSession]);
 
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
       const { token, name, userId } = response.data;
+
+      if (!token) return { success: false, message: 'Respuesta del servidor inválida.' };
+
       localStorage.setItem('token', token);
       localStorage.setItem('userName', name);
       if (userId) localStorage.setItem('userId', String(userId));
+
       const role = extractRoleFromToken(token);
       setUser({ name, token, userId: userId || null, role });
       return { success: true, role };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Error al conectar con el servidor.';
+      const errorMessage =
+        error.response?.data?.message || 'Error al conectar con el servidor.';
       return { success: false, message: errorMessage };
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userId');
-    setUser(null);
-  };
+  const logout = useCallback(() => {
+    clearSession();
+  }, [clearSession]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>

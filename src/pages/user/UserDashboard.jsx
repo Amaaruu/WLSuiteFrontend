@@ -16,8 +16,9 @@ const UserDashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get('/projects?size=5&sort=createdAt,desc')
-      .then(res => setProjects(res.data.content || []))
+    api
+      .get('/projects?size=5&sort=createdAt,desc')
+      .then((res) => setProjects(res.data.content || []))
       .catch(() => setError('No se pudieron cargar tus proyectos.'))
       .finally(() => setIsLoading(false));
   }, []);
@@ -31,7 +32,9 @@ const UserDashboard = () => {
         <div className="max-w-4xl mx-auto space-y-8">
 
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Hola, {user?.name} 👋</h1>
+            <h1 className="text-3xl font-extrabold text-gray-900">
+              Hola, {user?.name} 👋
+            </h1>
             <p className="text-gray-500 mt-1">Desde aquí gestionas tus landing pages.</p>
           </div>
 
@@ -63,13 +66,9 @@ const UserDashboard = () => {
               )}
             </div>
 
-            {isLoading && (
-              <div className="animate-pulse h-16 bg-gray-100 rounded-xl" />
-            )}
+            {isLoading && <div className="animate-pulse h-16 bg-gray-100 rounded-xl" />}
             {!isLoading && error && <ErrorBanner message={error} />}
-            {!isLoading && !error && lastProject && (
-              <ProjectRow project={lastProject} />
-            )}
+            {!isLoading && !error && lastProject && <ProjectRow project={lastProject} />}
             {!isLoading && !error && !lastProject && (
               <EmptyState
                 message="Todavía no tienes proyectos."

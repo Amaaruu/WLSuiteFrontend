@@ -2,17 +2,17 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { useContext, Suspense, lazy } from 'react';
 
-const Home          = lazy(() => import('./pages/Home'));
-const Contact       = lazy(() => import('./pages/Contact'));
-const Plans         = lazy(() => import('./pages/Plans'));
-const Templates     = lazy(() => import('./pages/Templates'));
-const Register      = lazy(() => import('./pages/Register'));
-const Login         = lazy(() => import('./pages/Login'));
-const About         = lazy(() => import('./pages/About'));
-const CreateLanding = lazy(() => import('./pages/CreateLanding'));
-const ProjectResult = lazy(() => import('./pages/ProjectResult'));
-const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
-const UserProjects  = lazy(() => import('./pages/user/UserProjects'));
+const Home           = lazy(() => import('./pages/Home'));
+const Contact        = lazy(() => import('./pages/Contact'));
+const Plans          = lazy(() => import('./pages/Plans'));
+const Templates      = lazy(() => import('./pages/Templates'));
+const Register       = lazy(() => import('./pages/Register'));
+const Login          = lazy(() => import('./pages/Login'));
+const About          = lazy(() => import('./pages/About'));
+const CreateLanding  = lazy(() => import('./pages/CreateLanding'));
+const ProjectResult  = lazy(() => import('./pages/ProjectResult'));
+const UserDashboard  = lazy(() => import('./pages/user/UserDashboard'));
+const UserProjects   = lazy(() => import('./pages/user/UserProjects'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers     = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminProjects  = lazy(() => import('./pages/admin/AdminProjects'));
@@ -37,27 +37,50 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
+const PublicOnlyRoute = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  if (user) {
+    return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/"         element={<Home />} />
-            <Route path="/contacto" element={<Contact />} />
-            <Route path="/about"    element={<About />} />
-            <Route path="/planes"   element={<Plans />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login"    element={<Login />} />
+            <Route path="/"          element={<Home />} />
+            <Route path="/contacto"  element={<Contact />} />
+            <Route path="/about"     element={<About />} />
+            <Route path="/planes"    element={<Plans />} />
             <Route path="/templates" element={<Templates />} />
 
-            <Route path="/dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
-            <Route path="/dashboard/projects" element={<UserRoute><UserProjects /></UserRoute>} />
-            <Route path="/create-landing" element={<UserRoute><CreateLanding /></UserRoute>} />
-            <Route path="/project-result" element={<UserRoute><ProjectResult /></UserRoute>} />
+            <Route
+              path="/login"
+              element={
+                <PublicOnlyRoute>
+                  <Login />
+                </PublicOnlyRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicOnlyRoute>
+                  <Register />
+                </PublicOnlyRoute>
+              }
+            />
 
-            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/dashboard"          element={<UserRoute><UserDashboard /></UserRoute>} />
+            <Route path="/dashboard/projects" element={<UserRoute><UserProjects /></UserRoute>} />
+            <Route path="/create-landing"     element={<UserRoute><CreateLanding /></UserRoute>} />
+            <Route path="/project-result"     element={<UserRoute><ProjectResult /></UserRoute>} />
+
+            <Route path="/admin"          element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/users"    element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="/admin/projects" element={<AdminRoute><AdminProjects /></AdminRoute>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />

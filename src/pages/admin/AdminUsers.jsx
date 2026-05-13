@@ -10,8 +10,18 @@ const AdminUsers = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get('/users')
-      .then(res => setUsers(Array.isArray(res.data) ? res.data : res.data.content || []))
+    api
+      .get('/users')
+      .then((res) => {
+        const data = res.data;
+        if (Array.isArray(data)) {
+          setUsers(data);
+        } else if (data.content) {
+          setUsers(data.content);
+        } else {
+          setUsers([]);
+        }
+      })
       .catch(() => setError('No se pudieron cargar los usuarios.'))
       .finally(() => setIsLoading(false));
   }, []);
@@ -29,7 +39,7 @@ const AdminUsers = () => {
 
           {isLoading && (
             <div className="space-y-2">
-              {[1, 2, 3, 4].map(i => (
+              {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="animate-pulse h-16 bg-white rounded-xl border border-gray-100" />
               ))}
             </div>
@@ -50,7 +60,7 @@ const AdminUsers = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {users.map(u => (
+                  {users.map((u) => (
                     <tr key={u.userId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 text-gray-400">{u.userId}</td>
                       <td className="px-6 py-4 font-medium text-gray-900">{u.name} {u.lastName}</td>

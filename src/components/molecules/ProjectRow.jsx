@@ -5,7 +5,9 @@ import Button from '../atoms/Button';
 const ProjectRow = ({ project, showLink = true }) => {
   const formattedDate = project.createdAt
     ? new Date(project.createdAt).toLocaleDateString('es-CL', {
-        day: '2-digit', month: 'long', year: 'numeric',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
       })
     : '—';
 
@@ -20,7 +22,7 @@ const ProjectRow = ({ project, showLink = true }) => {
         <p className="text-xs text-gray-300 mt-1">{formattedDate}</p>
       </div>
       {showLink && project.signedUrl && (
-        
+        <a
           href={project.signedUrl}
           target="_blank"
           rel="noopener noreferrer"
