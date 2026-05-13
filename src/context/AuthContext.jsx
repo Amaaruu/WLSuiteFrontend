@@ -18,18 +18,25 @@ export const AuthProvider = ({ children }) => {
           parsedUser.role = String(parsedUser.role).toUpperCase().trim();
         }
         setUser(parsedUser);
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } catch (error) {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
       }
     }
     setLoading(false);
+
+    const handleAuthError = () => {
+      logout();
+    };
+
+    window.addEventListener('auth-error', handleAuthError);
+    return () => window.removeEventListener('auth-error', handleAuthError);
   }, []);
 
   const login = async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
-    const { token, ...userData } = response.data;
+    const responseData = response.data.content || response.data;
+    const { token, ...userData } = responseData;
     
     if (userData.role) {
       userData.role = String(userData.role).toUpperCase().trim();
@@ -38,7 +45,6 @@ export const AuthProvider = ({ children }) => {
     const fullUser = { ...userData, token };
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(fullUser));
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(fullUser);
 
     return { success: true, user: fullUser };
@@ -47,7 +53,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    delete api.defaults.headers.common['Authorization'];
     setUser(null);
   };
 

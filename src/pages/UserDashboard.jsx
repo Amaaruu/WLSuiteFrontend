@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../components/organisms/Sidebar';
 import api from '../services/api';
 import StatusBadge from '../components/molecules/StatusBadge';
-import { ExternalLink, Trash2, Layout } from 'lucide-react';
+import { ExternalLink, Trash2, Layout, AlertCircle } from 'lucide-react';
 
 const UserDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await api.get('/projects');
         setProjects(response.data.content || response.data);
+        setError(null);
       } catch (err) {
-        console.error(err);
+        setError('No se pudieron cargar los proyectos. Por favor, intenta de nuevo más tarde.');
       } finally {
         setLoading(false);
       }
@@ -37,14 +40,23 @@ const UserDashboard = () => {
               <div key={i} className="h-48 bg-white rounded-2xl animate-pulse border border-gray-100"></div>
             ))}
           </div>
+        ) : error ? (
+          <div className="bg-red-50 rounded-3xl p-12 text-center border border-red-200">
+            <AlertCircle className="mx-auto text-red-400 mb-4" size={48} />
+            <h3 className="text-lg font-bold text-red-900">Hubo un problema</h3>
+            <p className="text-red-600 mb-6">{error}</p>
+            <button onClick={() => window.location.reload()} className="inline-block bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-all">
+              Reintentar
+            </button>
+          </div>
         ) : projects.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-gray-200">
             <Layout className="mx-auto text-gray-300 mb-4" size={48} />
             <h3 className="text-lg font-bold text-gray-900">No tienes proyectos aún</h3>
             <p className="text-gray-500 mb-6">Crea tu primera página en segundos.</p>
-            <a href="/planes" className="inline-block bg-sapphire-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-sapphire-700 transition-all">
+            <Link to="/planes" className="inline-block bg-sapphire-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-sapphire-700 transition-all">
               Crear mi primera landing
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
