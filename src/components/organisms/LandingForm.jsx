@@ -1,68 +1,46 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useFormContext } from '../../context/FormContext';
 import Button from '../atoms/Button';
-import StepperBar from '../molecules/StepperBar';
+import FormField from '../molecules/FormField';
+import SelectField from '../molecules/SelectField';
 import PlanBadge from '../molecules/PlanBadge';
+import FormSection from '../molecules/FormSection';
+import LockedField from '../molecules/LockedField';
 import UpgradeBanner from '../molecules/UpgradeBanner';
-import Step1Identity   from './steps/Step1Identity';
-import Step2Communication from './steps/Step2Communication';
-import Step3Visual     from './steps/Step3Visual';
-import Step4Advanced   from './steps/Step4Advanced';
-import StepReview      from './steps/StepReview';
 import api from '../../services/api';
 
 const PLAN_LEVELS = {
-  básico: 1, basico: 1, intermedio: 2, premium: 3,
-};
-const getPlanLevel = (name) => PLAN_LEVELS[name?.toLowerCase()] ?? 1;
-
-// Los pasos disponibles dependen del nivel del plan.
-// Plan Básico: paso 1 + revisión.
-// Intermedio: pasos 1–3 + revisión.
-// Premium: pasos 1–4 + revisión.
-const getSteps = (planLevel) => {
-  const all = [
-    { id: 'identity',      label: 'Tu negocio' },
-    { id: 'communication', label: 'Comunicación' },
-    { id: 'visual',        label: 'Estilo' },
-    { id: 'advanced',      label: 'Diseño avanzado' },
-    { id: 'review',        label: 'Revisión' },
-  ];
-
-  if (planLevel === 1) return [all[0], all[4]];           
-  if (planLevel === 2) return [all[0], all[1], all[2], all[4]]; 
-  return all;                                              // Premium: todos
+  básico: 1,
+  basico: 1,
+  intermedio: 2,
+  premium: 3,
 };
 
-//Validación mínima por paso
-const validateStep = (stepId, formData) => {
-  if (stepId === 'identity') {
-    return (
-      formData.projectName.trim() !== '' &&
-      formData.projectIdea.trim() !== '' &&
-      formData.callToAction.trim() !== '' &&
-      formData.businessSector !== '' &&
-      formData.landingGoal !== '' &&
-      formData.targetAudience !== '' &&
-      formData.brandPositioning !== '' &&
-      formData.brandStage !== ''
-    );
-  }
-  return true;
-};
+const getPlanLevel = (planName) => PLAN_LEVELS[planName?.toLowerCase()] ?? 1;
 
 const LandingForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { formData, currentStep, goToStep, buildPayload } = useFormContext();
 
   const { transactionId, selectedPlan } = location.state || {};
   const planLevel = getPlanLevel(selectedPlan?.name);
-  const steps     = getSteps(planLevel);
+
+  const [formData, setFormData] = useState({
+    projectName: '',
+    projectIdea: '',
+    callToAction: '',
+    businessSector: '',
+    communicationTone: 'Profesional',
+    designPreferences: {
+      colorPalette: 'Modern Blue',
+      visualStyle: 'minimalist',
+      animationLevel: 'medium',
+      seoLevel: 'basic',
+    },
+  });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError]         = useState(null);
+  const [error, setError] = useState(null);
 
   if (!transactionId) {
     return (
@@ -78,136 +56,234 @@ const LandingForm = () => {
     );
   }
 
-  const currentStepIndex  = currentStep - 1;
-  const currentStepConfig = steps[currentStepIndex];
-  const isLastStep        = currentStep === steps.length;
-  const isReviewStep      = currentStepConfig?.id === 'review';
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const canAdvance = validateStep(currentStepConfig?.id, formData);
+  const handleDesignChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      designPreferences: { ...prev.designPreferences, [name]: value },
+    }));
+  };
 
-  const handleNext = () => {
-    if (!canAdvance) {
-      setError('Por favor completa todos los campos requeridos antes de continuar.');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.projectName?.trim() || !formData.projectIdea?.trim() || !formData.callToAction?.trim()) {
+      setError('Por favor completa todos los campos requeridos en la sección de información básica.');
       return;
     }
-    setError(null);
-    goToStep(currentStep + 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
-  const handleBack = () => {
-    setError(null);
-    goToStep(currentStep - 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleEditStep = (targetStepNumber) => {
-    setError(null);
-    goToStep(targetStepNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleSubmit = async () => {
     setIsLoading(true);
     setError(null);
 
+    const payload = {
+      transactionId,
+      projectName: formData.projectName.trim(),
+      projectIdea: formData.projectIdea.trim(),
+      callToAction: formData.callToAction.trim(),
+
+      ...(planLevel >= 2 && {
+        businessSector: formData.businessSector?.trim(),
+        communicationTone: formData.communicationTone,
+        designPreferences: {
+          colorPalette: formData.designPreferences.colorPalette,
+          visualStyle: formData.designPreferences.visualStyle,
+
+          ...(planLevel >= 3 && {
+            animationLevel: formData.designPreferences.animationLevel,
+            seoLevel: formData.designPreferences.seoLevel,
+          }),
+        },
+      }),
+    };
+
     try {
-      const payload  = buildPayload(transactionId);
       const response = await api.post('/projects', payload);
       navigate('/project-result', { state: { project: response.data } });
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          'Ocurrió un error al generar tu landing. Intenta de nuevo.'
+        'Ocurrió un error al generar tu landing. Intenta de nuevo.'
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderStep = () => {
-    switch (currentStepConfig?.id) {
-      case 'identity':      return <Step1Identity />;
-      case 'communication': return <Step2Communication planLevel={planLevel} />;
-      case 'visual':        return <Step3Visual planLevel={planLevel} />;
-      case 'advanced':      return <Step4Advanced planLevel={planLevel} />;
-      case 'review':        return <StepReview planLevel={planLevel} onEditStep={handleEditStep} />;
-      default:              return null;
-    }
-  };
-
-  const STEP_TITLES = {
-    identity:      { title: 'Tu negocio',               desc: 'Define quién eres, a quién le hablas y qué quieres lograr.' },
-    communication: { title: 'Comunicación y colores',    desc: 'Define el tono de tu marca y la identidad visual de color.' },
-    visual:        { title: 'Estilo y secciones',        desc: 'Elige la estética y estructura de contenido de tu landing.' },
-    advanced:      { title: 'Diseño avanzado',           desc: 'Configura tipografía, botones, animaciones y creatividad.' },
-    review:        { title: 'Revisa tu configuración',   desc: 'Confirma todos los detalles antes de generar tu landing.' },
-  };
-
-  const { title, desc } = STEP_TITLES[currentStepConfig?.id] || {};
-
   return (
-    <div className="space-y-6">
-
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-8"
+    >
       <PlanBadge planName={selectedPlan?.name} transactionId={transactionId} />
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5">
-        <StepperBar steps={steps} currentStep={currentStep} />
-      </div>
-
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-        <p className="text-sm text-gray-500">{desc}</p>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-8">
-        {renderStep()}
-      </div>
-
       <UpgradeBanner planLevel={planLevel} />
 
+      <div className="space-y-5">
+        <FormSection title="Información básica" badge="Todos los planes" />
+        <FormField
+          label="Nombre del proyecto"
+          id="projectName"
+          name="projectName"
+          placeholder="Ej: Cafetería El Rincón"
+          value={formData.projectName}
+          onChange={handleChange}
+          required
+        />
+        <FormField
+          label="¿Qué hace tu negocio?"
+          id="projectIdea"
+          name="projectIdea"
+          placeholder="Ej: Somos una cafetería de especialidad en Santiago que vende café de origen..."
+          value={formData.projectIdea}
+          onChange={handleChange}
+          isTextArea
+          required
+        />
+        <FormField
+          label="¿Qué quieres que haga el visitante? (CTA)"
+          id="callToAction"
+          name="callToAction"
+          placeholder="Ej: Reserva tu mesa, Pide tu primera bolsa gratis, Contáctanos hoy"
+          value={formData.callToAction}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div className="space-y-5">
+        <FormSection title="Preferencias de diseño" badge="Plan Intermedio+" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {planLevel >= 2 ? (
+            <FormField
+              label="Sector del negocio"
+              id="businessSector"
+              name="businessSector"
+              placeholder="Ej: Gastronomía, Tecnología, Salud..."
+              value={formData.businessSector}
+              onChange={handleChange}
+            />
+          ) : (
+            <LockedField label="Sector del negocio" requiredPlan="Intermedio" variant="intermedio" />
+          )}
+
+          {planLevel >= 2 ? (
+            <SelectField
+              label="Tono de comunicación"
+              id="communicationTone"
+              name="communicationTone"
+              value={formData.communicationTone}
+              onChange={handleChange}
+            >
+              <option value="Profesional">Profesional</option>
+              <option value="Cercano">Cercano / Amigable</option>
+              <option value="Elegante">Elegante / Lujoso</option>
+              <option value="Jovial">Jovial / Divertido</option>
+            </SelectField>
+          ) : (
+            <LockedField label="Tono de comunicación" requiredPlan="Intermedio" variant="intermedio" />
+          )}
+
+          {planLevel >= 2 ? (
+            <SelectField
+              label="Paleta de colores"
+              id="colorPalette"
+              name="colorPalette"
+              value={formData.designPreferences.colorPalette}
+              onChange={handleDesignChange}
+            >
+              <option value="Modern Blue">Azul moderno</option>
+              <option value="Minimal Dark">Oscuro minimalista</option>
+              <option value="Nature Green">Verde naturaleza</option>
+              <option value="Warm Coral">Coral cálido</option>
+            </SelectField>
+          ) : (
+            <LockedField label="Paleta de colores" requiredPlan="Intermedio" variant="intermedio" />
+          )}
+
+          {planLevel >= 2 ? (
+            <SelectField
+              label="Estilo visual"
+              id="visualStyle"
+              name="visualStyle"
+              value={formData.designPreferences.visualStyle}
+              onChange={handleDesignChange}
+            >
+              <option value="minimalist">Minimalista</option>
+              <option value="bold">Audaz / Llamativo</option>
+              <option value="elegant">Elegante</option>
+              <option value="playful">Dinámico</option>
+            </SelectField>
+          ) : (
+            <LockedField label="Estilo visual" requiredPlan="Intermedio" variant="intermedio" />
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        <FormSection title="Configuración avanzada" badge="Plan Premium" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {planLevel >= 3 ? (
+            <SelectField
+              label="Nivel de animación"
+              id="animationLevel"
+              name="animationLevel"
+              value={formData.designPreferences.animationLevel}
+              onChange={handleDesignChange}
+            >
+              <option value="none">Sin animaciones</option>
+              <option value="subtle">Sutil</option>
+              <option value="medium">Moderado</option>
+              <option value="high">Dinámico</option>
+            </SelectField>
+          ) : (
+            <LockedField label="Nivel de animación" requiredPlan="Premium" variant="premium" />
+          )}
+
+          {planLevel >= 3 ? (
+            <SelectField
+              label="Optimización SEO"
+              id="seoLevel"
+              name="seoLevel"
+              value={formData.designPreferences.seoLevel}
+              onChange={handleDesignChange}
+            >
+              <option value="basic">Básica</option>
+              <option value="advanced">Avanzada</option>
+            </SelectField>
+          ) : (
+            <LockedField label="Optimización SEO avanzada" requiredPlan="Premium" variant="premium" />
+          )}
+        </div>
+
+        {planLevel >= 3 && (
+          <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl px-4 py-3">
+            <span className="text-lg" aria-hidden="true">🏆</span>
+            <p className="text-sm text-indigo-700 font-medium">
+              Tienes acceso completo a todas las funcionalidades del Plan Premium.
+            </p>
+          </div>
+        )}
+      </div>
+
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-xl">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
           <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4">
-        <Button
-          variant="secondary"
-          onClick={handleBack}
-          disabled={currentStep === 1}
-          className="px-6 py-3"
-        >
-          ← Anterior
-        </Button>
-
-        <span className="text-xs text-gray-400 font-medium">
-          Paso {currentStep} de {steps.length}
-        </span>
-
-        {isReviewStep ? (
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="px-8 py-3"
-          >
-            {isLoading ? 'Generando tu landing...' : '✦ Generar mi landing page'}
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            onClick={handleNext}
-            disabled={!canAdvance}
-            className="px-6 py-3"
-          >
-            Siguiente →
-          </Button>
-        )}
-      </div>
-
-    </div>
+      <Button
+        type="submit"
+        variant="primary"
+        className="w-full py-4 text-lg"
+        disabled={isLoading}
+      >
+        {isLoading ? 'La IA está generando tu landing...' : '✦ Generar mi landing page'}
+      </Button>
+    </form>
   );
 };
 

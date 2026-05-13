@@ -55,25 +55,11 @@ function App() {
             <Route path="/contacto"  element={<Contact />} />
             <Route path="/about"     element={<About />} />
             <Route path="/planes"    element={<Plans />} />
-            <Route path="/templates" element={<Templates />} />
 
-            <Route
-              path="/login"
-              element={
-                <PublicOnlyRoute>
-                  <Login />
-                </PublicOnlyRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicOnlyRoute>
-                  <Register />
-                </PublicOnlyRoute>
-              }
-            />
+            <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+            <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
+            <Route path="/templates"          element={<UserRoute><Templates /></UserRoute>} />
             <Route path="/dashboard"          element={<UserRoute><UserDashboard /></UserRoute>} />
             <Route path="/dashboard/projects" element={<UserRoute><UserProjects /></UserRoute>} />
             <Route path="/create-landing"     element={<UserRoute><CreateLanding /></UserRoute>} />
