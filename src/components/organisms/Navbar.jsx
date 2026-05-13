@@ -1,56 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import Button from '../atoms/Button';
 import logo from '../../assets/WebLandingSuiteLogo.webp';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { user, logout } = useContext(AuthContext);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-      const storedName = localStorage.getItem('userName');
-    if (token) {
-      setIsAuthenticated(true);
-      if (storedName) setUserName(storedName);
-    }
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    setIsAuthenticated(false);
+    logout();
     navigate('/');
   };
 
+  const isAuthenticated = !!user;
+  const userName = user?.name || '';
+  const isAdmin = user?.role === 'admin';
+  const dashboardPath = isAdmin ? '/admin' : '/dashboard';
+
   const navLinks = [
-    { name: 'Inicio', path: '/' },
+    { name: 'Inicio',     path: '/' },
     { name: 'Plantillas', path: '/templates' },
-    {name: 'Nosotros', path: '/about'},
-    { name: 'Planes', path: '/planes' },
-    { name: 'Contacto', path: '/contacto' },
+    { name: 'Nosotros',   path: '/about' },
+    { name: 'Planes',     path: '/planes' },
+    { name: 'Contacto',   path: '/contacto' },
   ];
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-transparent'
-    }`}>
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          
-          {/* LOGO */}
+
           <Link to="/" className="flex items-center gap-3 cursor-pointer">
             <img src={logo} alt="WebLandingSuite Logo" className="h-10 w-auto object-contain" />
             <span className="text-xl font-bold text-sapphire-900 tracking-tight hidden sm:block">
@@ -58,9 +47,8 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* NAVEGACIÓN DESKTOP */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {navLinks.map(link => (
               <Link
                 key={link.name}
                 to={link.path}
@@ -71,24 +59,24 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* ACTIONS DESKTOP */}
           <div className="hidden md:flex items-center gap-4">
             {isAuthenticated ? (
-              /* Muestra esto si el usuario ESTÁ logueado */
               <>
-                <span className="text-sm font-semibold text-sapphire-900">
-                  ¡Hola, Bienvenido {userName}!
-                </span>
-                <Button 
-                  variant="outline" 
-                  onClick={handleLogout} 
+                <Link
+                  to={dashboardPath}
+                  className="text-sm font-semibold text-sapphire-900 hover:text-sapphire-600 transition-colors"
+                >
+                  {isAdmin ? 'Panel Admin' : `Hola, ${userName}`}
+                </Link>
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
                   className="text-sm py-2 px-4 border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   Cerrar Sesión
                 </Button>
               </>
             ) : (
-              /* Muestra esto si el usuario NO está logueado */
               <>
                 <Link to="/login">
                   <button className="text-sm font-semibold text-sapphire-900 hover:text-sapphire-600 transition-colors">
@@ -104,9 +92,8 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* BOTÓN MÓVIL (Hamburguesa) */}
           <div className="md:hidden">
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-sapphire-900 p-2"
             >
@@ -118,11 +105,10 @@ const Navbar = () => {
 
       <div className="w-full h-[2px] bg-sapphire-900/10 shadow-sm" />
 
-      {/* MENÚ MÓVIL */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-gray-100">
           <div className="px-4 pt-2 pb-6 space-y-1">
-            {navLinks.map((link) => (
+            {navLinks.map(link => (
               <Link
                 key={link.name}
                 to={link.path}
@@ -132,31 +118,28 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            
-            {/* ACTIONS MÓVIL */}
             <div className="pt-4 flex flex-col gap-3">
               {isAuthenticated ? (
-                 /* Muestra esto si ESTÁ logueado (en el celular) */
                 <>
-                  <span className="block px-3 py-2 text-base font-medium text-sapphire-900 text-center">
-                    ¡Hola, Bienvenido {userName}!
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }} 
-                    className="w-full border-red-500 text-red-600 hover:bg-red-50"
+                  <Link
+                    to={dashboardPath}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-3 py-2 text-base font-semibold text-sapphire-900 text-center"
+                  >
+                    {isAdmin ? 'Panel Admin' : 'Mi Dashboard'}
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    className="border-red-500 text-red-600 hover:bg-red-50"
                   >
                     Cerrar Sesión
                   </Button>
                 </>
               ) : (
-                /* Muestra esto si NO está logueado (en el celular) */
                 <>
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full">Iniciar Sesión</Button>
+                    <Button variant="secondary" className="w-full">Iniciar Sesión</Button>
                   </Link>
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button variant="primary" className="w-full">Registrarse</Button>
@@ -164,7 +147,6 @@ const Navbar = () => {
                 </>
               )}
             </div>
-
           </div>
         </div>
       )}

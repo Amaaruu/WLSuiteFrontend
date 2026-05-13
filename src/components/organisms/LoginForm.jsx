@@ -9,7 +9,7 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [errorMsj, setErrorMsj] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -21,21 +21,28 @@ const LoginForm = () => {
     const result = await login(email, password);
 
     if (result.success) {
-      navigate('/templates'); 
+      if (result.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } else {
       setErrorMsj(result.message);
     }
-    
+
     setIsLoading(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-md bg-white p-8 rounded-xl shadow-sm border border-gray-100"
+    >
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-sapphire-900 mb-2">Bienvenido de nuevo</h2>
         <p className="text-gray-500 text-sm">Ingresa a tu cuenta de WebLandingSuite</p>
       </div>
-      
+
       {errorMsj && (
         <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 text-center font-medium">
           {errorMsj}
@@ -43,28 +50,22 @@ const LoginForm = () => {
       )}
 
       <div className="space-y-5 mb-8">
-        <Input 
-          label="Correo Electrónico" 
-          type="email" 
+        <Input
+          label="Correo Electrónico"
+          type="email"
           name="email"
-          placeholder="admin@weblanding.com" 
+          placeholder="tu@correo.com"
           value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (errorMsj) setErrorMsj('');
-          }}
+          onChange={(e) => { setEmail(e.target.value); if (errorMsj) setErrorMsj(''); }}
           required
         />
-        <Input 
-          label="Contraseña" 
-          type="password" 
+        <Input
+          label="Contraseña"
+          type="password"
           name="password"
-          placeholder="••••••••" 
+          placeholder="••••••••"
           value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (errorMsj) setErrorMsj('');
-          }}
+          onChange={(e) => { setPassword(e.target.value); if (errorMsj) setErrorMsj(''); }}
           required
           minLength={8}
         />
