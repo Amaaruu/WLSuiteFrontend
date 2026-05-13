@@ -1,94 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Sidebar from '../components/organisms/Sidebar';
-import api from '../services/api';
-import StatusBadge from '../components/molecules/StatusBadge';
-import { ExternalLink, Trash2, Layout, AlertCircle } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
+import Navbar from '../../components/organisms/Navbar';
+import Footer from '../../components/organisms/Footer';
+import Button from '../../components/atoms/Button';
+import ProjectRow from '../../components/molecules/ProjectRow';
+import ErrorBanner from '../../components/molecules/ErrorBanner';
+import EmptyState from '../../components/molecules/EmptyState';
+import api from '../../services/api';
 
 const UserDashboard = () => {
+  const { user } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await api.get('/projects');
-        setProjects(response.data.content || response.data);
-        setError(null);
-      } catch (err) {
-        setError('No se pudieron cargar los proyectos. Por favor, intenta de nuevo más tarde.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
+    api.get('/projects?size=5&sort=createdAt,desc')
+      .then(res => setProjects(res.data.content || []))
+      .catch(() => setError('No se pudieron cargar tus proyectos.'))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <main className="flex-grow ml-64 p-10">
-        <header className="mb-10 text-left">
-          <h1 className="text-3xl font-black text-sapphire-950">Mis Proyectos</h1>
-          <p className="text-gray-500">Gestiona tus landing pages generadas por IA.</p>
-        </header>
+  const lastProject = projects[0] || null;
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-48 bg-white rounded-2xl animate-pulse border border-gray-100"></div>
-            ))}
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <main className="flex-grow container mx-auto px-4 py-24">
+        <div className="max-w-4xl mx-auto space-y-8">
+
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900">Hola, {user?.name} 👋</h1>
+            <p className="text-gray-500 mt-1">Desde aquí gestionas tus landing pages.</p>
           </div>
-        ) : error ? (
-          <div className="bg-red-50 rounded-3xl p-12 text-center border border-red-200">
-            <AlertCircle className="mx-auto text-red-400 mb-4" size={48} />
-            <h3 className="text-lg font-bold text-red-900">Hubo un problema</h3>
-            <p className="text-red-600 mb-6">{error}</p>
-            <button onClick={() => window.location.reload()} className="inline-block bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-all">
-              Reintentar
-            </button>
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-gray-200">
-            <Layout className="mx-auto text-gray-300 mb-4" size={48} />
-            <h3 className="text-lg font-bold text-gray-900">No tienes proyectos aún</h3>
-            <p className="text-gray-500 mb-6">Crea tu primera página en segundos.</p>
-            <Link to="/planes" className="inline-block bg-sapphire-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-sapphire-700 transition-all">
-              Crear mi primera landing
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link to="/planes">
+              <div className="bg-blue-600 hover:bg-blue-700 transition-colors text-white p-6 rounded-2xl cursor-pointer h-full">
+                <p className="text-sm font-medium opacity-80 mb-1">Crear nueva</p>
+                <p className="text-xl font-bold">+ Nueva landing page</p>
+              </div>
+            </Link>
+            <Link to="/dashboard/projects">
+              <div className="bg-white border border-gray-200 hover:border-blue-300 transition-colors p-6 rounded-2xl cursor-pointer h-full">
+                <p className="text-sm font-medium text-gray-400 mb-1">Ver historial</p>
+                <p className="text-xl font-bold text-gray-800">Mis proyectos</p>
+              </div>
             </Link>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <div key={project.projectId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col transition-all hover:shadow-md text-left">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-bold text-gray-900 truncate pr-4">{project.projectName}</h3>
-                  <StatusBadge status={project.status} />
-                </div>
-                <p className="text-sm text-gray-500 line-clamp-2 mb-6 flex-grow">{project.projectIdea}</p>
-                <div className="flex gap-2">
-                  <a 
-                    href={project.signedUrl} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className={`flex-grow flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-all ${
-                      project.status === 'Ready' 
-                        ? 'bg-sapphire-50 text-sapphire-700 hover:bg-sapphire-100' 
-                        : 'bg-gray-50 text-gray-400 cursor-not-allowed pointer-events-none'
-                    }`}
-                  >
-                    <ExternalLink size={16} /> Ver Landing
-                  </a>
-                  <button className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            ))}
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-gray-800">Último proyecto</h2>
+              {projects.length > 0 && (
+                <Link
+                  to="/dashboard/projects"
+                  className="text-xs text-blue-600 hover:underline font-medium"
+                >
+                  Ver todos →
+                </Link>
+              )}
+            </div>
+
+            {isLoading && (
+              <div className="animate-pulse h-16 bg-gray-100 rounded-xl" />
+            )}
+            {!isLoading && error && <ErrorBanner message={error} />}
+            {!isLoading && !error && lastProject && (
+              <ProjectRow project={lastProject} />
+            )}
+            {!isLoading && !error && !lastProject && (
+              <EmptyState
+                message="Todavía no tienes proyectos."
+                actionLabel="Crear mi primera landing"
+                actionTo="/planes"
+              />
+            )}
           </div>
-        )}
+
+        </div>
       </main>
+      <Footer />
     </div>
   );
 };
