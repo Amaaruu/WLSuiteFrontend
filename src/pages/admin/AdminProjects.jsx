@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Navbar from '../../components/organisms/Navbar';
-import Footer from '../../components/organisms/Footer';
+import Sidebar from '../../components/organisms/Sidebar';
 import StatusBadge from '../../components/molecules/StatusBadge';
 import ErrorBanner from '../../components/molecules/ErrorBanner';
 import api from '../../services/api';
@@ -18,11 +17,10 @@ const AdminProjects = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-24">
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar />
+      <main className="flex-grow ml-64 p-10">
         <div className="max-w-6xl mx-auto space-y-6">
-
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Proyectos</h1>
             <p className="text-gray-500 mt-1">Todos los proyectos generados por la IA.</p>
@@ -60,18 +58,15 @@ const AdminProjects = () => {
                         <p className="text-xs text-gray-400 truncate max-w-xs">{p.projectIdea}</p>
                       </td>
                       <td className="px-6 py-4 text-gray-600">{p.businessSector || '—'}</td>
-                      <td className="px-6 py-4">
-                        <StatusBadge status={p.status} />
-                      </td>
+                      <td className="px-6 py-4"><StatusBadge status={p.status} /></td>
                       <td className="px-6 py-4 text-gray-400">
-                        {p.createdAt
-                          ? new Date(p.createdAt).toLocaleDateString('es-CL')
-                          : '—'}
+                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString('es-CL') : '—'}
                       </td>
                       <td className="px-6 py-4">
                         {p.signedUrl
                           ? <a href={p.signedUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">Ver</a>
-                          : <span className="text-gray-300 text-xs">—</span>}
+                          : <span className="text-gray-300 text-xs">—</span>
+                        }
                       </td>
                     </tr>
                   ))}
@@ -82,10 +77,8 @@ const AdminProjects = () => {
               )}
             </div>
           )}
-
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

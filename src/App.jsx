@@ -17,6 +17,7 @@ const UserProjects   = lazy(() => import('./pages/user/UserProjects'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers     = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminProjects  = lazy(() => import('./pages/admin/AdminProjects'));
+const AdminLogs      = lazy(() => import('./pages/admin/AdminLogs'));
 
 const PageLoader = () => (
   <div className="flex h-screen w-screen items-center justify-center">
@@ -40,9 +41,7 @@ const AdminRoute = ({ children }) => {
 
 const PublicOnlyRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
-  if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
-  }
+  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
   return children;
 };
 
@@ -57,26 +56,10 @@ function App() {
             <Route path="/about"     element={<About />} />
             <Route path="/planes"    element={<Plans />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/landings/:id" element={<LandingViewer />} />
 
-            {/* Ruta pública de visualización de landing — acceso por token en URL */}
-            <Route path="/landings/:id" element={<LandingViewer />} />  {/* ← AGREGADO */}
-
-            <Route
-              path="/login"
-              element={
-                <PublicOnlyRoute>
-                  <Login />
-                </PublicOnlyRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicOnlyRoute>
-                  <Register />
-                </PublicOnlyRoute>
-              }
-            />
+            <Route path="/login"    element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+            <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
             <Route path="/dashboard"          element={<UserRoute><UserDashboard /></UserRoute>} />
             <Route path="/dashboard/projects" element={<UserRoute><UserProjects /></UserRoute>} />
@@ -86,6 +69,7 @@ function App() {
             <Route path="/admin"          element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/users"    element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="/admin/projects" element={<AdminRoute><AdminProjects /></AdminRoute>} />
+            <Route path="/admin/logs"     element={<AdminRoute><AdminLogs /></AdminRoute>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

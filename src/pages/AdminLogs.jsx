@@ -1,35 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/organisms/Navbar';
-import Footer from '../components/organisms/Footer';
-import api from '../services/api';
+import Sidebar from '../../components/organisms/Sidebar';
+import api from '../../services/api';
 import { Terminal, RefreshCw } from 'lucide-react';
 
 const AdminLogs = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchLogs = async () => {
+  const fetchLogs = () => {
     setLoading(true);
-    try {
-      const response = await api.get('/logs');
-      setLogs(response.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    api.get('/logs')
+      .then(res => setLogs(res.data))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    fetchLogs();
-  }, []);
+  useEffect(() => { fetchLogs(); }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-24">
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar />
+      <main className="flex-grow ml-64 p-10">
         <div className="max-w-6xl mx-auto space-y-6">
-
           <div className="flex justify-between items-end">
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
@@ -74,14 +66,12 @@ const AdminLogs = () => {
                       </td>
                     </tr>
                   ) : (
-                    logs.map((log) => (
+                    logs.map(log => (
                       <tr key={log.logId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 font-bold text-sapphire-700">{log.eventType}</td>
                         <td className="px-6 py-4 text-gray-600">{log.userEmail}</td>
                         <td className="px-6 py-4">
-                          <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-500">
-                            {log.ipClient}
-                          </code>
+                          <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-500">{log.ipClient}</code>
                         </td>
                         <td className="px-6 py-4 text-gray-400">
                           {new Date(log.eventAt).toLocaleString('es-CL')}
@@ -93,10 +83,8 @@ const AdminLogs = () => {
               </table>
             </div>
           </div>
-
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
