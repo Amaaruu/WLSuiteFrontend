@@ -22,7 +22,6 @@ const LandingViewer = () => {
       try {
         const envBase = import.meta.env.VITE_API_BASE_URL || 'https://landingbackend-s1rk.onrender.com/api/v1';
         const serverUrl = envBase.replace(/\/api\/v1\/?$/, '');
-        
         const response = await axios.get(`${serverUrl}/landings/${id}?token=${token}`);
         setLandingData(response.data.aiMetadata);
       } catch (err) {
@@ -38,7 +37,7 @@ const LandingViewer = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-gray-900" />
       </div>
     );
   }
@@ -61,7 +60,8 @@ const LandingViewer = () => {
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-blue-100">
-      
+
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
       {landingData.hero && (
         <header className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-gray-50 border-b border-gray-100">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
@@ -78,16 +78,56 @@ const LandingViewer = () => {
         </header>
       )}
 
+      {/* ── SOCIAL PROOF (Intermedio: banda de urgencia / Premium: + testimonios) ── */}
       {landingData.socialProof && (
-        <section className="py-8 bg-blue-600 text-white text-center px-4">
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-6 font-medium">
-            <span>🚀 {landingData.socialProof.urgencyText}</span>
-            <span className="hidden md:inline">•</span>
-            <span>📦 {landingData.socialProof.shippingText}</span>
-          </div>
-        </section>
+        <>
+          {/* Banda de urgencia — presente en Intermedio y Premium */}
+          {(landingData.socialProof.urgencyText || landingData.socialProof.shippingText) && (
+            <section className="py-8 bg-blue-600 text-white text-center px-4">
+              <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-6 font-medium">
+                {landingData.socialProof.urgencyText && (
+                  <span>🚀 {landingData.socialProof.urgencyText}</span>
+                )}
+                {landingData.socialProof.urgencyText && landingData.socialProof.shippingText && (
+                  <span className="hidden md:inline">•</span>
+                )}
+                {landingData.socialProof.shippingText && (
+                  <span>📦 {landingData.socialProof.shippingText}</span>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Testimonios — solo en Premium cuando existen */}
+          {landingData.socialProof.testimonials && landingData.socialProof.testimonials.length > 0 && (
+            <section className="py-24 bg-gray-50 border-t border-gray-100">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 className="text-3xl font-bold text-center mb-16">Lo que dicen nuestros clientes</h2>
+                <div className="grid md:grid-cols-2 gap-8">
+                  {landingData.socialProof.testimonials.map((t, idx) => (
+                    <div key={idx} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                      <p className="text-gray-700 text-lg leading-relaxed mb-6 italic">
+                        "{t.quote}"
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-sm">
+                          {t.name?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                          {t.role && <p className="text-xs text-gray-400">{t.role}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+        </>
       )}
 
+      {/* ── FEATURES ─────────────────────────────────────────────────────── */}
       {landingData.features && landingData.features.length > 0 && (
         <section className="py-24 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -109,6 +149,7 @@ const LandingViewer = () => {
         </section>
       )}
 
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       {landingData.faq && landingData.faq.length > 0 && (
         <section className="py-24 bg-gray-50 border-t border-gray-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -125,6 +166,7 @@ const LandingViewer = () => {
         </section>
       )}
 
+      {/* ── PRICING ──────────────────────────────────────────────────────── */}
       {landingData.pricing && landingData.pricing.length > 0 && (
         <section className="py-24 bg-white">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -135,9 +177,11 @@ const LandingViewer = () => {
                   <h3 className="text-2xl font-bold mb-2">{plan.planName}</h3>
                   <p className="text-4xl font-black mb-6">{plan.price}</p>
                   <ul className="space-y-3 mb-8 text-gray-600">
-                    {plan.benefits.map((b, i) => <li key={i}>✓ {b}</li>)}
+                    {plan.benefits.map((b, i) => (
+                      <li key={i}>✓ {b}</li>
+                    ))}
                   </ul>
-                  <button className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800">
+                  <button className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition">
                     Elegir Plan
                   </button>
                 </div>
@@ -147,14 +191,40 @@ const LandingViewer = () => {
         </section>
       )}
 
+      {/* ── URGENCY (Solo Premium) ────────────────────────────────────────── */}
+      {landingData.urgency && (
+        <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center px-4">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-black mb-4">
+              {landingData.urgency.title}
+            </h2>
+            {landingData.urgency.countdown && (
+              <p className="text-blue-100 text-lg mb-8 font-medium">
+                ⏱ {landingData.urgency.countdown}
+              </p>
+            )}
+            {landingData.urgency.ctaButton && (
+              <button className="px-10 py-5 bg-white text-blue-700 font-bold text-lg rounded-full hover:bg-blue-50 transition shadow-xl">
+                {landingData.urgency.ctaButton}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       {landingData.footer && (
         <footer className="py-12 bg-gray-900 text-gray-400 text-center">
           <p className="mb-2">¿Tienes dudas? Escríbenos a:</p>
-          <a href={`mailto:${landingData.footer.contact}`} className="text-white font-bold hover:underline">
+          <a
+            href={`mailto:${landingData.footer.contact}`}
+            className="text-white font-bold hover:underline"
+          >
             {landingData.footer.contact}
           </a>
         </footer>
       )}
+
     </div>
   );
 };

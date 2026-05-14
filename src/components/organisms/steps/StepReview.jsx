@@ -136,6 +136,9 @@ const StepReview = ({ planLevel, onEditStep }) => {
         <ReviewRow label="Público objetivo" value={resolve(LABEL_MAPS.targetAudience, formData.targetAudience)} />
         <ReviewRow label="Posicionamiento" value={resolve(LABEL_MAPS.brandPositioning, formData.brandPositioning)} />
         <ReviewRow label="Etapa de la marca" value={resolve(LABEL_MAPS.brandStage, formData.brandStage)} />
+        {formData.valueProposition && (
+          <ReviewRow label="Diferenciador clave" value={formData.valueProposition} />
+        )}
       </ReviewSection>
 
       {planLevel >= 2 && (
