@@ -16,12 +16,22 @@ const UserDashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api
-      .get('/projects?size=5&sort=createdAt,desc')
-      .then((res) => setProjects(res.data.content || []))
+    if (!user?.userId) {
+      setIsLoading(false);
+      return;
+    }
+    api.get(`/projects?userId=${user.userId}&size=5&sort=createdAt,desc`)
+      .then(res => {
+        const all = res.data.content || [];
+        const mine = all.filter(p => {
+          const txUserId = p.transaction?.user?.userId ?? p.userId;
+          return txUserId === undefined || txUserId === user.userId;
+        });
+        setProjects(mine);
+      })
       .catch(() => setError('No se pudieron cargar tus proyectos.'))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [user]);
 
   const lastProject = projects[0] || null;
 
@@ -30,11 +40,8 @@ const UserDashboard = () => {
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-24">
         <div className="max-w-4xl mx-auto space-y-8">
-
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">
-              Hola, {user?.name} 👋
-            </h1>
+            <h1 className="text-3xl font-extrabold text-gray-900">Hola, {user?.name} 👋</h1>
             <p className="text-gray-500 mt-1">Desde aquí gestionas tus landing pages.</p>
           </div>
 
@@ -57,10 +64,7 @@ const UserDashboard = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-gray-800">Último proyecto</h2>
               {projects.length > 0 && (
-                <Link
-                  to="/dashboard/projects"
-                  className="text-xs text-blue-600 hover:underline font-medium"
-                >
+                <Link to="/dashboard/projects" className="text-xs text-blue-600 hover:underline font-medium">
                   Ver todos →
                 </Link>
               )}
@@ -77,7 +81,6 @@ const UserDashboard = () => {
               />
             )}
           </div>
-
         </div>
       </main>
       <Footer />
