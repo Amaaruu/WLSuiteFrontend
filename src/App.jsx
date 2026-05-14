@@ -11,6 +11,7 @@ const Login          = lazy(() => import('./pages/Login'));
 const About          = lazy(() => import('./pages/About'));
 const CreateLanding  = lazy(() => import('./pages/CreateLanding'));
 const ProjectResult  = lazy(() => import('./pages/ProjectResult'));
+const LandingViewer  = lazy(() => import('./pages/LandingViewer'));
 const UserDashboard  = lazy(() => import('./pages/user/UserDashboard'));
 const UserProjects   = lazy(() => import('./pages/user/UserProjects'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -55,11 +56,28 @@ function App() {
             <Route path="/contacto"  element={<Contact />} />
             <Route path="/about"     element={<About />} />
             <Route path="/planes"    element={<Plans />} />
+            <Route path="/templates" element={<Templates />} />
 
-            <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-            <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+            {/* Ruta pública de visualización de landing — acceso por token en URL */}
+            <Route path="/landings/:id" element={<LandingViewer />} />  {/* ← AGREGADO */}
 
-            <Route path="/templates"          element={<UserRoute><Templates /></UserRoute>} />
+            <Route
+              path="/login"
+              element={
+                <PublicOnlyRoute>
+                  <Login />
+                </PublicOnlyRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicOnlyRoute>
+                  <Register />
+                </PublicOnlyRoute>
+              }
+            />
+
             <Route path="/dashboard"          element={<UserRoute><UserDashboard /></UserRoute>} />
             <Route path="/dashboard/projects" element={<UserRoute><UserProjects /></UserRoute>} />
             <Route path="/create-landing"     element={<UserRoute><CreateLanding /></UserRoute>} />
