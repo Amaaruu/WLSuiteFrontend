@@ -80,8 +80,7 @@ const LandingForm = () => {
 
   const currentStepIndex  = currentStep - 1;
   const currentStepConfig = steps[currentStepIndex];
-  const isLastStep        = currentStep === steps.length;
-  const isReviewStep      = currentStepConfig?.id === 'review';
+  const isReviewStep = currentStepConfig?.id === 'review';
 
   const canAdvance = validateStep(currentStepConfig?.id, formData);
 

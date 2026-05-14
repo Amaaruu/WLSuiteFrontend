@@ -28,7 +28,7 @@ const ProjectResult = () => {
       intervalId = setInterval(async () => {
         try {
           // Asume que tienes un endpoint GET /api/v1/projects/{id}
-          const response = await api.get(`/projects/${project.projectId || project.id}`);
+          const response = await api.get(`/projects/${project.projectId}`);
           const updatedProject = response.data;
           
           setProject(updatedProject);
