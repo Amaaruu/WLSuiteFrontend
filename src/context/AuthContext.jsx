@@ -50,24 +50,29 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedName = localStorage.getItem('userName');
-    const storedUserId = localStorage.getItem('userId');
+    try {
+      const token = localStorage.getItem('token');
+      const storedName = localStorage.getItem('userName');
+      const storedUserId = localStorage.getItem('userId');
 
-    if (token) {
-      if (isTokenExpired(token)) {
-        clearSession();
-      } else {
-        const role = extractRoleFromToken(token);
-        setUser({
-          name: storedName || 'Usuario',
-          userId: storedUserId ? parseInt(storedUserId) : null,
-          token,
-          role,
-        });
+      if (token) {
+        if (isTokenExpired(token)) {
+          clearSession();
+        } else {
+          const role = extractRoleFromToken(token);
+          setUser({
+            name: storedName || 'Usuario',
+            userId: storedUserId ? parseInt(storedUserId) : null,
+            token,
+            role,
+          });
+        }
       }
+    } catch (error) {
+      clearSession();
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [clearSession]);
 
   useEffect(() => {
@@ -91,8 +96,7 @@ export const AuthProvider = ({ children }) => {
       setUser({ name, token, userId: userId || null, role });
       return { success: true, role };
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || 'Error al conectar con el servidor.';
+      const errorMessage = error.response?.data?.message || 'Error al conectar con el servidor.';
       return { success: false, message: errorMessage };
     }
   };
