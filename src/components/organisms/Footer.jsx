@@ -47,7 +47,7 @@ const Footer = () => {
               <li><button className="hover:text-blue-400 transition-colors">Documentación</button></li>
               <li><button className="hover:text-blue-400 transition-colors">Guías Rápidas</button></li>
               <li><button className="hover:text-blue-400 transition-colors">API Status</button></li>
-              <li><Link to="/contacto" className="hover:text-blue-400 transition-colors">Contacto</Link></li>
+              <li><Link to="/soporte" className="hover:text-blue-400 transition-colors">Soporte</Link></li>
             </ul>
           </div>
 

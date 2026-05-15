@@ -13,7 +13,7 @@ const RevealOnScroll = ({ children, className = "", delay = "" }) => {
   );
 };
 
-const Contact = () => {
+const Support = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
@@ -23,10 +23,10 @@ const Contact = () => {
             <RevealOnScroll>
               <div className="max-w-3xl mx-auto text-center mb-24">
                 <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sapphire-700 via-blue-600 to-indigo-600">
-                  Hablemos
+                  Soporte
                 </h1>
                 <p className="text-xl text-gray-600">
-                  ¿Tienes dudas o necesitas una solución personalizada? Estamos aquí para ayudarte a escalar.
+                  ¿Tienes dudas o necesitas ayuda con tu proyecto? Estamos aquí para responder todas tus preguntas.
                 </p>
               </div>
             </RevealOnScroll>
@@ -44,4 +44,4 @@ const Contact = () => {
   );
 };
 
-export default Contact;
+export default Support;

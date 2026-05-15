@@ -31,7 +31,7 @@ const Navbar = () => {
     { name: 'Plantillas', path: '/templates' },
     { name: 'Nosotros', path: '/about' },
     { name: 'Planes', path: '/planes' },
-    { name: 'Contacto', path: '/contacto' },
+    { name: 'Soporte', path: '/soporte' },
   ];
 
   return (

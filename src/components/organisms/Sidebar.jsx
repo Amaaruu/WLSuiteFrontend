@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { LayoutDashboard, Users, FolderOpen, ScrollText, LogOut, Home } from 'lucide-react';
+import { LayoutDashboard, Users, FolderOpen, ScrollText, LogOut, Home, Headphones } from 'lucide-react';
 
 const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -18,6 +18,7 @@ const Sidebar = () => {
     { label: 'Usuarios', path: '/admin/users', icon: Users },
     { label: 'Proyectos', path: '/admin/projects', icon: FolderOpen },
     { label: 'Logs del Sistema', path: '/admin/logs', icon: ScrollText },
+    { label: 'Soporte', path: '/admin/support', icon: Headphones },
   ];
 
   const LinkItem = ({ item }) => (
@@ -49,32 +50,33 @@ const Sidebar = () => {
         ))}
       </nav>
 
-      <div className="mt-auto pt-6 border-t border-gray-100 space-y-3">
-        <Link
-          to="/"
-          className="flex items-center gap-3 px-4 py-3 text-sapphire-600 font-medium hover:bg-sapphire-50 rounded-xl transition-colors"
-        >
-          <Home size={20} />
-          Volver al Inicio
-        </Link>
-
-        <div className="flex items-center gap-3 px-2 mb-2">
-          <div className="w-10 h-10 rounded-full bg-sapphire-100 flex items-center justify-center text-sapphire-700 font-bold uppercase">
+      <div className="mt-auto pt-5 border-t border-gray-100">
+        <div className="flex items-center gap-3 px-3 py-3 mb-4 bg-gray-50 rounded-xl">
+          <div className="w-9 h-9 rounded-full bg-sapphire-100 flex items-center justify-center text-sapphire-700 font-bold uppercase text-sm flex-shrink-0">
             {user?.name?.charAt(0) || 'A'}
           </div>
-          <div className="overflow-hidden text-left">
-            <p className="text-sm font-bold text-gray-900 truncate">{user?.name || 'Admin'}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+          <div className="overflow-hidden">
+            <p className="text-sm font-bold text-gray-900 truncate leading-tight">{user?.name || 'Admin'}</p>
+            <p className="text-xs text-gray-400 truncate">{user?.email}</p>
           </div>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 text-red-500 font-medium hover:bg-red-50 rounded-xl transition-colors"
-        >
-          <LogOut size={20} />
-          Cerrar Sesión
-        </button>
+        <div className="flex gap-2">
+          <Link
+            to="/"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs text-gray-600 font-semibold hover:bg-gray-100 rounded-xl transition-colors border border-gray-200"
+          >
+            <Home size={14} />
+            Inicio
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs text-red-500 font-semibold hover:bg-red-50 rounded-xl transition-colors border border-red-100"
+          >
+            <LogOut size={14} />
+            Salir
+          </button>
+        </div>
       </div>
     </aside>
   );
