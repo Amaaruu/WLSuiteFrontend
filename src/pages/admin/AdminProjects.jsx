@@ -14,10 +14,7 @@ const AdminProjects = () => {
         const response = await api.get('/projects?size=500');
         setProjects(response.data.content || response.data);
       } catch (err) {
-<<<<<<< Updated upstream
         console.error(err);
-=======
->>>>>>> Stashed changes
       } finally {
         setLoading(false);
       }
@@ -31,11 +28,7 @@ const AdminProjects = () => {
       <main className="flex-grow ml-64 p-10">
         <header className="mb-10">
           <h1 className="text-3xl font-black text-gray-900">Gestión de Proyectos</h1>
-<<<<<<< Updated upstream
           <p className="text-gray-500">Supervisa todos los proyectos generados en la plataforma.</p>
-=======
-          <p className="text-gray-500">Supervisa todos los proyectos generados.</p>
->>>>>>> Stashed changes
         </header>
 
         <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
@@ -74,19 +67,11 @@ const AdminProjects = () => {
                     </td>
                     <td className="px-6 py-4 text-right flex justify-end gap-2">
                       {project.status === 'Ready' && (
-<<<<<<< Updated upstream
                         <a href={project.signedUrl} target="_blank" rel="noreferrer" className="text-sapphire-600 hover:bg-sapphire-50 rounded-lg p-2 transition-colors">
                           <ExternalLink size={18} />
                         </a>
                       )}
                       <button className="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg p-2 transition-colors">
-=======
-                        <a href={project.signedUrl} target="_blank" rel="noreferrer" className="text-sapphire-600 hover:bg-sapphire-50 rounded-lg p-2">
-                          <ExternalLink size={18} />
-                        </a>
-                      )}
-                      <button className="text-gray-400 hover:text-red-600 p-2">
->>>>>>> Stashed changes
                         <Trash2 size={18} />
                       </button>
                     </td>
