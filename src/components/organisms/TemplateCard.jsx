@@ -1,44 +1,169 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+const CATEGORY_COLORS = {
+  'Tecnología':   { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
+  'E-commerce':   { bg: '#faf5ff', text: '#7c3aed', border: '#e9d5ff' },
+  'Salud':        { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0' },
+  'Freelance':    { bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
+  'Gastronomía':  { bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
+  'Inmobiliaria': { bg: '#f0f9ff', text: '#0284c7', border: '#bae6fd' },
+};
+
+const DEFAULT_COLOR = { bg: '#eef2ff', text: '#4f46e5', border: '#c7d2fe' };
 
 const TemplateCard = ({ template }) => {
+  const [hovered, setHovered] = useState(false);
+  const catColor = CATEGORY_COLORS[template.category] || DEFAULT_COLOR;
+
   return (
-    <div className="group relative rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-sapphire-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col">
-      <div className="relative h-56 overflow-hidden bg-gray-100">
+    <div
+      className="group relative flex flex-col overflow-hidden cursor-pointer select-none"
+      style={{
+        borderRadius: '20px',
+        background: '#ffffff',
+        border: hovered ? '1px solid #cbd5e1' : '1px solid #e2e8f0',
+        boxShadow: hovered
+          ? '0 20px 48px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06)'
+          : '0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+        transform: hovered ? 'translateY(-6px) scale(1.01)' : 'translateY(0) scale(1)',
+        transition: 'all 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="relative overflow-hidden" style={{ height: '210px', flexShrink: 0 }}>
         <img
           src={template.imageUrl}
           alt={template.title}
-          className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700"
+          loading="lazy"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'top',
+            transform: hovered ? 'scale(1.07)' : 'scale(1)',
+            transition: 'transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
+            display: 'block',
+          }}
+          onError={(e) => {
+            e.currentTarget.src = `https://placehold.co/600x400/f1f5f9/94a3b8?text=${encodeURIComponent(template.title)}`;
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-sapphire-950/70 via-sapphire-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
-        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-sapphire-800 shadow-sm border border-white/50">
+
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.35) 100%)',
+          pointerEvents: 'none',
+        }} />
+
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(15,23,42,0.55)',
+          backdropFilter: 'blur(2px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: hovered ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          pointerEvents: hovered ? 'auto' : 'none',
+        }}>
+          <button style={{
+            padding: '10px 26px',
+            background: '#ffffff',
+            color: '#0f172a',
+            fontWeight: '800',
+            fontSize: '0.8rem',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            borderRadius: '9999px',
+            border: 'none',
+            cursor: 'pointer',
+            transform: hovered ? 'translateY(0)' : 'translateY(10px)',
+            transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+          }}>
+            Ver demo →
+          </button>
+        </div>
+
+        <div style={{
+          position: 'absolute', top: '12px', left: '12px',
+          padding: '4px 12px',
+          background: catColor.bg,
+          color: catColor.text,
+          border: `1px solid ${catColor.border}`,
+          borderRadius: '9999px',
+          fontSize: '0.68rem', fontWeight: '700',
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+        }}>
           {template.category}
         </div>
-        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-300">
-          <button className="w-full py-2.5 bg-white text-sapphire-900 font-bold text-sm rounded-xl hover:bg-sapphire-50 transition-colors shadow-lg">
-            Ver demostración
-          </button>
+
+        <div style={{
+          position: 'absolute', top: '12px', right: '12px',
+          display: 'flex', alignItems: 'center', gap: '5px',
+          padding: '4px 10px',
+          background: 'rgba(255,255,255,0.9)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: '9999px',
+          border: '1px solid rgba(0,0,0,0.08)',
+        }}>
+          <span style={{
+            width: '6px', height: '6px',
+            background: '#22c55e', borderRadius: '50%', flexShrink: 0,
+          }} />
+          <span style={{ color: '#475569', fontSize: '0.68rem', fontWeight: '600' }}>
+            Responsive
+          </span>
         </div>
       </div>
 
-      <div className="p-6 flex flex-col flex-grow">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-sapphire-700 transition-colors">
+      <div style={{ padding: '18px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+          <h3 style={{
+            margin: 0, fontSize: '0.97rem', fontWeight: '700',
+            color: '#0f172a', lineHeight: '1.3', letterSpacing: '-0.01em',
+          }}>
             {template.title}
           </h3>
-          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-sapphire-50 group-hover:border-sapphire-100 transition-all duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-sapphire-600">
+
+          <div style={{
+            flexShrink: 0, width: '28px', height: '28px', borderRadius: '8px',
+            background: hovered ? catColor.bg : '#f8fafc',
+            border: `1px solid ${hovered ? catColor.border : '#e2e8f0'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transform: hovered ? 'rotate(-45deg)' : 'rotate(0deg)',
+            transition: 'all 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+            color: hovered ? catColor.text : '#94a3b8',
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </div>
         </div>
-        <p className="text-gray-400 text-sm flex-grow leading-relaxed">{template.description}</p>
-        <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-          <div className="flex gap-1.5">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === 0 ? 'w-8 bg-sapphire-500 group-hover:w-10' : i === 1 ? 'w-4 bg-sapphire-300 group-hover:w-6' : 'w-2 bg-sapphire-200'}`} />
+
+        <p style={{
+          margin: 0, fontSize: '0.82rem',
+          color: '#64748b', lineHeight: '1.6', flex: 1,
+        }}>
+          {template.description}
+        </p>
+
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingTop: '12px', borderTop: '1px solid #f1f5f9',
+        }}>
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            {[8, 14, 6, 10, 5].map((w, i) => (
+              <div key={i} style={{
+                width: `${hovered ? w + 3 : w}px`, height: '3px',
+                borderRadius: '9999px',
+                background: i === 1 ? catColor.text : '#e2e8f0',
+                transition: `width ${0.2 + i * 0.06}s ease`,
+              }} />
             ))}
           </div>
-          <span className="text-xs text-gray-300 font-medium">Responsive</span>
+          <span style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: '600', letterSpacing: '0.05em' }}>
+            IA-Ready
+          </span>
         </div>
       </div>
     </div>
