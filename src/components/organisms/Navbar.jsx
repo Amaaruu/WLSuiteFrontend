@@ -30,13 +30,11 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Cierra menús al cambiar de ruta
   useEffect(() => {
     setShowUserMenu(false);
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Cierra dropdown al hacer clic fuera
   useEffect(() => {
     if (!showUserMenu) return;
     const handler = (e) => {
@@ -60,7 +58,7 @@ const Navbar = () => {
     { name: 'Plantillas', path: '/templates' },
     { name: 'Nosotros',   path: '/about' },
     { name: 'Planes',     path: '/planes' },
-    { name: 'Soporte',   path: '/contacto' },
+    { name: 'Soporte',    path: '/soporte' },
   ];
 
   return (
@@ -71,8 +69,6 @@ const Navbar = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-
-          {/* ── Logo ─────────────────────────────────── */}
           <Link to="/" className="flex items-center gap-3 group cursor-pointer">
             <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center p-1.5 group-hover:bg-white/20 transition-all duration-300">
               <img src={logo} alt="WebLandingSuite Logo" className="w-full h-full object-contain" />
@@ -81,8 +77,6 @@ const Navbar = () => {
               WebLanding<span className="text-sapphire-400">Suite</span>
             </span>
           </Link>
-
-          {/* ── Nav links (desktop) ───────────────────── */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
               <Link
@@ -101,23 +95,17 @@ const Navbar = () => {
               </Link>
             ))}
           </div>
-
-          {/* ── Auth area (desktop) ───────────────────── */}
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <div id="user-menu-wrapper" className="relative">
-
-                {/* Botón de usuario premium */}
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-200"
                   style={{ background: 'rgba(255,255,255,0.06)' }}
                 >
-                  {/* Avatar con gradiente dinámico */}
                   <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white font-black text-sm shadow-lg flex-shrink-0`}>
                     {userInitial}
                   </div>
-
                   <div className="flex flex-col items-start leading-none gap-0.5">
                     <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">
                       {isAdmin ? 'Administrador' : 'Mi cuenta'}
@@ -126,8 +114,6 @@ const Navbar = () => {
                       {isAdmin ? 'Panel Admin' : userName}
                     </span>
                   </div>
-
-                  {/* Chevron animado */}
                   <svg
                     width="13" height="13" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor"
@@ -137,13 +123,10 @@ const Navbar = () => {
                     <path d="M6 9l6 6 6-6"/>
                   </svg>
                 </button>
-
-                {/* Dropdown */}
                 {showUserMenu && (
                   <div className="absolute right-0 top-full mt-2 w-60 rounded-2xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden"
                     style={{ background: 'rgba(15,23,42,0.97)', backdropFilter: 'blur(20px)' }}
                   >
-                    {/* Header del dropdown */}
                     <div className="px-4 py-3 border-b border-white/8">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white font-black text-base shadow-md`}>
@@ -160,8 +143,6 @@ const Navbar = () => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Ítems del menú */}
                     <div className="p-1.5 space-y-0.5">
                       <Link
                         to={dashboardPath}
@@ -173,7 +154,6 @@ const Navbar = () => {
                         </svg>
                         {isAdmin ? 'Panel de administración' : 'Mi dashboard'}
                       </Link>
-
                       {!isAdmin && (
                         <Link
                           to="/dashboard/projects"
@@ -186,7 +166,6 @@ const Navbar = () => {
                           Mis proyectos
                         </Link>
                       )}
-
                       <Link
                         to="/planes"
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/8 transition-all"
@@ -197,8 +176,6 @@ const Navbar = () => {
                         Ver planes
                       </Link>
                     </div>
-
-                    {/* Cerrar sesión */}
                     <div className="p-1.5 border-t border-white/8">
                       <button
                         onClick={handleLogout}
@@ -215,7 +192,6 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
-
             ) : (
               <>
                 <Link to="/login">
@@ -231,8 +207,6 @@ const Navbar = () => {
               </>
             )}
           </div>
-
-          {/* ── Mobile hamburger ──────────────────────── */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -243,8 +217,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
-      {/* ── Mobile menu ───────────────────────────────── */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-sapphire-950/95 backdrop-blur-xl border-t border-white/10">
           <div className="px-4 pt-2 pb-6 space-y-1">
@@ -261,7 +233,6 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-
             <div className="pt-4 flex flex-col gap-3 border-t border-white/10 mt-3">
               {isAuthenticated ? (
                 <>
