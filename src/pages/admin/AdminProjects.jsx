@@ -1,81 +1,99 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/organisms/Sidebar';
 import StatusBadge from '../../components/molecules/StatusBadge';
-import ErrorBanner from '../../components/molecules/ErrorBanner';
 import api from '../../services/api';
+import { ExternalLink, Trash2 } from 'lucide-react';
 
 const AdminProjects = () => {
   const [projects, setProjects] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/projects?size=100&sort=createdAt,desc')
-      .then(res => setProjects(res.data.content || []))
-      .catch(() => setError('No se pudieron cargar los proyectos.'))
-      .finally(() => setIsLoading(false));
+    const fetchProjects = async () => {
+      try {
+        const response = await api.get('/projects?size=500');
+        setProjects(response.data.content || response.data);
+      } catch (err) {
+<<<<<<< Updated upstream
+        console.error(err);
+=======
+>>>>>>> Stashed changes
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
   }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       <main className="flex-grow ml-64 p-10">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Proyectos</h1>
-            <p className="text-gray-500 mt-1">Todos los proyectos generados por la IA.</p>
-          </div>
+        <header className="mb-10">
+          <h1 className="text-3xl font-black text-gray-900">Gestión de Proyectos</h1>
+<<<<<<< Updated upstream
+          <p className="text-gray-500">Supervisa todos los proyectos generados en la plataforma.</p>
+=======
+          <p className="text-gray-500">Supervisa todos los proyectos generados.</p>
+>>>>>>> Stashed changes
+        </header>
 
-          {isLoading && (
-            <div className="space-y-2">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="animate-pulse h-20 bg-white rounded-2xl border border-gray-100" />
-              ))}
+        <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+          {loading ? (
+            <div className="p-10 flex justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-sapphire-600 border-t-transparent"></div>
             </div>
-          )}
-
-          {!isLoading && error && <ErrorBanner message={error} />}
-
-          {!isLoading && !error && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">ID</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Proyecto</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Sector</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Estado</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Fecha</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">URL</th>
+          ) : (
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 text-xs uppercase">
+                <tr>
+                  <th className="px-6 py-4">Proyecto</th>
+                  <th className="px-6 py-4">Propietario</th>
+                  <th className="px-6 py-4">Estado</th>
+                  <th className="px-6 py-4">Fecha</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {projects.map((project) => (
+                  <tr key={project.projectId} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-gray-900 truncate max-w-[200px]">
+                      {project.projectName}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-gray-900">{project.user?.name || 'Usuario'}</span>
+                        <span className="text-xs text-gray-500">{project.user?.email || 'Sin correo'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <StatusBadge status={project.status} />
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                      {project.status === 'Ready' && (
+<<<<<<< Updated upstream
+                        <a href={project.signedUrl} target="_blank" rel="noreferrer" className="text-sapphire-600 hover:bg-sapphire-50 rounded-lg p-2 transition-colors">
+                          <ExternalLink size={18} />
+                        </a>
+                      )}
+                      <button className="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg p-2 transition-colors">
+=======
+                        <a href={project.signedUrl} target="_blank" rel="noreferrer" className="text-sapphire-600 hover:bg-sapphire-50 rounded-lg p-2">
+                          <ExternalLink size={18} />
+                        </a>
+                      )}
+                      <button className="text-gray-400 hover:text-red-600 p-2">
+>>>>>>> Stashed changes
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {projects.map(p => (
-                    <tr key={p.projectId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-gray-400">{p.projectId}</td>
-                      <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{p.projectName}</p>
-                        <p className="text-xs text-gray-400 truncate max-w-xs">{p.projectIdea}</p>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">{p.businessSector || '—'}</td>
-                      <td className="px-6 py-4"><StatusBadge status={p.status} /></td>
-                      <td className="px-6 py-4 text-gray-400">
-                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString('es-CL') : '—'}
-                      </td>
-                      <td className="px-6 py-4">
-                        {p.signedUrl
-                          ? <a href={p.signedUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">Ver</a>
-                          : <span className="text-gray-300 text-xs">—</span>
-                        }
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {projects.length === 0 && (
-                <p className="text-center text-gray-400 py-8 text-sm">No hay proyectos.</p>
-              )}
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </main>

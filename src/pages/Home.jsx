@@ -284,9 +284,9 @@ const Home = () => {
                   Crear mi cuenta gratis
                 </button>
               </Link>
-              <Link to="/contacto" className="w-full sm:w-auto">
+              <Link to="/soporte" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto px-10 py-4 rounded-2xl border border-white/15 text-white/80 font-bold text-lg hover:bg-white/10 hover:text-white hover:border-white/30 transition-all duration-200">
-                  Hablar con ventas
+                  Hablar con soporte
                 </button>
               </Link>
             </div>
