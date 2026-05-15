@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { LayoutDashboard, Users, FolderOpen, ScrollText, LogOut, Home, Headphones } from 'lucide-react';
+import { LayoutDashboard, Users, FolderOpen, ScrollText, LogOut, Home, CreditCard } from 'lucide-react';
 
 const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -14,11 +14,11 @@ const Sidebar = () => {
   };
 
   const menuItems = [
-    { label: 'Panel General', path: '/admin', icon: LayoutDashboard },
-    { label: 'Usuarios', path: '/admin/users', icon: Users },
-    { label: 'Proyectos', path: '/admin/projects', icon: FolderOpen },
-    { label: 'Logs del Sistema', path: '/admin/logs', icon: ScrollText },
-    { label: 'Soporte', path: '/admin/support', icon: Headphones },
+    { label: 'Panel General',    path: '/admin',         icon: LayoutDashboard },
+    { label: 'Usuarios',         path: '/admin/users',   icon: Users           },
+    { label: 'Proyectos',        path: '/admin/projects', icon: FolderOpen     },
+    { label: 'Planes',           path: '/admin/planes',  icon: CreditCard      },
+    { label: 'Logs del Sistema', path: '/admin/logs',    icon: ScrollText      },
   ];
 
   const LinkItem = ({ item }) => (
