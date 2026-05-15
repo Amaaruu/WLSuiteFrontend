@@ -1,166 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/organisms/Sidebar';
-import { Mail, MapPin, Clock, MessageSquare } from 'lucide-react';
+import api from '../../services/api';
 
 const AdminSupport = () => {
-  const [formData, setFormData] = useState({ subject: '', message: '', priority: 'normal' });
-  const [isSending, setIsSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
-      setSent(true);
-      setFormData({ subject: '', message: '', priority: 'normal' });
-      setTimeout(() => setSent(false), 4000);
-    }, 1200);
-  };
-
-  const infoItems = [
-    {
-      icon: <Mail className="w-5 h-5" />,
-      title: 'Email de soporte técnico',
-      value: 'soporte@weblandingsuite.com',
-    },
-    {
-      icon: <Clock className="w-5 h-5" />,
-      title: 'Horario de atención',
-      value: 'Lunes a Viernes, 9:00 – 18:00 (CLT)',
-    },
-    {
-      icon: <MapPin className="w-5 h-5" />,
-      title: 'Sede Central',
-      value: 'Santiago, Chile',
-    },
-  ];
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const response = await api.get('/support/tickets').catch(() => ({ data: [] }));
+        setTickets(response.data || []);
+      } catch (err) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTickets();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       <main className="flex-grow ml-64 p-10">
-        <div className="max-w-5xl mx-auto space-y-8">
+        <header className="mb-10">
+          <h1 className="text-3xl font-black text-gray-900">Centro de Soporte</h1>
+          <p className="text-gray-500">Gestiona los mensajes y consultas de los usuarios.</p>
+        </header>
 
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
-              <MessageSquare className="text-sapphire-600" size={28} />
-              Soporte del Sistema
-            </h1>
-            <p className="text-gray-500 mt-1">Canal de comunicación interno para el equipo administrador.</p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-8">
-
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-                <h2 className="text-base font-semibold text-gray-800 border-b border-gray-100 pb-3">
-                  Información de contacto
-                </h2>
-                {infoItems.map((item, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-sapphire-50 rounded-xl flex items-center justify-center text-sapphire-600 flex-shrink-0">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">{item.title}</p>
-                      <p className="text-sm font-medium text-gray-800">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-sapphire-50 border border-sapphire-100 rounded-2xl p-6">
-                <h3 className="text-sm font-semibold text-sapphire-800 mb-2">Recursos disponibles</h3>
-                <ul className="space-y-2 text-sm text-sapphire-700">
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sapphire-400 flex-shrink-0" />
-                    Documentación técnica del sistema
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sapphire-400 flex-shrink-0" />
-                    Guías de configuración del backend
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sapphire-400 flex-shrink-0" />
-                    Logs del sistema en tiempo real
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sapphire-400 flex-shrink-0" />
-                    Panel de monitoreo de proyectos
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="text-base font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-5">
-                Enviar mensaje interno
-              </h2>
-
-              {sent && (
-                <div className="mb-5 p-3 bg-green-50 text-green-700 text-sm font-medium rounded-xl border border-green-100">
-                  ✓ Mensaje enviado correctamente.
-                </div>
+        <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 text-xs uppercase">
+              <tr>
+                <th className="px-8 py-4">Usuario</th>
+                <th className="px-8 py-4">Asunto / Mensaje</th>
+                <th className="px-8 py-4">Fecha</th>
+                <th className="px-8 py-4">Estado</th>
+                <th className="px-8 py-4">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-8 py-10 text-center">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-sapphire-600 border-t-transparent"></div>
+                  </td>
+                </tr>
+              ) : tickets.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-8 py-12 text-center text-gray-500 font-medium">
+                    No hay mensajes de soporte pendientes.
+                  </td>
+                </tr>
+              ) : (
+                tickets.map((ticket) => (
+                  <tr key={ticket.id || Math.random()} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-8 py-5">
+                      <p className="font-bold text-gray-900">{ticket.userName || 'Usuario'}</p>
+                      <p className="text-xs text-gray-400">{ticket.userEmail || 'Sin email'}</p>
+                    </td>
+                    <td className="px-8 py-5">
+                      <p className="text-gray-700 truncate max-w-xs">{ticket.message}</p>
+                    </td>
+                    <td className="px-8 py-5 text-gray-500 text-sm">
+                      {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        ticket.status === 'open' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'
+                      }`}>
+                        {ticket.status === 'open' ? 'Pendiente' : 'Resuelto'}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      <button className="text-sapphire-600 font-bold text-sm hover:underline">Responder</button>
+                    </td>
+                  </tr>
+                ))
               )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-gray-700">Asunto</label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                    placeholder="Describe brevemente el problema o consulta"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-sapphire-200 focus:border-sapphire-500 outline-none transition-all bg-gray-50/50 focus:bg-white text-sm"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-gray-700">Prioridad</label>
-                  <select
-                    name="priority"
-                    value={formData.priority}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-sapphire-200 focus:border-sapphire-500 outline-none transition-all bg-gray-50/50 focus:bg-white text-sm"
-                  >
-                    <option value="baja">Baja</option>
-                    <option value="normal">Normal</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-gray-700">Mensaje</label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    rows={5}
-                    placeholder="Detalla el problema, incluyendo pasos para reproducirlo si aplica..."
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-sapphire-200 focus:border-sapphire-500 outline-none transition-all bg-gray-50/50 focus:bg-white text-sm resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSending}
-                  className="w-full py-3 bg-sapphire-600 hover:bg-sapphire-700 text-white font-bold rounded-xl transition-all text-sm disabled:opacity-60"
-                >
-                  {isSending ? 'Enviando...' : 'Enviar mensaje'}
-                </button>
-              </form>
-            </div>
-
-          </div>
+            </tbody>
+          </table>
         </div>
       </main>
     </div>
