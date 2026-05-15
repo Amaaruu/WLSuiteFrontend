@@ -17,7 +17,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers     = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminProjects  = lazy(() => import('./pages/admin/AdminProjects'));
 const AdminLogs      = lazy(() => import('./pages/admin/AdminLogs'));
-const LandingViewer  = lazy(() => import('./pages/LandingViewer')); // ← NUEVO
+const LandingViewer  = lazy(() => import('./pages/LandingViewer'));
 
 const PageLoader = () => (
   <div className="flex h-screen w-screen items-center justify-center">
@@ -65,6 +65,7 @@ function App() {
             <Route path="/contacto" element={<Contact />} />
             <Route path="/about"    element={<About />} />
             <Route path="/planes"   element={<Plans />} />
+            <Route path="/templates" element={<Templates />} />
 
             {/* ── Landing generada (pública, solo con token) ── */}
             <Route path="/landings/:id" element={<LandingViewer />} /> {/* ← NUEVO */}
@@ -74,7 +75,6 @@ function App() {
             <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
             {/* ── Rutas protegidas (cualquier usuario) ───── */}
-            <Route path="/templates"      element={<ProtectedRoute><Templates /></ProtectedRoute>} />
             <Route path="/create-landing" element={<ProtectedRoute><CreateLanding /></ProtectedRoute>} />
             <Route path="/project-result" element={<ProtectedRoute><ProjectResult /></ProtectedRoute>} />
 
