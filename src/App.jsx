@@ -17,11 +17,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers     = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminProjects  = lazy(() => import('./pages/admin/AdminProjects'));
 const AdminLogs      = lazy(() => import('./pages/admin/AdminLogs'));
-<<<<<<< HEAD
 const AdminSupport   = lazy(() => import('./pages/admin/AdminSupport'));
-=======
-const LandingViewer  = lazy(() => import('./pages/LandingViewer'));
->>>>>>> dev
 
 const PageLoader = () => (
   <div className="flex h-screen w-screen items-center justify-center">
@@ -68,28 +64,10 @@ function App() {
             <Route path="/soporte"   element={<Support />} />
             <Route path="/planes"    element={<Plans />} />
 
-<<<<<<< HEAD
             <Route path="/login"    element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
             <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
             <Route path="/templates"      element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-=======
-            {/* ── Rutas públicas ─────────────────────────── */}
-            <Route path="/"         element={<Home />} />
-            <Route path="/contacto" element={<Contact />} />
-            <Route path="/about"    element={<About />} />
-            <Route path="/planes"   element={<Plans />} />
-            <Route path="/templates" element={<Templates />} />
-
-            {/* ── Landing generada (pública, solo con token) ── */}
-            <Route path="/landings/:id" element={<LandingViewer />} /> {/* ← NUEVO */}
-
-            {/* ── Solo usuarios no autenticados ──────────── */}
-            <Route path="/login"    element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-            <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
-
-            {/* ── Rutas protegidas (cualquier usuario) ───── */}
->>>>>>> dev
             <Route path="/create-landing" element={<ProtectedRoute><CreateLanding /></ProtectedRoute>} />
             <Route path="/project-result" element={<ProtectedRoute><ProjectResult /></ProtectedRoute>} />
 
