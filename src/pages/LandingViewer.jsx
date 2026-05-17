@@ -1,346 +1,286 @@
-// src/pages/LandingViewer.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { generateAndDownloadZip } from '../utils/exportProject';
 
+// ── Helpers de color ──────────────────────────────────────────────────────────
 const COLOR_HEX_MAP = {
-  'azul-marino':    '#1e3a5f',
-  'azul-cielo':     '#3b82f6',
-  'verde-bosque':   '#166534',
-  'verde-menta':    '#10b981',
-  'terracota':      '#b5541c',
-  'rojo-vibrante':  '#dc2626',
-  'morado':         '#7c3aed',
-  'rosa':           '#db2777',
-  'negro':          '#111827',
-  'gris-oscuro':    '#374151',
-  'gris-neutro':    '#9ca3af',
-  'blanco':         '#ffffff',
-  'crema':          '#fef9f0',
-  'amarillo-dorado':'#d97706',
-  'naranja':        '#ea580c',
-  'cian':           '#0891b2',
+  'azul-marino':    '#1e3a5f', 'azul-cielo':      '#3b82f6',
+  'verde-bosque':   '#166534', 'verde-menta':      '#10b981',
+  'terracota':      '#b5541c', 'rojo-vibrante':    '#dc2626',
+  'morado':         '#7c3aed', 'rosa':             '#db2777',
+  'negro':          '#111827', 'gris-oscuro':      '#374151',
+  'gris-neutro':    '#9ca3af', 'blanco':           '#ffffff',
+  'crema':          '#fef9f0', 'amarillo-dorado':  '#d97706',
+  'naranja':        '#ea580c', 'cian':             '#0891b2',
 };
 
 function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return `${r}, ${g}, ${b}`;
 }
-
-function lighten(hex, amount = 0.9) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const lr = Math.round(r + (255 - r) * amount);
-  const lg = Math.round(g + (255 - g) * amount);
-  const lb = Math.round(b + (255 - b) * amount);
-  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+function lighten(hex, a=0.9) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `#${Math.round(r+(255-r)*a).toString(16).padStart(2,'0')}${Math.round(g+(255-g)*a).toString(16).padStart(2,'0')}${Math.round(b+(255-b)*a).toString(16).padStart(2,'0')}`;
+}
+function darken(hex, a=0.15) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `#${Math.round(r*(1-a)).toString(16).padStart(2,'0')}${Math.round(g*(1-a)).toString(16).padStart(2,'0')}${Math.round(b*(1-a)).toString(16).padStart(2,'0')}`;
 }
 
-function darken(hex, amount = 0.3) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const dr = Math.round(r * (1 - amount));
-  const dg = Math.round(g * (1 - amount));
-  const db = Math.round(b * (1 - amount));
-  return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
-}
-
+// ── Construir tema visual ─────────────────────────────────────────────────────
 function buildTheme(aiMetadata, designPreferences) {
   const t  = aiMetadata?._theme || {};
   const dp = designPreferences  || {};
-
   const primaryKey   = dp.primaryColor   || 'azul-marino';
   const secondaryKey = dp.secondaryColor || 'azul-cielo';
   const baseMode     = t.baseMode || dp.baseMode || 'claro';
   const isDark       = baseMode === 'oscuro';
-
-  const primaryHex   = t.primaryColor   || COLOR_HEX_MAP[primaryKey]   || '#1e3a5f';
-  const secondaryHex = t.secondaryColor || COLOR_HEX_MAP[secondaryKey] || '#3b82f6';
-
-  const LIGHT_COLORS  = ['blanco', 'crema', 'amarillo-dorado', 'gris-neutro'];
-  const primaryText   = LIGHT_COLORS.includes(primaryKey)   ? '#111827' : '#ffffff';
-  const secondaryText = LIGHT_COLORS.includes(secondaryKey) ? '#111827' : '#ffffff';
+  const primaryHex   = t.primaryColor  || COLOR_HEX_MAP[primaryKey]   || '#1e3a5f';
+  const secondaryHex = t.secondaryColor|| COLOR_HEX_MAP[secondaryKey] || '#3b82f6';
+  const LIGHT_COLORS = ['blanco','crema','amarillo-dorado','gris-neutro'];
 
   return {
     primaryColor:   primaryHex,
+    primaryDark:    t.primaryDark    || darken(primaryHex, 0.15),
+    primaryLight:   t.primaryLight   || lighten(primaryHex, 0.9),
+    primaryMedium:  t.primaryMedium  || lighten(primaryHex, 0.7),
+    primaryRgb:     t.primaryRgb     || hexToRgb(primaryHex),
+    primaryText:    LIGHT_COLORS.includes(primaryKey) ? '#111827' : '#ffffff',
     secondaryColor: secondaryHex,
-    primaryDark:    darken(primaryHex, 0.2),
-    primaryLight:   lighten(primaryHex, 0.88),
-    secondaryLight: lighten(secondaryHex, 0.88),
-    primaryRgb:     hexToRgb(primaryHex),
-    secondaryRgb:   hexToRgb(secondaryHex),
-    primaryText,
-    secondaryText,
-    fontImport:     t.fontImport   || 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
-    fontFamily:     t.fontFamily   || "'Inter', sans-serif",
-    baseMode,
-    isDark,
-    bgPrimary:      t.bgPrimary    || (isDark ? '#0f172a' : '#ffffff'),
-    bgSecondary:    t.bgSecondary  || (isDark ? '#1e293b' : '#f8fafc'),
-    textBase:       t.textBase     || (isDark ? '#f1f5f9' : '#0f172a'),
-    textMuted:      t.textMuted    || (isDark ? '#94a3b8' : '#64748b'),
-    cardBg:         t.cardBg       || (isDark ? '#1e293b' : '#ffffff'),
-    cardBorder:     t.cardBorder   || (isDark ? '#334155' : '#e2e8f0'),
-    buttonShape:    t.buttonShape  || dp.buttonShape    || 'redondeado',
+    secondaryLight: t.secondaryLight || lighten(secondaryHex, 0.9),
+    secondaryRgb:   t.secondaryRgb   || hexToRgb(secondaryHex),
+    secondaryText:  LIGHT_COLORS.includes(secondaryKey) ? '#111827' : '#ffffff',
+    fontImport:   t.fontImport  || 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
+    fontFamily:   t.fontFamily  || "'Inter', sans-serif",
+    baseMode, isDark,
+    bgPrimary:   t.bgPrimary   || (isDark ? '#0a0a0f' : '#ffffff'),
+    bgSecondary: t.bgSecondary || (isDark ? '#13131a' : '#f8f9fc'),
+    bgTertiary:  t.bgTertiary  || (isDark ? '#1a1a24' : '#f0f2f8'),
+    textBase:    t.textBase    || (isDark ? '#f0f0f5' : '#0a0a1a'),
+    textMuted:   t.textMuted   || (isDark ? '#9090a0' : '#52526a'),
+    cardBg:      t.cardBg      || (isDark ? '#1a1a24' : '#ffffff'),
+    cardBorder:  t.cardBorder  || (isDark ? '#2a2a3a' : '#e4e6f0'),
+    buttonShape:    t.buttonShape    || dp.buttonShape    || 'redondeado',
     animationLevel: t.animationLevel || dp.animationLevel || 'sutil',
-    visualStyle:    t.visualStyle  || dp.visualStyle    || 'moderno',
+    visualStyle:    t.visualStyle    || dp.visualStyle    || 'moderno',
+    scrollEffect:   t.scrollEffect   || dp.scrollEffect   || 'fade-in',
   };
 }
 
-function getButtonStyles(theme) {
-  const radiusMap = {
-    cuadrado:   '4px',
-    redondeado: '10px',
-    pildora:    '9999px',
-  };
-  const radius = radiusMap[theme.buttonShape] || '10px';
-
-  return {
-    primary: {
-      backgroundColor: theme.primaryColor,
-      color: theme.primaryText,
-      borderRadius: radius,
-      border: `2px solid ${theme.primaryColor}`,
-      padding: '14px 32px',
-      fontWeight: '700',
-      fontSize: '1rem',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      display: 'inline-block',
-      textDecoration: 'none',
-      letterSpacing: '-0.01em',
-    },
-    secondary: {
-      backgroundColor: 'transparent',
-      color: theme.primaryColor,
-      borderRadius: radius,
-      border: `2px solid ${theme.primaryColor}`,
-      padding: '14px 32px',
-      fontWeight: '700',
-      fontSize: '1rem',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      display: 'inline-block',
-      textDecoration: 'none',
-    },
-  };
+// ── Radios de botones ─────────────────────────────────────────────────────────
+function getBtnRadius(shape) {
+  return { cuadrado:'6px', redondeado:'12px', pildora:'9999px' }[shape] || '12px';
 }
 
-const ANIMATION_CSS = `
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
+// ── CSS global inyectado en el head ──────────────────────────────────────────
+const GLOBAL_CSS = (theme) => {
+  const r = getBtnRadius(theme.buttonShape);
+  return `
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: ${theme.fontFamily}; background: ${theme.bgPrimary}; color: ${theme.textBase}; -webkit-font-smoothing: antialiased; }
+
+  /* Animaciones scroll-reveal */
+  .sr { opacity: 0; transform: translateY(32px); transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1); }
+  .sr.visible { opacity: 1; transform: none; }
+  .sr-delay-1 { transition-delay: .1s; }
+  .sr-delay-2 { transition-delay: .2s; }
+  .sr-delay-3 { transition-delay: .3s; }
+  .sr-delay-4 { transition-delay: .4s; }
+  .sr-delay-5 { transition-delay: .5s; }
+  .sr-delay-6 { transition-delay: .6s; }
+
+  /* Botones */
+  .btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 16px 36px; background: ${theme.primaryColor}; color: ${theme.primaryText};
+    border-radius: ${r}; font-weight: 700; font-size: 1.05rem;
+    border: 2px solid ${theme.primaryColor}; cursor: pointer; text-decoration: none;
+    transition: transform .2s, box-shadow .2s, background .2s;
+    box-shadow: 0 4px 20px rgba(${theme.primaryRgb}, 0.35);
   }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(${theme.primaryRgb}, 0.5); background: ${theme.primaryDark}; }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 16px 36px; background: transparent; color: ${theme.textBase};
+    border-radius: ${r}; font-weight: 600; font-size: 1rem;
+    border: 1.5px solid ${theme.cardBorder}; cursor: pointer; text-decoration: none;
+    transition: background .2s, border-color .2s;
   }
-  @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to   { opacity: 1; transform: scale(1); }
+  .btn-secondary:hover { background: ${theme.bgSecondary}; border-color: ${theme.primaryColor}; color: ${theme.primaryColor}; }
+
+  .btn-ghost-white {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 32px; background: rgba(255,255,255,0.12); color: #fff;
+    border-radius: ${r}; font-weight: 600; font-size: 0.95rem;
+    border: 1.5px solid rgba(255,255,255,0.3); cursor: pointer; text-decoration: none;
+    transition: background .2s;
+    backdrop-filter: blur(8px);
   }
-  .wls-animate-fade-up  { animation: fadeUp  0.7s cubic-bezier(0.22,1,0.36,1) both; }
-  .wls-animate-fade-in  { animation: fadeIn  0.5s ease both; }
-  .wls-animate-scale-in { animation: scaleIn 0.6s cubic-bezier(0.22,1,0.36,1) both; }
-  .wls-d1  { animation-delay: 0.1s; }
-  .wls-d2  { animation-delay: 0.2s; }
-  .wls-d3  { animation-delay: 0.3s; }
-  .wls-d4  { animation-delay: 0.4s; }
-  .wls-d5  { animation-delay: 0.5s; }
-  .wls-d6  { animation-delay: 0.6s; }
-  .wls-btn-hover:hover { filter: brightness(0.9); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
-  .wls-card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 48px rgba(0,0,0,0.12); }
-  .wls-card-hover { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .btn-ghost-white:hover { background: rgba(255,255,255,0.22); }
+
+  /* Badge */
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; background: ${theme.primaryLight}; color: ${theme.primaryColor};
+    border-radius: 9999px; font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1px solid ${theme.primaryMedium};
+  }
+  .badge-white {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; background: rgba(255,255,255,0.15); color: #fff;
+    border-radius: 9999px; font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(8px);
+  }
+
+  /* Cards */
+  .card {
+    background: ${theme.cardBg}; border: 1px solid ${theme.cardBorder};
+    border-radius: 20px; padding: 32px; transition: transform .25s, box-shadow .25s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.1); }
+
+  .card-featured {
+    background: ${theme.primaryColor}; border: none; border-radius: 24px;
+    padding: 36px; position: relative;
+    box-shadow: 0 20px 64px rgba(${theme.primaryRgb}, 0.35);
+  }
+
+  /* Section headers */
+  .section-tag {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: ${theme.primaryColor}; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-tag::before {
+    content: ''; display: block; width: 24px; height: 2px; background: ${theme.primaryColor};
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.02em; color: ${theme.textBase};
+  }
+  .section-subtitle {
+    font-size: 1.15rem; color: ${theme.textMuted}; line-height: 1.75; max-width: 600px; margin: 0 auto;
+  }
+
+  /* Divider */
+  .section-divider { height: 1px; background: ${theme.cardBorder}; margin: 0; }
+
+  /* Containers */
+  .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .container-sm { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  /* Stars */
+  .stars { color: #f59e0b; font-size: 0.95rem; letter-spacing: 2px; }
+
+  /* Nav */
+  .nav-floating {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 999; display: flex; align-items: center; gap: 12px;
+    padding: 10px 20px; border-radius: 9999px;
+    background: ${theme.isDark ? 'rgba(10,10,20,0.85)' : 'rgba(255,255,255,0.85)'};
+    backdrop-filter: blur(20px); border: 1px solid ${theme.cardBorder};
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    font-size: 0.875rem; font-weight: 600; color: ${theme.textBase};
+    max-width: calc(100vw - 48px);
+  }
+  .nav-floating a { color: ${theme.textMuted}; text-decoration: none; transition: color .2s; }
+  .nav-floating a:hover { color: ${theme.primaryColor}; }
+
+  /* FAQ accordion */
+  .faq-item { border-bottom: 1px solid ${theme.cardBorder}; overflow: hidden; }
+  .faq-question {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 0; background: none; border: none; cursor: pointer; text-align: left;
+    font-size: 1.05rem; font-weight: 600; color: ${theme.textBase}; gap: 16px;
+    font-family: inherit;
+  }
+  .faq-icon {
+    width: 32px; height: 32px; flex-shrink: 0; border-radius: 9999px;
+    background: ${theme.primaryLight}; color: ${theme.primaryColor};
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    font-weight: 300; transition: transform .3s, background .3s, color .3s;
+  }
+  .faq-item.open .faq-icon { transform: rotate(45deg); background: ${theme.primaryColor}; color: ${theme.primaryText}; }
+  .faq-answer { overflow: hidden; max-height: 0; transition: max-height .4s cubic-bezier(.22,1,.36,1); }
+  .faq-answer-inner { padding: 0 0 22px; font-size: 0.97rem; color: ${theme.textMuted}; line-height: 1.8; }
+
+  /* Highlight word in headline */
+  .headline-highlight { color: ${theme.primaryColor}; position: relative; }
+
+  /* Trust bar */
+  .trust-bar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 8px 24px; font-size: 0.85rem; color: ${theme.textMuted}; margin-top: 20px;
+  }
+  .trust-bar span { display: flex; align-items: center; gap: 6px; }
+  .trust-bar span::before { content: '✓'; color: ${theme.primaryColor}; font-weight: 700; }
+
+  /* Steps */
+  .step-number {
+    width: 56px; height: 56px; border-radius: 16px; background: ${theme.primaryLight};
+    color: ${theme.primaryColor}; font-size: 1.4rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  /* Stat card */
+  .stat-number { font-size: 3rem; font-weight: 900; color: ${theme.primaryColor}; line-height: 1; letter-spacing: -0.03em; }
+  .stat-label  { font-size: 0.9rem; font-weight: 600; color: ${theme.textBase}; margin-top: 4px; }
+  .stat-desc   { font-size: 0.8rem; color: ${theme.textMuted}; margin-top: 2px; }
+
+  /* Pricing notIncluded */
+  .not-included { color: ${theme.textMuted}; opacity: 0.5; text-decoration: line-through; }
+
+  /* Urgency countdown */
+  .countdown-box {
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 16px; padding: 20px 32px;
+    display: inline-flex; gap: 24px; align-items: center;
+    backdrop-filter: blur(8px);
+  }
+  .countdown-unit { text-align: center; }
+  .countdown-value { font-size: 2.5rem; font-weight: 900; color: #fff; line-height: 1; }
+  .countdown-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.6); }
+  .countdown-sep { font-size: 2rem; font-weight: 900; color: rgba(255,255,255,.5); margin-top: -8px; }
+
+  /* Feature highlight */
+  .feature-highlight {
+    border: 2px solid ${theme.primaryColor}; position: relative;
+  }
+  .feature-highlight::before {
+    content: '★ Destacado'; position: absolute; top: -12px; left: 20px;
+    background: ${theme.primaryColor}; color: ${theme.primaryText};
+    padding: 2px 12px; border-radius: 9999px; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+
+  /* Avatar */
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; color: ${theme.primaryText};
+    background: linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor});
+  }
+
+  @media (max-width: 768px) {
+    .hero-grid { flex-direction: column !important; }
+    .features-grid { grid-template-columns: 1fr !important; }
+    .testimonials-grid { grid-template-columns: 1fr !important; }
+    .pricing-grid { grid-template-columns: 1fr !important; }
+    .steps-grid { grid-template-columns: 1fr !important; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .cta-buttons { flex-direction: column !important; align-items: stretch !important; }
+    .nav-floating { display: none !important; }
+    .countdown-box { flex-wrap: wrap; gap: 12px; }
+  }
 `;
+};
 
-function generateStandaloneHTML(landingData, theme, projectName) {
-  const btnStyles = getButtonStyles(theme);
-
-  const heroSection = landingData.hero ? `
-    <header style="position:relative; padding: 120px 24px 80px; background: linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 100%); overflow:hidden; text-align:center;">
-      <div style="position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2220%22 cy=%2220%22 r=%2260%22 fill=%22rgba(255,255,255,0.04)%22/><circle cx=%2280%22 cy=%2280%22 r=%2240%22 fill=%22rgba(255,255,255,0.04)%22/></svg>');background-size:cover;"></div>
-      <div style="position:relative;max-width:800px;margin:0 auto;">
-        <div style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border-radius:9999px;color:rgba(255,255,255,0.9);font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:24px;">${projectName}</div>
-        <h1 style="font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;color:#ffffff;margin:0 0 24px;line-height:1.05;letter-spacing:-0.03em;">${landingData.hero.headline || ''}</h1>
-        <p style="font-size:1.25rem;color:rgba(255,255,255,0.8);margin:0 auto 40px;max-width:600px;line-height:1.7;">${landingData.hero.subheadline || ''}</p>
-        ${landingData.hero.ctaButton ? `<a href="#contacto" style="display:inline-block;padding:16px 40px;background:#ffffff;color:${theme.primaryColor};border-radius:${btnStyles.primary.borderRadius};font-weight:800;font-size:1.05rem;text-decoration:none;box-shadow:0 8px 32px rgba(0,0,0,0.25);letter-spacing:-0.01em;">${landingData.hero.ctaButton}</a>` : ''}
-        ${landingData.hero.supportingText ? `<p style="margin-top:20px;font-size:0.9rem;color:rgba(255,255,255,0.6);">${landingData.hero.supportingText}</p>` : ''}
-      </div>
-    </header>` : '';
-
-  const featuresSection = landingData.features?.length ? `
-    <section style="padding:96px 24px;background:${theme.bgSecondary};">
-      <div style="max-width:1100px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:64px;">
-          <span style="display:inline-block;padding:4px 14px;background:${theme.primaryLight};color:${theme.primaryColor};border-radius:9999px;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px;">Características</span>
-          <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;color:${theme.textBase};margin:0;letter-spacing:-0.02em;">Por qué elegirnos</h2>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;">
-          ${landingData.features.map((f, i) => `
-            <div style="background:${theme.cardBg};border:1px solid ${theme.cardBorder};border-radius:20px;padding:36px;box-shadow:0 2px 16px rgba(0,0,0,0.06);">
-              <div style="width:52px;height:52px;background:${theme.primaryLight};border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;font-size:1.5rem;font-weight:900;color:${theme.primaryColor};">${i + 1}</div>
-              <h3 style="font-size:1.15rem;font-weight:700;color:${theme.textBase};margin:0 0 12px;">${f.title || ''}</h3>
-              <p style="font-size:0.95rem;color:${theme.textMuted};line-height:1.75;margin:0;">${f.description || ''}</p>
-            </div>`).join('')}
-        </div>
-      </div>
-    </section>` : '';
-
-  const testimonialsSection = landingData.testimonials?.length ? `
-    <section style="padding:96px 24px;background:${theme.bgPrimary};">
-      <div style="max-width:1100px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:64px;">
-          <span style="display:inline-block;padding:4px 14px;background:${theme.primaryLight};color:${theme.primaryColor};border-radius:9999px;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px;">Testimonios</span>
-          <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;color:${theme.textBase};margin:0;letter-spacing:-0.02em;">Lo que dicen nuestros clientes</h2>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;">
-          ${landingData.testimonials.map(t => `
-            <div style="background:${theme.cardBg};border:1px solid ${theme.cardBorder};border-radius:20px;padding:36px;box-shadow:0 2px 16px rgba(0,0,0,0.06);">
-              <div style="display:flex;margin-bottom:16px;">${'★'.repeat(5).split('').map(() => `<span style="color:#f59e0b;font-size:1rem;">★</span>`).join('')}</div>
-              <p style="font-size:1rem;color:${theme.textBase};line-height:1.75;margin:0 0 24px;font-style:italic;">"${t.quote || ''}"</p>
-              <div style="display:flex;align-items:center;gap:12px;">
-                <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,${theme.primaryColor},${theme.secondaryColor});display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.9rem;">${(t.name || 'U')[0].toUpperCase()}</div>
-                <div>
-                  <p style="font-weight:700;color:${theme.textBase};margin:0;font-size:0.9rem;">${t.name || ''}</p>
-                  ${t.role ? `<p style="color:${theme.textMuted};margin:0;font-size:0.8rem;">${t.role}</p>` : ''}
-                </div>
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>
-    </section>` : '';
-
-  const faqSection = landingData.faq?.length ? `
-    <section style="padding:96px 24px;background:${theme.bgSecondary};">
-      <div style="max-width:760px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:64px;">
-          <span style="display:inline-block;padding:4px 14px;background:${theme.primaryLight};color:${theme.primaryColor};border-radius:9999px;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px;">FAQ</span>
-          <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;color:${theme.textBase};margin:0;letter-spacing:-0.02em;">Preguntas frecuentes</h2>
-        </div>
-        ${landingData.faq.map(item => `
-          <div style="border-bottom:1px solid ${theme.cardBorder};padding:28px 0;">
-            <h3 style="font-size:1.05rem;font-weight:700;color:${theme.textBase};margin:0 0 12px;">${item.question || ''}</h3>
-            <p style="font-size:0.95rem;color:${theme.textMuted};line-height:1.75;margin:0;">${item.answer || ''}</p>
-          </div>`).join('')}
-      </div>
-    </section>` : '';
-
-  const pricingSection = landingData.pricing?.plans?.length ? `
-    <section style="padding:96px 24px;background:${theme.bgPrimary};">
-      <div style="max-width:1100px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:64px;">
-          <span style="display:inline-block;padding:4px 14px;background:${theme.primaryLight};color:${theme.primaryColor};border-radius:9999px;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px;">Precios</span>
-          <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;color:${theme.textBase};margin:0 0 16px;letter-spacing:-0.02em;">${landingData.pricing.title || 'Nuestros planes'}</h2>
-          ${landingData.pricing.subtitle ? `<p style="font-size:1.1rem;color:${theme.textMuted};">${landingData.pricing.subtitle}</p>` : ''}
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;align-items:start;">
-          ${landingData.pricing.plans.map((plan, i) => {
-            const isFeatured = plan.featured || i === 1;
-            return `
-            <div style="border-radius:24px;padding:40px 32px;border:${isFeatured ? `2px solid ${theme.primaryColor}` : `1px solid ${theme.cardBorder}`};background:${isFeatured ? theme.primaryColor : theme.cardBg};box-shadow:${isFeatured ? `0 20px 48px rgba(${theme.primaryRgb},0.3)` : '0 2px 16px rgba(0,0,0,0.06)'};position:relative;">
-              ${isFeatured ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:${theme.secondaryColor};color:${theme.secondaryText};padding:4px 16px;border-radius:9999px;font-size:0.75rem;font-weight:800;white-space:nowrap;">MÁS POPULAR</div>` : ''}
-              <h3 style="font-size:1.2rem;font-weight:700;color:${isFeatured ? '#fff' : theme.textBase};margin:0 0 8px;">${plan.name || ''}</h3>
-              <div style="font-size:2.5rem;font-weight:900;color:${isFeatured ? '#fff' : theme.primaryColor};margin:16px 0 8px;letter-spacing:-0.03em;">${plan.price || ''}</div>
-              ${plan.period ? `<p style="font-size:0.85rem;color:${isFeatured ? 'rgba(255,255,255,0.7)' : theme.textMuted};margin:0 0 24px;">${plan.period}</p>` : ''}
-              <ul style="list-style:none;padding:0;margin:0 0 32px;">
-                ${(plan.benefits || []).map(b => `<li style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:0.9rem;color:${isFeatured ? 'rgba(255,255,255,0.9)' : theme.textBase};border-bottom:1px solid ${isFeatured ? 'rgba(255,255,255,0.1)' : theme.cardBorder};"><span style="color:${isFeatured ? '#fff' : theme.primaryColor};font-size:1rem;">✓</span>${b}</li>`).join('')}
-              </ul>
-              <a href="#contacto" style="display:block;text-align:center;padding:14px 24px;background:${isFeatured ? '#fff' : theme.primaryColor};color:${isFeatured ? theme.primaryColor : theme.primaryText};border-radius:${btnStyles.primary.borderRadius};font-weight:700;text-decoration:none;font-size:0.95rem;">Comenzar ahora</a>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-    </section>` : '';
-
-  const urgencySection = landingData.urgency ? `
-    <section style="padding:80px 24px;background:linear-gradient(135deg,${theme.primaryColor},${theme.primaryDark});text-align:center;">
-      <div style="max-width:700px;margin:0 auto;">
-        <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;color:#ffffff;margin:0 0 16px;letter-spacing:-0.02em;">${landingData.urgency.title || ''}</h2>
-        ${landingData.urgency.countdown ? `<p style="font-size:1.1rem;color:rgba(255,255,255,0.8);margin:0 0 32px;">⏱ ${landingData.urgency.countdown}</p>` : ''}
-        ${landingData.urgency.ctaButton ? `<a href="#contacto" style="display:inline-block;padding:16px 40px;background:#ffffff;color:${theme.primaryColor};border-radius:${btnStyles.primary.borderRadius};font-weight:800;font-size:1.05rem;text-decoration:none;">${landingData.urgency.ctaButton}</a>` : ''}
-      </div>
-    </section>` : '';
-
-  const footerSection = landingData.footer ? `
-    <footer id="contacto" style="padding:64px 24px;background:${theme.isDark ? '#020617' : '#0f172a'};text-align:center;">
-      <div style="font-size:1.6rem;font-weight:900;color:#ffffff;margin-bottom:16px;">${projectName}</div>
-      ${landingData.footer.tagline ? `<p style="color:#94a3b8;margin:0 0 24px;font-size:0.95rem;">${landingData.footer.tagline}</p>` : ''}
-      ${landingData.footer.contact ? `<a href="mailto:${landingData.footer.contact}" style="color:${theme.secondaryColor};font-weight:600;text-decoration:none;">${landingData.footer.contact}</a>` : ''}
-      <p style="margin:32px 0 0;color:#475569;font-size:0.8rem;">© ${new Date().getFullYear()} ${projectName}. Todos los derechos reservados.</p>
-    </footer>` : '';
-
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${projectName}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="${theme.fontImport}" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body { font-family: ${theme.fontFamily}; background-color: ${theme.bgPrimary}; color: ${theme.textBase}; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-    img { max-width: 100%; height: auto; display: block; }
-    @media (max-width: 640px) {
-      h1 { font-size: 2.2rem !important; }
-      h2 { font-size: 1.8rem !important; }
-      div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
-    }
-  </style>
-</head>
-<body>
-${heroSection}
-${featuresSection}
-${testimonialsSection}
-${faqSection}
-${pricingSection}
-${urgencySection}
-${footerSection}
-</body>
-</html>`;
-}
-
-function SectionBadge({ label, theme }) {
-  return (
-    <span style={{
-      display: 'inline-block',
-      padding: '4px 14px',
-      background: theme.primaryLight,
-      color: theme.primaryColor,
-      borderRadius: '9999px',
-      fontSize: '0.72rem',
-      fontWeight: '700',
-      letterSpacing: '0.1em',
-      textTransform: 'uppercase',
-      marginBottom: '16px',
-    }}>
-      {label}
-    </span>
-  );
-}
-
-function SectionTitle({ children, theme }) {
-  return (
-    <h2 style={{
-      fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-      fontWeight: '800',
-      color: theme.textBase,
-      margin: '0',
-      letterSpacing: '-0.02em',
-      lineHeight: '1.15',
-    }}>
-      {children}
-    </h2>
-  );
-}
-
+// ── Componente principal ──────────────────────────────────────────────────────
 const LandingViewer = () => {
   const { id }         = useParams();
   const [searchParams] = useSearchParams();
@@ -351,375 +291,549 @@ const LandingViewer = () => {
   const [projectName,       setProjectName]       = useState('Landing Page');
   const [error,             setError]             = useState(null);
   const [isLoading,         setIsLoading]         = useState(true);
-  const [isDownloading,     setIsDownloading]     = useState(false);
-  const [isDownloadingZip,  setIsDownloadingZip]  = useState(false);
-
+  const [countdown,         setCountdown]         = useState({ h:23, m:59, s:59 });
+  const [openFaq,           setOpenFaq]           = useState(null);
   const containerRef = useRef(null);
 
+  // Countdown
   useEffect(() => {
-    if (!token) {
-      setError('Acceso denegado: Token no proporcionado.');
-      setIsLoading(false);
-      return;
-    }
+    const t = setInterval(() => {
+      setCountdown(prev => {
+        let { h, m, s } = prev;
+        if (s > 0) return { h, m, s: s-1 };
+        if (m > 0) return { h, m: m-1, s: 59 };
+        if (h > 0) return { h: h-1, m: 59, s: 59 };
+        return { h:0, m:0, s:0 };
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
 
+  // Fetch data
+  useEffect(() => {
+    if (!token) { setError('Token no proporcionado.'); setIsLoading(false); return; }
     const fetchData = async () => {
       try {
         const envBase   = import.meta.env.VITE_API_BASE_URL || 'https://landingbackend-s1rk.onrender.com/api/v1';
         const serverUrl = envBase.replace(/\/api\/v1\/?$/, '');
-        const response  = await axios.get(`${serverUrl}/landings/${id}?token=${token}`);
-
-        setLandingData(response.data.aiMetadata);
-        setDesignPreferences(response.data.designPreferences || null);
-        setProjectName(response.data.projectName || 'Landing Page');
+        const res       = await axios.get(`${serverUrl}/landings/${id}?token=${token}`);
+        setLandingData(res.data.aiMetadata);
+        setDesignPreferences(res.data.designPreferences || null);
+        setProjectName(res.data.projectName || 'Landing Page');
       } catch (err) {
         setError(err.response?.data?.error || 'El enlace ha expirado o no es válido.');
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [id, token]);
 
+  // Inject font + scroll reveal
   useEffect(() => {
     if (!landingData) return;
-    const theme    = buildTheme(landingData, designPreferences);
-    const existing = document.getElementById('wls-font-import');
-    if (!existing) {
-      const link  = document.createElement('link');
-      link.id     = 'wls-font-import';
-      link.rel    = 'stylesheet';
-      link.href   = theme.fontImport;
+    const theme = buildTheme(landingData, designPreferences);
+    // Font
+    if (!document.getElementById('wls-font')) {
+      const link = document.createElement('link');
+      link.id = 'wls-font'; link.rel = 'stylesheet'; link.href = theme.fontImport;
       document.head.appendChild(link);
     }
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    const timer = setTimeout(() => {
+      document.querySelectorAll('.sr').forEach(el => obs.observe(el));
+    }, 100);
+    return () => { clearTimeout(timer); obs.disconnect(); };
   }, [landingData, designPreferences]);
 
-  const handleDownload = () => {
-    if (!landingData) return;
-    setIsDownloading(true);
-    try {
-      const theme = buildTheme(landingData, designPreferences);
-      const html  = generateStandaloneHTML(landingData, theme, projectName);
-      const blob  = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url   = URL.createObjectURL(blob);
-      const a     = document.createElement('a');
-      a.href      = url;
-      a.download  = `${projectName.toLowerCase().replace(/\s+/g, '-')}-landing.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const handleDownloadZip = async () => {
-    if (!landingData) return;
-    setIsDownloadingZip(true);
-    try {
-      const theme = buildTheme(landingData, designPreferences);
-      await generateAndDownloadZip(landingData, theme, projectName);
-    } catch (err) {
-      console.error('Error generando ZIP:', err);
-      alert('No se pudo generar el ZIP. Verifica tu conexión e intenta de nuevo.');
-    } finally {
-      setIsDownloadingZip(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '56px', height: '56px', border: '4px solid #e2e8f0', borderTopColor: '#1e3a5f', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 20px' }} />
-          <p style={{ color: '#64748b', fontFamily: 'Inter, sans-serif', fontWeight: '500' }}>Cargando tu landing page…</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  if (isLoading) return (
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ textAlign:'center' }}>
+        <div style={{ width:56, height:56, border:'4px solid #e2e8f0', borderTopColor:'#1e3a5f', borderRadius:'50%', animation:'spin .8s linear infinite', margin:'0 auto 16px' }}/>
+        <p style={{ color:'#64748b', fontFamily:'Inter,sans-serif', fontWeight:500 }}>Cargando tu landing page…</p>
       </div>
-    );
-  }
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '24px' }}>
-        <div style={{ background: '#fff', padding: '48px', borderRadius: '24px', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', maxWidth: '440px', textAlign: 'center', border: '1px solid #fee2e2' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚠️</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', marginBottom: '8px', fontFamily: 'Inter, sans-serif' }}>Página no disponible</h2>
-          <p style={{ color: '#ef4444', fontWeight: '500', marginBottom: '32px', fontFamily: 'Inter, sans-serif' }}>{error}</p>
-          <a href="/" style={{ display: 'inline-block', padding: '12px 28px', background: '#0f172a', color: '#fff', borderRadius: '10px', fontWeight: '700', textDecoration: 'none', fontFamily: 'Inter, sans-serif' }}>
-            Volver al inicio
-          </a>
-        </div>
+  if (error) return (
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
+      <div style={{ background:'#fff', padding:48, borderRadius:24, maxWidth:440, textAlign:'center', border:'1px solid #fee2e2', boxShadow:'0 4px 32px rgba(0,0,0,0.08)' }}>
+        <div style={{ fontSize:'3rem', marginBottom:16 }}>⚠️</div>
+        <h2 style={{ fontSize:'1.5rem', fontWeight:800, color:'#0f172a', marginBottom:8, fontFamily:'Inter,sans-serif' }}>Página no disponible</h2>
+        <p style={{ color:'#ef4444', fontWeight:500, marginBottom:32, fontFamily:'Inter,sans-serif' }}>{error}</p>
+        <a href="/" style={{ display:'inline-block', padding:'12px 28px', background:'#0f172a', color:'#fff', borderRadius:10, fontWeight:700, textDecoration:'none', fontFamily:'Inter,sans-serif' }}>Volver al inicio</a>
       </div>
-    );
-  }
+    </div>
+  );
 
   if (!landingData) return null;
 
-  const theme    = buildTheme(landingData, designPreferences);
-  const btnStyle = getButtonStyles(theme);
+  const theme = buildTheme(landingData, designPreferences);
+  const d     = landingData; // alias
+  const faq   = d.faq?.items || d.faq || [];
+  const testimonials = d.socialProof?.testimonials || d.testimonials || [];
+  const stats        = d.socialProof?.stats || [];
+  const pricingPlans = d.pricing?.plans || (Array.isArray(d.pricing) ? d.pricing : []);
+  const steps        = d.howItWorks?.steps || [];
+
+  const toggleFaq = (i) => setOpenFaq(prev => prev === i ? null : i);
+
+  // Descarga HTML
+  const handleDownload = () => {
+    const html = document.documentElement.outerHTML;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `${projectName.toLowerCase().replace(/\s+/g,'-')}.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
 
   return (
     <>
-      <style>{ANIMATION_CSS}</style>
+      {/* Estilos globales */}
+      <style>{GLOBAL_CSS(theme)}</style>
 
-      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 9999, display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <div style={{ background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(12px)', borderRadius: '12px', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: theme.primaryColor, flexShrink: 0 }} />
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: '600', fontFamily: 'Inter,sans-serif', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {projectName}
-          </span>
-        </div>
-
-        <button
-          onClick={handleDownload}
-          disabled={isDownloading}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: theme.primaryColor, color: theme.primaryText, border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif', boxShadow: `0 4px 16px rgba(${theme.primaryRgb}, 0.4)`, opacity: isDownloading ? 0.7 : 1, transition: 'all 0.2s ease' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-          </svg>
-          {isDownloading ? 'Descargando...' : 'Descargar HTML'}
-        </button>
-
-        <button
-          onClick={handleDownloadZip}
-          disabled={isDownloadingZip}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: theme.isDark ? '#1e293b' : '#0f172a', color: '#ffffff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif', boxShadow: '0 4px 16px rgba(0,0,0,0.3)', opacity: isDownloadingZip ? 0.7 : 1, transition: 'all 0.2s ease' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-          </svg>
-          {isDownloadingZip ? 'Generando ZIP...' : 'Descargar Proyecto'}
+      {/* Barra de herramientas flotante */}
+      <div style={{ position:'fixed', top:16, right:16, zIndex:9999, display:'flex', gap:10 }}>
+        <button onClick={handleDownload}
+          style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 18px', background:theme.primaryColor, color:theme.primaryText, border:'none', borderRadius:10, cursor:'pointer', fontWeight:700, fontSize:'0.8rem', fontFamily:'inherit', boxShadow:`0 4px 16px rgba(${theme.primaryRgb},.4)` }}>
+          ↓ Descargar HTML
         </button>
       </div>
 
-      <div
-        ref={containerRef}
-        style={{ fontFamily: theme.fontFamily, background: theme.bgPrimary, color: theme.textBase, minHeight: '100vh', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
-      >
-        {landingData.hero && (
-          <header style={{ position: 'relative', padding: 'clamp(80px, 12vw, 140px) 24px clamp(60px, 8vw, 100px)', background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 100%)`, overflow: 'hidden', textAlign: 'center' }}>
-            <div style={{ position: 'absolute', top: '-30%', left: '-10%', width: '60%', height: '200%', background: `radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%)`, pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: '-20%', right: '-5%', width: '50%', height: '150%', background: `radial-gradient(ellipse, rgba(255,255,255,0.05) 0%, transparent 70%)`, pointerEvents: 'none' }} />
+      {/* NAV flotante */}
+      <nav className="nav-floating">
+        <span style={{ fontWeight:800, color:theme.textBase, marginRight:8 }}>{projectName}</span>
+        {d.hero && <a href="#hero">Inicio</a>}
+        {steps.length > 0 && <a href="#how">Cómo funciona</a>}
+        {testimonials.length > 0 && <a href="#testimonials">Clientes</a>}
+        {pricingPlans.length > 0 && <a href="#pricing">Precios</a>}
+        {faq.length > 0 && <a href="#faq">FAQ</a>}
+        <a href="#contact" className="btn-primary" style={{ padding:'8px 20px', fontSize:'0.82rem' }}>
+          {d.hero?.ctaButton || 'Comenzar'}
+        </a>
+      </nav>
 
-            <div style={{ position: 'relative', maxWidth: '860px', margin: '0 auto' }}>
-              <div className="wls-animate-fade-in wls-d1" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 18px', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: '9999px', color: 'rgba(255,255,255,0.9)', fontSize: '0.72rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                <span style={{ width: '6px', height: '6px', background: '#fff', borderRadius: '50%', flexShrink: 0 }} />
-                {projectName}
+      {/* ── HERO ───────────────────────────────────────────────────────────── */}
+      {d.hero && (
+        <section id="hero" style={{
+          position:'relative', overflow:'hidden', paddingTop:140, paddingBottom:100,
+          background:`linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : darken(theme.primaryColor, 0.25)} 100%)`,
+        }}>
+          {/* Decoración de fondo */}
+          <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
+            <div style={{ position:'absolute', top:'-20%', right:'-10%', width:'70%', height:'140%', background:'rgba(255,255,255,0.04)', borderRadius:'50%', transform:'rotate(-15deg)' }}/>
+            <div style={{ position:'absolute', top:'10%', left:'-5%', width:'50%', height:'80%', background:'rgba(255,255,255,0.03)', borderRadius:'50%' }}/>
+            <svg style={{ position:'absolute', bottom:0, left:0, right:0 }} viewBox="0 0 1440 80" preserveAspectRatio="none">
+              <path d="M0,80 C480,0 960,0 1440,80 L1440,80 L0,80 Z" fill={theme.bgPrimary}/>
+            </svg>
+          </div>
+
+          <div className="container" style={{ position:'relative', zIndex:1 }}>
+            {/* Badge */}
+            {d.hero.badge && (
+              <div className="sr" style={{ textAlign:'center', marginBottom:24 }}>
+                <span className="badge-white">{d.hero.badge}</span>
               </div>
+            )}
 
-              <h1 className="wls-animate-fade-up wls-d2" style={{ fontSize: 'clamp(2.4rem, 6vw, 4.8rem)', fontWeight: '900', color: '#ffffff', margin: '0 0 24px', lineHeight: '1.05', letterSpacing: '-0.03em' }}>
-                {landingData.hero.headline}
+            {/* Headline */}
+            <div className="sr sr-delay-1" style={{ textAlign:'center', marginBottom:24 }}>
+              <h1 style={{
+                fontSize:'clamp(2.4rem, 5.5vw, 4.2rem)', fontWeight:900, lineHeight:1.08,
+                letterSpacing:'-0.03em', color:'#ffffff', maxWidth:860, margin:'0 auto',
+              }}>
+                {d.hero.headline}
               </h1>
+            </div>
 
-              <p className="wls-animate-fade-up wls-d3" style={{ fontSize: 'clamp(1rem, 2.5vw, 1.3rem)', color: 'rgba(255,255,255,0.78)', margin: '0 auto 40px', maxWidth: '620px', lineHeight: '1.75' }}>
-                {landingData.hero.subheadline}
-              </p>
-
-              {landingData.hero.ctaButton && (
-                <div className="wls-animate-fade-up wls-d4" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button className="wls-btn-hover" style={{ ...btnStyle.primary, background: '#ffffff', color: theme.primaryColor, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', fontSize: '1.05rem', padding: '16px 40px' }}>
-                    {landingData.hero.ctaButton}
-                  </button>
-                  {landingData.hero.secondaryCta && (
-                    <button className="wls-btn-hover" style={{ ...btnStyle.secondary, color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.35)', fontSize: '1.05rem', padding: '16px 40px' }}>
-                      {landingData.hero.secondaryCta}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {landingData.hero.supportingText && (
-                <p className="wls-animate-fade-up wls-d5" style={{ marginTop: '20px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-                  {landingData.hero.supportingText}
+            {/* Subheadline */}
+            {d.hero.subheadline && (
+              <div className="sr sr-delay-2" style={{ textAlign:'center', marginBottom:36 }}>
+                <p style={{ fontSize:'clamp(1.05rem,2vw,1.3rem)', color:'rgba(255,255,255,0.82)', lineHeight:1.75, maxWidth:640, margin:'0 auto' }}>
+                  {d.hero.subheadline}
                 </p>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div style={{ position: 'absolute', bottom: '-2px', left: 0, right: 0, height: '60px', overflow: 'hidden' }}>
-              <svg viewBox="0 0 1440 60" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
-                <path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z" fill={theme.bgSecondary} />
-              </svg>
-            </div>
-          </header>
-        )}
-
-        {landingData.features?.length > 0 && (
-          <section style={{ padding: 'clamp(64px, 8vw, 96px) 24px', background: theme.bgSecondary }}>
-            <div style={{ maxWidth: '1140px', margin: '0 auto' }}>
-              <div className="wls-animate-fade-up" style={{ textAlign: 'center', marginBottom: '56px' }}>
-                <SectionBadge label="Características" theme={theme} />
-                <SectionTitle theme={theme}>Por qué elegirnos</SectionTitle>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-                {landingData.features.map((feature, idx) => (
-                  <div key={idx} className={`wls-animate-fade-up wls-card-hover wls-d${Math.min(idx + 1, 6)}`} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: '20px', padding: '36px 32px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
-                    <div style={{ width: '52px', height: '52px', background: theme.primaryLight, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', fontSize: '1.4rem', fontWeight: '900', color: theme.primaryColor }}>
-                      {idx + 1}
-                    </div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: theme.textBase, margin: '0 0 12px' }}>{feature.title}</h3>
-                    <p style={{ fontSize: '0.93rem', color: theme.textMuted, lineHeight: '1.75', margin: '0' }}>{feature.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {landingData.testimonials?.length > 0 && (
-          <section style={{ padding: 'clamp(64px, 8vw, 96px) 24px', background: theme.bgPrimary }}>
-            <div style={{ maxWidth: '1140px', margin: '0 auto' }}>
-              <div className="wls-animate-fade-up" style={{ textAlign: 'center', marginBottom: '56px' }}>
-                <SectionBadge label="Testimonios" theme={theme} />
-                <SectionTitle theme={theme}>Lo que dicen nuestros clientes</SectionTitle>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-                {landingData.testimonials.map((t, idx) => (
-                  <div key={idx} className={`wls-animate-scale-in wls-card-hover wls-d${Math.min(idx + 1, 6)}`} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: '20px', padding: '36px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
-                    <div style={{ display: 'flex', gap: '3px', marginBottom: '20px' }}>
-                      {[...Array(5)].map((_, i) => (<span key={i} style={{ color: '#f59e0b', fontSize: '1rem' }}>★</span>))}
-                    </div>
-                    <p style={{ fontSize: '0.97rem', color: theme.textBase, lineHeight: '1.8', margin: '0 0 28px', fontStyle: 'italic', borderLeft: `3px solid ${theme.primaryColor}`, paddingLeft: '16px' }}>
-                      "{t.quote}"
-                    </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '1rem' }}>
-                        {(t.name || 'U')[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p style={{ fontWeight: '700', color: theme.textBase, margin: '0', fontSize: '0.9rem' }}>{t.name}</p>
-                        {t.role && <p style={{ color: theme.textMuted, margin: '0', fontSize: '0.8rem' }}>{t.role}</p>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {landingData.faq?.length > 0 && (
-          <section style={{ padding: 'clamp(64px, 8vw, 96px) 24px', background: theme.bgSecondary }}>
-            <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-              <div className="wls-animate-fade-up" style={{ textAlign: 'center', marginBottom: '56px' }}>
-                <SectionBadge label="Preguntas frecuentes" theme={theme} />
-                <SectionTitle theme={theme}>FAQ</SectionTitle>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {landingData.faq.map((item, idx) => (
-                  <FaqItem key={idx} item={item} theme={theme} idx={idx} />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {landingData.pricing?.plans?.length > 0 && (
-          <section style={{ padding: 'clamp(64px, 8vw, 96px) 24px', background: theme.bgPrimary }}>
-            <div style={{ maxWidth: '1140px', margin: '0 auto' }}>
-              <div className="wls-animate-fade-up" style={{ textAlign: 'center', marginBottom: '56px' }}>
-                <SectionBadge label="Precios" theme={theme} />
-                <SectionTitle theme={theme}>{landingData.pricing.title || 'Nuestros planes'}</SectionTitle>
-                {landingData.pricing.subtitle && (
-                  <p style={{ color: theme.textMuted, marginTop: '16px', fontSize: '1.05rem' }}>{landingData.pricing.subtitle}</p>
-                )}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px', alignItems: 'start' }}>
-                {landingData.pricing.plans.map((plan, idx) => {
-                  const isFeatured = plan.featured || idx === 1;
-                  return (
-                    <div key={idx} className={`wls-animate-fade-up wls-d${Math.min(idx + 1, 4)}`} style={{ borderRadius: '24px', padding: '40px 32px', border: isFeatured ? `2px solid ${theme.primaryColor}` : `1px solid ${theme.cardBorder}`, background: isFeatured ? theme.primaryColor : theme.cardBg, boxShadow: isFeatured ? `0 20px 48px rgba(${theme.primaryRgb}, 0.3)` : '0 2px 16px rgba(0,0,0,0.06)', position: 'relative', transform: isFeatured ? 'scale(1.03)' : 'scale(1)' }}>
-                      {isFeatured && (
-                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: theme.secondaryColor, color: theme.secondaryText, padding: '4px 18px', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '800', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>
-                          MÁS POPULAR
-                        </div>
-                      )}
-                      <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: isFeatured ? '#fff' : theme.textBase, margin: '0 0 8px' }}>{plan.name}</h3>
-                      <div style={{ fontSize: '2.8rem', fontWeight: '900', color: isFeatured ? '#fff' : theme.primaryColor, margin: '16px 0 4px', letterSpacing: '-0.04em' }}>{plan.price}</div>
-                      {plan.period && (<p style={{ fontSize: '0.85rem', color: isFeatured ? 'rgba(255,255,255,0.65)' : theme.textMuted, margin: '0 0 28px' }}>{plan.period}</p>)}
-                      <ul style={{ listStyle: 'none', padding: '0', margin: '0 0 32px' }}>
-                        {(plan.benefits || []).map((b, i) => (
-                          <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 0', fontSize: '0.9rem', color: isFeatured ? 'rgba(255,255,255,0.9)' : theme.textBase, borderBottom: `1px solid ${isFeatured ? 'rgba(255,255,255,0.12)' : theme.cardBorder}` }}>
-                            <span style={{ color: isFeatured ? '#fff' : theme.primaryColor, fontWeight: '700', fontSize: '0.9rem', flexShrink: 0, marginTop: '1px' }}>✓</span>
-                            {b}
-                          </li>
-                        ))}
-                      </ul>
-                      <button className="wls-btn-hover" style={{ width: '100%', padding: '14px 24px', background: isFeatured ? '#fff' : theme.primaryColor, color: isFeatured ? theme.primaryColor : theme.primaryText, border: 'none', borderRadius: btnStyle.primary.borderRadius, fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s ease', fontFamily: 'inherit' }}>
-                        Comenzar ahora
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {landingData.urgency && (
-          <section style={{ padding: 'clamp(60px, 8vw, 80px) 24px', background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 100%)`, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.06) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(255,255,255,0.04) 0%, transparent 50%)', pointerEvents: 'none' }} />
-            <div style={{ position: 'relative', maxWidth: '700px', margin: '0 auto' }}>
-              <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: '900', color: '#fff', margin: '0 0 16px', letterSpacing: '-0.02em' }}>
-                {landingData.urgency.title}
-              </h2>
-              {landingData.urgency.countdown && (<p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.75)', margin: '0 0 32px' }}>⏱ {landingData.urgency.countdown}</p>)}
-              {landingData.urgency.ctaButton && (
-                <button className="wls-btn-hover" style={{ padding: '16px 48px', background: '#ffffff', color: theme.primaryColor, border: 'none', borderRadius: btnStyle.primary.borderRadius, fontWeight: '800', fontSize: '1.1rem', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-                  {landingData.urgency.ctaButton}
-                </button>
-              )}
-            </div>
-          </section>
-        )}
-
-        {landingData.footer && (
-          <footer style={{ padding: 'clamp(48px, 6vw, 72px) 24px', background: theme.isDark ? '#020617' : '#0f172a', textAlign: 'center' }}>
-            <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: '900', color: '#ffffff', marginBottom: '8px', letterSpacing: '-0.02em' }}>{projectName}</div>
-              {landingData.footer.tagline && (<p style={{ color: '#94a3b8', margin: '0 0 28px', fontSize: '0.95rem' }}>{landingData.footer.tagline}</p>)}
-              {landingData.footer.contact && (
-                <a href={`mailto:${landingData.footer.contact}`} style={{ color: theme.secondaryColor, fontWeight: '600', textDecoration: 'none', fontSize: '0.95rem' }}>
-                  {landingData.footer.contact}
+            {/* CTAs */}
+            <div className="sr sr-delay-3 cta-buttons" style={{ display:'flex', gap:16, justifyContent:'center', marginBottom:28, flexWrap:'wrap' }}>
+              <a href="#contact" className="btn-primary" style={{ background:'#fff', color:theme.primaryColor, boxShadow:'0 8px 32px rgba(0,0,0,0.2)', fontSize:'1.1rem', padding:'18px 40px', fontFamily:'inherit', borderColor:'#fff' }}>
+                {d.hero.ctaButton} →
+              </a>
+              {d.hero.secondaryCta && (
+                <a href="#how" className="btn-ghost-white" style={{ fontFamily:'inherit', fontSize:'1rem' }}>
+                  {d.hero.secondaryCta}
                 </a>
               )}
-              <p style={{ margin: '32px 0 0', color: '#475569', fontSize: '0.8rem' }}>
-                © {new Date().getFullYear()} {projectName}. Todos los derechos reservados.
+            </div>
+
+            {/* Trust indicators */}
+            {d.hero.trustIndicators?.length > 0 && (
+              <div className="sr sr-delay-4 trust-bar">
+                {d.hero.trustIndicators.map((t, i) => <span key={i}>{t}</span>)}
+              </div>
+            )}
+
+            {/* Stats rápidas en hero */}
+            {stats.length > 0 && (
+              <div className="sr sr-delay-5" style={{ marginTop:56, display:'grid', gridTemplateColumns:`repeat(${Math.min(stats.length, 3)}, 1fr)`, gap:1, maxWidth:640, margin:'56px auto 0', background:'rgba(255,255,255,0.1)', borderRadius:20, overflow:'hidden', backdropFilter:'blur(10px)' }}>
+                {stats.slice(0,3).map((s, i) => (
+                  <div key={i} style={{ padding:'24px 20px', textAlign:'center', borderRight: i < stats.length-1 ? '1px solid rgba(255,255,255,0.15)' : 'none' }}>
+                    <div style={{ fontSize:'2rem', fontWeight:900, color:'#fff', lineHeight:1 }}>{s.number}</div>
+                    <div style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.8)', fontWeight:600, marginTop:4 }}>{s.label}</div>
+                    {s.description && <div style={{ fontSize:'0.75rem', color:'rgba(255,255,255,0.55)', marginTop:2 }}>{s.description}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── FEATURES ───────────────────────────────────────────────────────── */}
+      {d.features?.length > 0 && (
+        <section style={{ padding:'96px 0', background:theme.bgPrimary }}>
+          <div className="container">
+            <div style={{ textAlign:'center', marginBottom:64 }}>
+              <div className="sr section-tag" style={{ justifyContent:'center' }}>Características</div>
+              <h2 className="sr sr-delay-1 section-title" style={{ textAlign:'center' }}>
+                ¿Por qué elegir {projectName}?
+              </h2>
+              <p className="sr sr-delay-2 section-subtitle" style={{ marginTop:16 }}>
+                Descubre todo lo que obtienes con nosotros
               </p>
             </div>
-          </footer>
-        )}
-      </div>
+            <div className="features-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:24 }}>
+              {d.features.map((f, i) => (
+                <div key={i} className={`sr sr-delay-${(i%3)+1} card${f.highlight ? ' feature-highlight' : ''}`}>
+                  <div style={{ fontSize:'2.2rem', marginBottom:16 }}>{f.icon}</div>
+                  <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:theme.textBase, marginBottom:12, lineHeight:1.3 }}>{f.title}</h3>
+                  <p style={{ fontSize:'0.93rem', color:theme.textMuted, lineHeight:1.8 }}>{f.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
+      {steps.length > 0 && (
+        <section id="how" style={{ padding:'96px 0', background:theme.bgSecondary }}>
+          <div className="container">
+            <div style={{ textAlign:'center', marginBottom:64 }}>
+              <div className="sr section-tag" style={{ justifyContent:'center' }}>Proceso</div>
+              <h2 className="sr sr-delay-1 section-title" style={{ textAlign:'center' }}>
+                {d.howItWorks?.title || '¿Cómo funciona?'}
+              </h2>
+              {d.howItWorks?.subtitle && (
+                <p className="sr sr-delay-2 section-subtitle" style={{ marginTop:16 }}>{d.howItWorks.subtitle}</p>
+              )}
+            </div>
+            <div className="steps-grid" style={{ display:'grid', gridTemplateColumns:`repeat(${steps.length}, 1fr)`, gap:32, position:'relative' }}>
+              {/* Línea conectora */}
+              {steps.length > 1 && (
+                <div style={{ position:'absolute', top:28, left:'15%', right:'15%', height:2, background:`linear-gradient(90deg, ${theme.primaryLight}, ${theme.primaryColor}, ${theme.primaryLight})`, zIndex:0 }}/>
+              )}
+              {steps.map((s, i) => (
+                <div key={i} className={`sr sr-delay-${i+1}`} style={{ textAlign:'center', position:'relative', zIndex:1 }}>
+                  <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
+                    <div style={{
+                      width:56, height:56, borderRadius:16, background:theme.primaryColor,
+                      color:theme.primaryText, fontSize:'1.3rem', fontWeight:900,
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      boxShadow:`0 8px 24px rgba(${theme.primaryRgb},.3)`,
+                    }}>{s.number}</div>
+                  </div>
+                  <h3 style={{ fontSize:'1.05rem', fontWeight:700, color:theme.textBase, marginBottom:10 }}>{s.title}</h3>
+                  <p style={{ fontSize:'0.9rem', color:theme.textMuted, lineHeight:1.75 }}>{s.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── TESTIMONIALS ───────────────────────────────────────────────────── */}
+      {testimonials.length > 0 && (
+        <section id="testimonials" style={{ padding:'96px 0', background:theme.bgPrimary }}>
+          <div className="container">
+            <div style={{ textAlign:'center', marginBottom:64 }}>
+              <div className="sr section-tag" style={{ justifyContent:'center' }}>Testimonios</div>
+              <h2 className="sr sr-delay-1 section-title" style={{ textAlign:'center' }}>
+                {d.socialProof?.title || 'Lo que dicen nuestros clientes'}
+              </h2>
+              {d.socialProof?.subtitle && (
+                <p className="sr sr-delay-2 section-subtitle" style={{ marginTop:16 }}>{d.socialProof.subtitle}</p>
+              )}
+            </div>
+            <div className="testimonials-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:24 }}>
+              {testimonials.map((t, i) => (
+                <div key={i} className={`sr sr-delay-${(i%3)+1} card`} style={{ display:'flex', flexDirection:'column' }}>
+                  {/* Stars */}
+                  <div className="stars" style={{ marginBottom:16 }}>
+                    {'★'.repeat(t.rating || 5)}
+                  </div>
+                  {/* Quote */}
+                  <blockquote style={{ flex:1, fontSize:'0.97rem', color:theme.textBase, lineHeight:1.85, fontStyle:'italic', marginBottom:24, borderLeft:`3px solid ${theme.primaryColor}`, paddingLeft:16 }}>
+                    "{t.quote}"
+                  </blockquote>
+                  {/* Author */}
+                  <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                    <div className="avatar">{(t.name||'U')[0].toUpperCase()}</div>
+                    <div>
+                      <div style={{ fontWeight:700, color:theme.textBase, fontSize:'0.9rem' }}>{t.name}</div>
+                      <div style={{ fontSize:'0.8rem', color:theme.textMuted }}>{t.role}{t.company ? ` · ${t.company}` : ''}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── PRICING ────────────────────────────────────────────────────────── */}
+      {pricingPlans.length > 0 && (
+        <section id="pricing" style={{ padding:'96px 0', background:theme.bgSecondary }}>
+          <div className="container">
+            <div style={{ textAlign:'center', marginBottom:64 }}>
+              {d.pricing?.badge && (
+                <div className="sr" style={{ marginBottom:12 }}>
+                  <span className="badge">{d.pricing.badge}</span>
+                </div>
+              )}
+              <div className="sr section-tag sr-delay-1" style={{ justifyContent:'center' }}>Precios</div>
+              <h2 className="sr sr-delay-2 section-title" style={{ textAlign:'center' }}>
+                {d.pricing?.title || 'Elige tu plan'}
+              </h2>
+              {d.pricing?.subtitle && (
+                <p className="sr sr-delay-3 section-subtitle" style={{ marginTop:16 }}>{d.pricing.subtitle}</p>
+              )}
+            </div>
+            <div className="pricing-grid" style={{ display:'grid', gridTemplateColumns:`repeat(${pricingPlans.length}, 1fr)`, gap:24, alignItems:'start' }}>
+              {pricingPlans.map((plan, i) => (
+                plan.featured ? (
+                  <div key={i} className={`sr sr-delay-${i+1} card-featured`}>
+                    {plan.badge && (
+                      <div style={{ position:'absolute', top:-14, left:'50%', transform:'translateX(-50%)', background:'#fff', color:theme.primaryColor, padding:'4px 18px', borderRadius:9999, fontSize:'0.72rem', fontWeight:800, whiteSpace:'nowrap', boxShadow:'0 4px 12px rgba(0,0,0,0.15)' }}>
+                        {plan.badge}
+                      </div>
+                    )}
+                    <h3 style={{ fontSize:'1.2rem', fontWeight:700, color:'rgba(255,255,255,0.9)', marginBottom:8 }}>{plan.name}</h3>
+                    {plan.description && <p style={{ fontSize:'0.87rem', color:'rgba(255,255,255,0.65)', marginBottom:20, lineHeight:1.6 }}>{plan.description}</p>}
+                    <div style={{ fontSize:'3rem', fontWeight:900, color:'#fff', letterSpacing:'-0.04em', lineHeight:1 }}>{plan.price}</div>
+                    {plan.period && <p style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.6)', marginTop:4, marginBottom:28 }}>{plan.period}</p>}
+                    <ul style={{ listStyle:'none', marginBottom:32 }}>
+                      {(plan.benefits||[]).map((b,j) => (
+                        <li key={j} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'9px 0', fontSize:'0.9rem', color:'rgba(255,255,255,0.9)', borderBottom:'1px solid rgba(255,255,255,0.1)' }}>
+                          <span style={{ color:'#fff', fontWeight:700, flexShrink:0, marginTop:1 }}>✓</span>{b}
+                        </li>
+                      ))}
+                    </ul>
+                    <a href="#contact" style={{ display:'block', textAlign:'center', padding:'15px 24px', background:'#fff', color:theme.primaryColor, borderRadius:getBtnRadius(theme.buttonShape), fontWeight:800, textDecoration:'none', fontSize:'1rem', fontFamily:'inherit' }}>
+                      {plan.ctaButton || 'Empezar ahora'}
+                    </a>
+                  </div>
+                ) : (
+                  <div key={i} className={`sr sr-delay-${i+1} card`}>
+                    <h3 style={{ fontSize:'1.15rem', fontWeight:700, color:theme.textBase, marginBottom:8 }}>{plan.name}</h3>
+                    {plan.description && <p style={{ fontSize:'0.87rem', color:theme.textMuted, marginBottom:20, lineHeight:1.6 }}>{plan.description}</p>}
+                    <div style={{ fontSize:'2.8rem', fontWeight:900, color:theme.primaryColor, letterSpacing:'-0.04em', lineHeight:1 }}>{plan.price}</div>
+                    {plan.period && <p style={{ fontSize:'0.85rem', color:theme.textMuted, marginTop:4, marginBottom:28 }}>{plan.period}</p>}
+                    <ul style={{ listStyle:'none', marginBottom:32 }}>
+                      {(plan.benefits||[]).map((b,j) => (
+                        <li key={j} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'9px 0', fontSize:'0.9rem', color:theme.textBase, borderBottom:`1px solid ${theme.cardBorder}` }}>
+                          <span style={{ color:theme.primaryColor, fontWeight:700, flexShrink:0, marginTop:1 }}>✓</span>{b}
+                        </li>
+                      ))}
+                      {(plan.notIncluded||[]).map((b,j) => (
+                        <li key={`n${j}`} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'9px 0', fontSize:'0.9rem', borderBottom:`1px solid ${theme.cardBorder}` }}>
+                          <span style={{ color:theme.textMuted, flexShrink:0, marginTop:1 }}>✕</span>
+                          <span className="not-included">{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <a href="#contact" style={{ display:'block', textAlign:'center', padding:'15px 24px', background:theme.primaryLight, color:theme.primaryColor, borderRadius:getBtnRadius(theme.buttonShape), fontWeight:700, textDecoration:'none', fontSize:'1rem', fontFamily:'inherit', border:`1.5px solid ${theme.primaryColor}` }}>
+                      {plan.ctaButton || 'Elegir plan'}
+                    </a>
+                  </div>
+                )
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── FAQ ────────────────────────────────────────────────────────────── */}
+      {faq.length > 0 && (
+        <section id="faq" style={{ padding:'96px 0', background:theme.bgPrimary }}>
+          <div className="container-sm">
+            <div style={{ textAlign:'center', marginBottom:64 }}>
+              <div className="sr section-tag" style={{ justifyContent:'center' }}>FAQ</div>
+              <h2 className="sr sr-delay-1 section-title" style={{ textAlign:'center' }}>
+                {d.faq?.title || 'Preguntas frecuentes'}
+              </h2>
+              {d.faq?.subtitle && (
+                <p className="sr sr-delay-2 section-subtitle" style={{ marginTop:16 }}>{d.faq.subtitle}</p>
+              )}
+            </div>
+            <div className="sr sr-delay-1">
+              {faq.map((item, i) => (
+                <div key={i} className={`faq-item${openFaq===i ? ' open' : ''}`}>
+                  <button className="faq-question" onClick={() => toggleFaq(i)}>
+                    <span>{item.question}</span>
+                    <span className="faq-icon">+</span>
+                  </button>
+                  <div className="faq-answer" style={{ maxHeight: openFaq===i ? 400 : 0 }}>
+                    <div className="faq-answer-inner">{item.answer}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── URGENCY ────────────────────────────────────────────────────────── */}
+      {d.urgency && (
+        <section style={{
+          padding:'96px 0', position:'relative', overflow:'hidden',
+          background:`linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 100%)`,
+        }}>
+          <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
+            <div style={{ position:'absolute', top:'-30%', right:'-10%', width:'60%', height:'160%', background:'rgba(255,255,255,0.04)', borderRadius:'50%' }}/>
+          </div>
+          <div className="container" style={{ position:'relative', zIndex:1, textAlign:'center' }}>
+            {d.urgency.badge && (
+              <div className="sr" style={{ marginBottom:20 }}>
+                <span className="badge-white">{d.urgency.badge}</span>
+              </div>
+            )}
+            <h2 className="sr sr-delay-1" style={{ fontSize:'clamp(2rem,4vw,3.2rem)', fontWeight:900, color:'#fff', marginBottom:16, letterSpacing:'-0.02em' }}>
+              {d.urgency.title}
+            </h2>
+            {d.urgency.subtitle && (
+              <p className="sr sr-delay-2" style={{ fontSize:'1.15rem', color:'rgba(255,255,255,0.8)', marginBottom:32, maxWidth:560, margin:'0 auto 32px' }}>
+                {d.urgency.subtitle}
+              </p>
+            )}
+            {/* Countdown */}
+            {d.urgency.countdown?.enabled && (
+              <div className="sr sr-delay-3" style={{ marginBottom:36 }}>
+                <p style={{ fontSize:'0.8rem', textTransform:'uppercase', letterSpacing:'.12em', color:'rgba(255,255,255,.6)', marginBottom:12 }}>
+                  {d.urgency.countdown.label || 'La oferta termina en:'}
+                </p>
+                <div className="countdown-box">
+                  {[{v:String(countdown.h).padStart(2,'0'),l:'horas'},{v:String(countdown.m).padStart(2,'0'),l:'minutos'},{v:String(countdown.s).padStart(2,'0'),l:'segundos'}].map((u,i,arr) => (
+                    <React.Fragment key={i}>
+                      <div className="countdown-unit">
+                        <div className="countdown-value">{u.v}</div>
+                        <div className="countdown-label">{u.l}</div>
+                      </div>
+                      {i < arr.length-1 && <span className="countdown-sep">:</span>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Benefits */}
+            {d.urgency.benefitsList?.length > 0 && (
+              <div className="sr sr-delay-4" style={{ display:'flex', flexWrap:'wrap', justifyContent:'center', gap:'8px 20px', marginBottom:36 }}>
+                {d.urgency.benefitsList.map((b,i) => (
+                  <span key={i} style={{ display:'flex', alignItems:'center', gap:6, color:'rgba(255,255,255,0.85)', fontSize:'0.9rem' }}>
+                    <span style={{ color:'rgba(255,255,255,0.9)', fontWeight:700 }}>✓</span> {b}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="sr sr-delay-5" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+              <a href="#contact" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'18px 48px', background:'#fff', color:theme.primaryColor, borderRadius:getBtnRadius(theme.buttonShape), fontWeight:800, fontSize:'1.1rem', textDecoration:'none', boxShadow:'0 8px 32px rgba(0,0,0,0.25)', fontFamily:'inherit' }}>
+                {d.urgency.ctaButton || d.hero?.ctaButton || 'Aprovechar oferta'} →
+              </a>
+              {d.urgency.supportingText && (
+                <p style={{ fontSize:'0.82rem', color:'rgba(255,255,255,0.55)' }}>{d.urgency.supportingText}</p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── CTA FINAL ──────────────────────────────────────────────────────── */}
+      {d.cta && (
+        <section id="contact" style={{ padding:'96px 0', background:theme.bgSecondary }}>
+          <div className="container-sm" style={{ textAlign:'center' }}>
+            <h2 className="sr section-title" style={{ marginBottom:16 }}>{d.cta.title}</h2>
+            {d.cta.subtitle && <p className="sr sr-delay-1 section-subtitle" style={{ margin:'0 auto 40px' }}>{d.cta.subtitle}</p>}
+            <div className="sr sr-delay-2 cta-buttons" style={{ display:'flex', gap:16, justifyContent:'center', flexWrap:'wrap' }}>
+              <a href="mailto:info@empresa.cl" className="btn-primary" style={{ fontFamily:'inherit', fontSize:'1.1rem', padding:'18px 44px' }}>
+                {d.cta.ctaButton} →
+              </a>
+              {d.cta.secondaryCta && (
+                <a href="#faq" className="btn-secondary" style={{ fontFamily:'inherit', fontSize:'1rem', padding:'18px 36px' }}>
+                  {d.cta.secondaryCta}
+                </a>
+              )}
+            </div>
+            {d.cta.trustText && (
+              <p className="sr sr-delay-3" style={{ marginTop:20, fontSize:'0.85rem', color:theme.textMuted }}>
+                🔒 {d.cta.trustText}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
+      {d.footer && (
+        <footer style={{ padding:'64px 0 32px', background:theme.isDark ? '#05050a' : '#0a0a1a' }}>
+          <div className="container">
+            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:48, marginBottom:48, alignItems:'start' }}>
+              {/* Brand */}
+              <div>
+                <div style={{ fontSize:'1.5rem', fontWeight:900, color:'#fff', marginBottom:12, letterSpacing:'-0.02em' }}>{projectName}</div>
+                {d.footer.description && <p style={{ fontSize:'0.9rem', color:'#6b7280', lineHeight:1.75, maxWidth:420 }}>{d.footer.description}</p>}
+                {d.footer.contact && (
+                  <a href={`mailto:${d.footer.contact}`} style={{ display:'block', marginTop:16, fontSize:'0.9rem', color:theme.secondaryColor }}>
+                    {d.footer.contact}
+                  </a>
+                )}
+                {d.footer.phone && <p style={{ fontSize:'0.85rem', color:'#6b7280', marginTop:6 }}>{d.footer.phone}</p>}
+              </div>
+              {/* Links */}
+              {d.footer.links?.length > 0 && (
+                <div>
+                  <p style={{ fontSize:'0.75rem', fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:'#6b7280', marginBottom:16 }}>Navegación</p>
+                  <ul style={{ listStyle:'none' }}>
+                    {d.footer.links.map((l,i) => (
+                      <li key={i} style={{ marginBottom:10 }}>
+                        <a href={l.href || '#'} style={{ fontSize:'0.9rem', color:'#9ca3af', textDecoration:'none', transition:'color .2s' }}
+                          onMouseOver={e=>e.target.style.color='#fff'} onMouseOut={e=>e.target.style.color='#9ca3af'}>
+                          {l.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div style={{ borderTop:'1px solid #1f2937', paddingTop:28, display:'flex', flexWrap:'wrap', justifyContent:'space-between', alignItems:'center', gap:12 }}>
+              <p style={{ fontSize:'0.8rem', color:'#4b5563' }}>
+                © {new Date().getFullYear()} {projectName}. {d.footer.legalText || 'Todos los derechos reservados.'}
+              </p>
+              {d.footer.socialProof && (
+                <p style={{ fontSize:'0.8rem', color:'#6b7280' }}>🔒 {d.footer.socialProof}</p>
+              )}
+            </div>
+          </div>
+        </footer>
+      )}
     </>
   );
 };
-
-function FaqItem({ item, theme, idx }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div
-      className={`wls-animate-fade-up wls-d${Math.min(idx + 1, 6)}`}
-      style={{ background: theme.cardBg, border: `1px solid ${open ? theme.primaryColor : theme.cardBorder}`, borderRadius: '14px', overflow: 'hidden', transition: 'border-color 0.2s ease', marginBottom: '8px' }}
-    >
-      <button
-        onClick={() => setOpen(!open)}
-        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', gap: '16px', fontFamily: 'inherit' }}
-      >
-        <span style={{ fontSize: '0.97rem', fontWeight: '700', color: theme.textBase, lineHeight: '1.4' }}>{item.question}</span>
-        <span style={{ flexShrink: 0, width: '28px', height: '28px', borderRadius: '50%', background: open ? theme.primaryColor : theme.primaryLight, color: open ? theme.primaryText : theme.primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: '700', transition: 'all 0.2s ease', transform: open ? 'rotate(45deg)' : 'rotate(0deg)' }}>
-          +
-        </span>
-      </button>
-      {open && (
-        <div style={{ padding: '0 24px 20px' }}>
-          <p style={{ fontSize: '0.93rem', color: theme.textMuted, lineHeight: '1.75', margin: '0' }}>{item.answer}</p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default LandingViewer;
