@@ -3,6 +3,7 @@ import FormField from '../molecules/FormField';
 import TextArea from '../atoms/TextArea';
 import Button from '../atoms/Button';
 import { Mail, MapPin } from 'lucide-react';
+import api from '../../services/api';
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -11,15 +12,37 @@ const ContactSection = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [status, setStatus] = useState({ type: '', message: '' });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => setIsSubmitting(false), 1500);
+    setStatus({ type: '', message: '' });
+
+    try {
+      await api.post('/contact', formData);
+      
+      setStatus({ 
+        type: 'success', 
+        message: '¡Tu mensaje ha sido enviado con éxito! Nos pondremos en contacto contigo pronto.' 
+      });
+      
+      setFormData({ name: '', email: '', message: '' });
+
+    } catch (error) {
+      console.error("Error al enviar el formulario de contacto:", error);
+      setStatus({ 
+        type: 'error', 
+        message: 'Hubo un problema al enviar tu mensaje. Por favor, inténtalo de nuevo más tarde.' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -38,7 +61,7 @@ const ContactSection = () => {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Soporte y Ventas</p>
-              <p className="text-lg font-bold text-sapphire-900">contacto@weblandingsuite.com</p>
+              <p className="text-lg font-bold text-sapphire-900">weblandingsuite@gmail.com</p>
             </div>
           </div>
           <div className="flex items-center gap-5">
@@ -81,9 +104,19 @@ const ContactSection = () => {
             className="w-full"
           />
         </div>
+        {status.message && (
+          <div className={`p-4 rounded-xl text-sm font-medium border ${
+            status.type === 'success' 
+              ? 'bg-green-50 text-green-800 border-green-200' 
+              : 'bg-red-50 text-red-800 border-red-200'
+          }`}>
+            {status.message}
+          </div>
+        )}
+
         <Button 
           type="submit" 
-          className="w-full py-4 mt-4 text-lg font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+          className="w-full py-4 mt-4 text-lg font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Enviando...' : 'Enviar mensaje'}
