@@ -28,16 +28,15 @@ const PricingCard = ({ plan, isPopular }) => {
     setError(null);
     try {
       const response = await api.post('/transactions', {
-        userId: user.userId,
-        planId: plan.planId,
+        planId:        plan.planId,
         paymentMethod: 'online',
-        status: 'completado',
+        status:        'completado',
       });
       const transactionId = response.data.transactionId;
       navigate('/create-landing', {
         state: { transactionId, selectedPlan: plan },
       });
-    } catch (err) {
+    } catch {
       setError('No se pudo procesar el plan. Intenta de nuevo.');
     } finally {
       setIsLoading(false);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { generateAndDownloadZip } from '../utils/exportProject';
 
 // ── Helpers de color ──────────────────────────────────────────────────────────
 const COLOR_HEX_MAP = {

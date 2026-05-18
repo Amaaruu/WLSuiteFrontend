@@ -11,24 +11,17 @@ import api from '../../services/api';
 
 const UserDashboard = () => {
   const { user } = useContext(AuthContext);
-  const [projects, setProjects] = useState([]);
+  const [projects,  setProjects]  = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error,     setError]     = useState(null);
 
   useEffect(() => {
-    if (!user?.userId) {
+    if (!user) {
       setIsLoading(false);
       return;
     }
-    api.get(`/projects?userId=${user.userId}&size=5&sort=createdAt,desc`)
-      .then(res => {
-        const all = res.data.content || [];
-        const mine = all.filter(p => {
-          const txUserId = p.transaction?.user?.userId ?? p.userId;
-          return txUserId === undefined || txUserId === user.userId;
-        });
-        setProjects(mine);
-      })
+    api.get('/projects?size=5&sort=createdAt,desc')
+      .then(res => setProjects(res.data.content || []))
       .catch(() => setError('No se pudieron cargar tus proyectos.'))
       .finally(() => setIsLoading(false));
   }, [user]);
