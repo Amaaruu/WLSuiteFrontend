@@ -474,7 +474,7 @@ const LandingViewer = () => {
       {d.hero && (
         <section id="hero" style={{
           position:'relative', overflow:'hidden', paddingTop:140, paddingBottom:100,
-          background:`linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : darken(theme.primaryColor, 0.25)} 100%)`,
+          background: `linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : theme.primaryDark} 100%)`,
         }}>
           {/* Decoración de fondo */}
           <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
