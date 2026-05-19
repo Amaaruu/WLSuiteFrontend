@@ -19,14 +19,11 @@ const ContactSection = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  import api from '../../services/api';
-
-// Reemplaza el handleSubmit:
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
   try {
-    await api.post('/contact', formData);
+    await api.post('/soporte', formData);
     setFormData({ name: '', email: '', message: '' });
     alert('¡Mensaje enviado correctamente!');
   } catch (err) {
