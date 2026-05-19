@@ -19,32 +19,22 @@ const ContactSection = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setStatus({ type: '', message: '' });
+  import api from '../../services/api';
 
-    try {
-      await api.post('/contact', formData);
-      
-      setStatus({ 
-        type: 'success', 
-        message: '¡Tu mensaje ha sido enviado con éxito! Nos pondremos en contacto contigo pronto.' 
-      });
-      
-      setFormData({ name: '', email: '', message: '' });
-
-    } catch (error) {
-      console.error("Error al enviar el formulario de contacto:", error);
-      setStatus({ 
-        type: 'error', 
-        message: 'Hubo un problema al enviar tu mensaje. Por favor, inténtalo de nuevo más tarde.' 
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+// Reemplaza el handleSubmit:
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  try {
+    await api.post('/contact', formData);
+    setFormData({ name: '', email: '', message: '' });
+    alert('¡Mensaje enviado correctamente!');
+  } catch (err) {
+    alert('Error al enviar el mensaje. Intenta de nuevo.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <div className="grid lg:grid-cols-2 gap-16 items-start">
       
