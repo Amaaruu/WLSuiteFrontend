@@ -1,10 +1,10 @@
-//Estilo visual y secciones. Plan Intermedio+.
 import React from 'react';
 import { useFormContext } from '../../../context/FormContext';
 import FieldGroup from '../../molecules/FieldGroup';
 import OptionChip from '../../atoms/OptionChip';
 import SectionToggle from '../../atoms/SectionToggle';
 import LockedField from '../../molecules/LockedField';
+import ImageUploader from '../../atoms/ImageUploader';
 
 const VISUAL_STYLES = [
   { value: 'minimalista',  label: 'Minimalista',  description: 'Mucho espacio en blanco, austero' },
@@ -93,7 +93,7 @@ const Step3Visual = ({ planLevel }) => {
   return (
     <div className="space-y-8">
 
-      {/* Estilo visual */}
+      {/* ── Estilo visual ───────────────────────────────────────────────────── */}
       <FieldGroup
         title="Estilo visual"
         description="Define la personalidad estética general de la landing."
@@ -111,7 +111,7 @@ const Step3Visual = ({ planLevel }) => {
         </div>
       </FieldGroup>
 
-      {/* Jerarquía tipográfica */}
+      {/* ── Jerarquía tipográfica ────────────────────────────────────────────── */}
       <FieldGroup
         title="Jerarquía tipográfica"
         description="¿Qué protagonismo tienen los títulos?"
@@ -129,7 +129,7 @@ const Step3Visual = ({ planLevel }) => {
         </div>
       </FieldGroup>
 
-      {/* Densidad visual */}
+      {/* ── Densidad visual ──────────────────────────────────────────────────── */}
       <FieldGroup
         title="Densidad de contenido"
         description="Cuánta información y cuánto espacio tendrá la página."
@@ -147,7 +147,7 @@ const Step3Visual = ({ planLevel }) => {
         </div>
       </FieldGroup>
 
-      {/* Divisores de sección */}
+      {/* ── Divisores de sección ─────────────────────────────────────────────── */}
       <FieldGroup
         title="Separación entre secciones"
         description="Cómo se distinguen visualmente las secciones entre sí."
@@ -165,7 +165,7 @@ const Step3Visual = ({ planLevel }) => {
         </div>
       </FieldGroup>
 
-      {/* Secciones activas */}
+      {/* ── Secciones activas ────────────────────────────────────────────────── */}
       <FieldGroup
         title="Secciones de la landing"
         description="Activa las secciones que quieres incluir. El Hero siempre está presente."
@@ -184,6 +184,34 @@ const Step3Visual = ({ planLevel }) => {
         </div>
         <p className="text-xs text-gray-400 mt-2">
           {Object.values(formData.sections).filter(Boolean).length} secciones activas
+        </p>
+      </FieldGroup>
+
+      {/* ── Imágenes personalizadas ──────────────────────────────────────────── */}
+      <FieldGroup
+        title="Imágenes personalizadas"
+        description="Sube imágenes reales de tu negocio. Son opcionales — si no las agregas, la landing usará gradientes de color automáticos."
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ImageUploader
+            label="Imagen principal del Hero"
+            description="Foto de portada de tu negocio o producto"
+            value={formData.heroImageUrl}
+            onChange={(url) => updateField('heroImageUrl', url)}
+            context="hero"
+            aspectRatio="16/9"
+          />
+          <ImageUploader
+            label="Logo del negocio"
+            description="Logotipo (PNG con fondo transparente, ideal)"
+            value={formData.logoImageUrl}
+            onChange={(url) => updateField('logoImageUrl', url)}
+            context="logo"
+            aspectRatio="4/3"
+          />
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Formatos aceptados: JPG, PNG, WEBP · Tamaño máximo: 5MB por imagen.
         </p>
       </FieldGroup>
 
