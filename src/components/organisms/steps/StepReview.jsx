@@ -1,5 +1,3 @@
-// Panel de revisión completo antes del submit.
-// El usuario puede editar cualquier sección volviendo al paso correspondiente.
 import React from 'react';
 import { useFormContext } from '../../../context/FormContext';
 import ReviewRow from '../../molecules/ReviewRow';
@@ -102,6 +100,30 @@ const ReviewSection = ({ title, stepNumber, onEdit, children }) => (
   </div>
 );
 
+// ── Componente de preview de imagen individual ────────────────────────────────
+const ImagePreviewRow = ({ label, url }) => {
+  if (!url) return null;
+
+  return (
+    <div className="flex items-center justify-between py-3 gap-4">
+      <span className="text-sm text-gray-500 flex-shrink-0">{label}</span>
+      <div className="flex items-center gap-3">
+        <img
+          src={url}
+          alt={label}
+          className="w-20 h-12 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+        />
+        <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Subida
+        </span>
+      </div>
+    </div>
+  );
+};
+
 const StepReview = ({ planLevel, onEditStep }) => {
   const { formData } = useFormContext();
 
@@ -116,6 +138,9 @@ const StepReview = ({ planLevel, onEditStep }) => {
     })
     .join(', ');
 
+  // Determina si hay alguna imagen subida para mostrar el bloque
+  const hasImages = formData.heroImageUrl || formData.logoImageUrl;
+
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
@@ -127,6 +152,7 @@ const StepReview = ({ planLevel, onEditStep }) => {
         </p>
       </div>
 
+      {/* ── Paso 1: Identidad del negocio ─────────────────────────────────── */}
       <ReviewSection title="Identidad del negocio" stepNumber={1} onEdit={() => onEditStep(1)}>
         <ReviewRow label="Nombre del proyecto" value={formData.projectName} />
         <ReviewRow label="Propuesta de valor" value={formData.projectIdea} />
@@ -141,6 +167,7 @@ const StepReview = ({ planLevel, onEditStep }) => {
         )}
       </ReviewSection>
 
+      {/* ── Paso 2: Comunicación e identidad visual (plan ≥ 2) ───────────── */}
       {planLevel >= 2 && (
         <ReviewSection title="Comunicación e identidad visual" stepNumber={2} onEdit={() => onEditStep(2)}>
           <ReviewRow label="Tono de comunicación" value={resolve(LABEL_MAPS.communicationTone, formData.communicationTone)} />
@@ -152,6 +179,7 @@ const StepReview = ({ planLevel, onEditStep }) => {
         </ReviewSection>
       )}
 
+      {/* ── Paso 3: Estilo visual, secciones e imágenes (plan ≥ 2) ──────── */}
       {planLevel >= 2 && (
         <ReviewSection title="Estilo visual y secciones" stepNumber={3} onEdit={() => onEditStep(3)}>
           <ReviewRow label="Estilo visual" value={resolve(LABEL_MAPS.visualStyle, formData.visualStyle)} />
@@ -159,9 +187,25 @@ const StepReview = ({ planLevel, onEditStep }) => {
           <ReviewRow label="Densidad visual" value={resolve(LABEL_MAPS.visualDensity, formData.visualDensity)} />
           <ReviewRow label="Divisores de sección" value={resolve(LABEL_MAPS.sectionDividers, formData.sectionDividers)} />
           <ReviewRow label="Secciones activas" value={activeSections} />
+
+          {/* ── Preview de imágenes subidas ──────────────────────────────── */}
+          {hasImages ? (
+            <>
+              <ImagePreviewRow label="Imagen Hero" url={formData.heroImageUrl} />
+              <ImagePreviewRow label="Logo" url={formData.logoImageUrl} />
+            </>
+          ) : (
+            <div className="py-3 flex items-center gap-2">
+              <span className="text-sm text-gray-400">Imágenes</span>
+              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                Sin imágenes — se usarán gradientes automáticos
+              </span>
+            </div>
+          )}
         </ReviewSection>
       )}
 
+      {/* ── Paso 4: Diseño avanzado (plan ≥ 3) ───────────────────────────── */}
       {planLevel >= 3 && (
         <ReviewSection title="Diseño avanzado" stepNumber={4} onEdit={() => onEditStep(4)}>
           <ReviewRow label="Tipografía" value={resolve(LABEL_MAPS.typographyStyle, formData.typographyStyle)} />

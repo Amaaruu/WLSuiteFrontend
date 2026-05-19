@@ -12,7 +12,6 @@ const INITIAL_FORM_DATA = {
   brandStage:       '',
   valueProposition: '',
 
-  
   communicationTone: 'profesional',
   formalityLevel:    'semi-formal',
   primaryColor:      'azul-marino',
@@ -20,7 +19,6 @@ const INITIAL_FORM_DATA = {
   baseMode:          'claro',
   contrastLevel:     'estandar',
 
-  
   visualStyle:         'moderno',
   typographyHierarchy: 'equilibrada',
   visualDensity:       'equilibrado',
@@ -35,7 +33,6 @@ const INITIAL_FORM_DATA = {
     urgency:      false,
   },
 
-  
   typographyStyle: 'sans-humanista',
   buttonShape:     'redondeado',
   buttonStyle:     'solido',
@@ -47,12 +44,15 @@ const INITIAL_FORM_DATA = {
   heroEffect:      'ninguno',
   hoverIntensity:  'sutil',
   contentDensity:  'equilibrado',
+
+  heroImageUrl: null,
+  logoImageUrl: null,
 };
 
 const FormContext = createContext(null);
 
 export const FormProvider = ({ children }) => {
-  const [formData, setFormData]     = useState(INITIAL_FORM_DATA);
+  const [formData, setFormData]       = useState(INITIAL_FORM_DATA);
   const [currentStep, setCurrentStep] = useState(1);
 
   const updateField = useCallback((name, value) => {
@@ -82,15 +82,15 @@ export const FormProvider = ({ children }) => {
 
     return {
       transactionId,
-      projectName:      formData.projectName,
-      projectIdea:      formData.projectIdea,
-      callToAction:     formData.callToAction,
-      businessSector:   formData.businessSector,
-      landingGoal:      formData.landingGoal,
-      targetAudience:   formData.targetAudience,
-      brandPositioning: formData.brandPositioning,
-      brandStage:       formData.brandStage,
-      valueProposition: formData.valueProposition,
+      projectName:       formData.projectName,
+      projectIdea:       formData.projectIdea,
+      callToAction:      formData.callToAction,
+      businessSector:    formData.businessSector,
+      landingGoal:       formData.landingGoal,
+      targetAudience:    formData.targetAudience,
+      brandPositioning:  formData.brandPositioning,
+      brandStage:        formData.brandStage,
+      valueProposition:  formData.valueProposition,
       communicationTone: formData.communicationTone,
       formalityLevel:    formData.formalityLevel,
       designPreferences: {
@@ -114,6 +114,9 @@ export const FormProvider = ({ children }) => {
         heroEffect:          formData.heroEffect,
         hoverIntensity:      formData.hoverIntensity,
         contentDensity:      formData.contentDensity,
+
+        ...(formData.heroImageUrl && { heroImageUrl: formData.heroImageUrl }),
+        ...(formData.logoImageUrl && { logoImageUrl: formData.logoImageUrl }),
       },
     };
   }, [formData]);

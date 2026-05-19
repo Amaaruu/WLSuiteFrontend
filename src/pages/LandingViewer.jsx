@@ -81,7 +81,6 @@ const GLOBAL_CSS = (theme) => {
   html { scroll-behavior: smooth; }
   body { font-family: ${theme.fontFamily}; background: ${theme.bgPrimary}; color: ${theme.textBase}; -webkit-font-smoothing: antialiased; }
  
-  /* Animaciones scroll-reveal */
   .sr { opacity: 0; transform: translateY(32px); transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1); }
   .sr.visible { opacity: 1; transform: none; }
   .sr-delay-1 { transition-delay: .1s; }
@@ -91,7 +90,6 @@ const GLOBAL_CSS = (theme) => {
   .sr-delay-5 { transition-delay: .5s; }
   .sr-delay-6 { transition-delay: .6s; }
  
-  /* Botones */
   .btn-primary {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 16px 36px; background: ${theme.primaryColor}; color: ${theme.primaryText};
@@ -121,7 +119,6 @@ const GLOBAL_CSS = (theme) => {
   }
   .btn-ghost-white:hover { background: rgba(255,255,255,0.22); }
  
-  /* Badge */
   .badge {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 16px; background: ${theme.primaryLight}; color: ${theme.primaryColor};
@@ -137,7 +134,6 @@ const GLOBAL_CSS = (theme) => {
     border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(8px);
   }
  
-  /* Cards */
   .card {
     background: ${theme.cardBg}; border: 1px solid ${theme.cardBorder};
     border-radius: 20px; padding: 32px; transition: transform .25s, box-shadow .25s;
@@ -150,7 +146,6 @@ const GLOBAL_CSS = (theme) => {
     box-shadow: 0 20px 64px rgba(${theme.primaryRgb}, 0.35);
   }
  
-  /* Section headers */
   .section-tag {
     font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: ${theme.primaryColor}; margin-bottom: 12px;
@@ -168,17 +163,11 @@ const GLOBAL_CSS = (theme) => {
     font-size: 1.15rem; color: ${theme.textMuted}; line-height: 1.75; max-width: 600px; margin: 0 auto;
   }
  
-  /* Divider */
   .section-divider { height: 1px; background: ${theme.cardBorder}; margin: 0; }
- 
-  /* Containers */
   .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
   .container-sm { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 24px; }
- 
-  /* Stars */
   .stars { color: #f59e0b; font-size: 0.95rem; letter-spacing: 2px; }
  
-  /* Nav */
   .nav-floating {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
     z-index: 999; display: flex; align-items: center; gap: 12px;
@@ -192,7 +181,6 @@ const GLOBAL_CSS = (theme) => {
   .nav-floating a { color: ${theme.textMuted}; text-decoration: none; transition: color .2s; }
   .nav-floating a:hover { color: ${theme.primaryColor}; }
  
-  /* FAQ accordion */
   .faq-item { border-bottom: 1px solid ${theme.cardBorder}; overflow: hidden; }
   .faq-question {
     width: 100%; display: flex; justify-content: space-between; align-items: center;
@@ -210,10 +198,8 @@ const GLOBAL_CSS = (theme) => {
   .faq-answer { overflow: hidden; max-height: 0; transition: max-height .4s cubic-bezier(.22,1,.36,1); }
   .faq-answer-inner { padding: 0 0 22px; font-size: 0.97rem; color: ${theme.textMuted}; line-height: 1.8; }
  
-  /* Highlight word in headline */
   .headline-highlight { color: ${theme.primaryColor}; position: relative; }
  
-  /* Trust bar */
   .trust-bar {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
     gap: 8px 24px; font-size: 0.85rem; color: ${theme.textMuted}; margin-top: 20px;
@@ -221,22 +207,18 @@ const GLOBAL_CSS = (theme) => {
   .trust-bar span { display: flex; align-items: center; gap: 6px; }
   .trust-bar span::before { content: '✓'; color: ${theme.primaryColor}; font-weight: 700; }
  
-  /* Steps */
   .step-number {
     width: 56px; height: 56px; border-radius: 16px; background: ${theme.primaryLight};
     color: ${theme.primaryColor}; font-size: 1.4rem; font-weight: 800;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
  
-  /* Stat card */
   .stat-number { font-size: 3rem; font-weight: 900; color: ${theme.primaryColor}; line-height: 1; letter-spacing: -0.03em; }
   .stat-label  { font-size: 0.9rem; font-weight: 600; color: ${theme.textBase}; margin-top: 4px; }
   .stat-desc   { font-size: 0.8rem; color: ${theme.textMuted}; margin-top: 2px; }
  
-  /* Pricing notIncluded */
   .not-included { color: ${theme.textMuted}; opacity: 0.5; text-decoration: line-through; }
  
-  /* Urgency countdown */
   .countdown-box {
     background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
     border-radius: 16px; padding: 20px 32px;
@@ -248,7 +230,6 @@ const GLOBAL_CSS = (theme) => {
   .countdown-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.6); }
   .countdown-sep { font-size: 2rem; font-weight: 900; color: rgba(255,255,255,.5); margin-top: -8px; }
  
-  /* Feature highlight */
   .feature-highlight {
     border: 2px solid ${theme.primaryColor}; position: relative;
   }
@@ -259,12 +240,24 @@ const GLOBAL_CSS = (theme) => {
     letter-spacing: .08em; text-transform: uppercase;
   }
  
-  /* Avatar */
   .avatar {
     width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-weight: 800; font-size: 1rem; color: ${theme.primaryText};
     background: linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor});
+  }
+
+  /* ── Hero image overlay ── */
+  .hero-img-overlay {
+    position: absolute; inset: 0; z-index: 0;
+  }
+  .hero-img-overlay img {
+    width: 100%; height: 100%; object-fit: cover; object-position: center;
+    display: block;
+  }
+  .hero-img-overlay::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(145deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.38) 100%);
   }
  
   @media (max-width: 768px) {
@@ -335,13 +328,11 @@ const LandingViewer = () => {
   useEffect(() => {
     if (!landingData) return;
     const theme = buildTheme(landingData, designPreferences);
-    // Font
     if (!document.getElementById('wls-font')) {
       const link = document.createElement('link');
       link.id = 'wls-font'; link.rel = 'stylesheet'; link.href = theme.fontImport;
       document.head.appendChild(link);
     }
-    // Scroll reveal
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
@@ -375,16 +366,19 @@ const LandingViewer = () => {
   if (!landingData) return null;
  
   const theme = buildTheme(landingData, designPreferences);
-  const d     = landingData; // alias
+  const d     = landingData;
   const faq   = d.faq?.items || d.faq || [];
   const testimonials = d.socialProof?.testimonials || d.testimonials || [];
   const stats        = d.socialProof?.stats || [];
   const pricingPlans = d.pricing?.plans || (Array.isArray(d.pricing) ? d.pricing : []);
   const steps        = d.howItWorks?.steps || [];
+
+  // ── Imágenes personalizadas desde designPreferences ───────────────────────
+  const heroImageUrl = designPreferences?.heroImageUrl || null;
+  const logoImageUrl = designPreferences?.logoImageUrl || null;
  
   const toggleFaq = (i) => setOpenFaq(prev => prev === i ? null : i);
  
-  // Descarga HTML completo (página tal como está)
   const handleDownload = () => {
     const html = document.documentElement.outerHTML;
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -394,7 +388,6 @@ const LandingViewer = () => {
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   };
  
-  // Descarga ZIP con HTML + CSS + JS separados
   const handleDownloadZip = async () => {
     setIsZipping(true);
     try {
@@ -409,48 +402,30 @@ const LandingViewer = () => {
  
   return (
     <>
-      {/* Estilos globales */}
       <style>{GLOBAL_CSS(theme)}</style>
  
       {/* ── Barra de herramientas flotante ── */}
       <div style={{ position:'fixed', top:16, right:16, zIndex:9999, display:'flex', gap:10 }}>
-        {/* Botón ZIP */}
         <button
           onClick={handleDownloadZip}
           disabled={isZipping}
           style={{
-            display:'flex', alignItems:'center', gap:8,
-            padding:'9px 18px',
-            background: isZipping ? '#6b7280' : '#10b981',
-            color:'#fff',
-            border:'none',
-            borderRadius:10,
-            cursor: isZipping ? 'not-allowed' : 'pointer',
-            fontWeight:700,
-            fontSize:'0.8rem',
-            fontFamily:'inherit',
-            boxShadow:'0 4px 16px rgba(16,185,129,0.4)',
-            transition:'background .2s',
+            display:'flex', alignItems:'center', gap:8, padding:'9px 18px',
+            background: isZipping ? '#6b7280' : '#10b981', color:'#fff', border:'none',
+            borderRadius:10, cursor: isZipping ? 'not-allowed' : 'pointer',
+            fontWeight:700, fontSize:'0.8rem', fontFamily:'inherit',
+            boxShadow:'0 4px 16px rgba(16,185,129,0.4)', transition:'background .2s',
           }}
         >
           {isZipping ? '⏳ Generando...' : '⬇ Descargar ZIP'}
         </button>
- 
-        {/* Botón HTML completo */}
         <button
           onClick={handleDownload}
           style={{
-            display:'flex', alignItems:'center', gap:8,
-            padding:'9px 18px',
-            background:theme.primaryColor,
-            color:theme.primaryText,
-            border:'none',
-            borderRadius:10,
-            cursor:'pointer',
-            fontWeight:700,
-            fontSize:'0.8rem',
-            fontFamily:'inherit',
-            boxShadow:`0 4px 16px rgba(${theme.primaryRgb},.4)`,
+            display:'flex', alignItems:'center', gap:8, padding:'9px 18px',
+            background:theme.primaryColor, color:theme.primaryText, border:'none',
+            borderRadius:10, cursor:'pointer', fontWeight:700, fontSize:'0.8rem',
+            fontFamily:'inherit', boxShadow:`0 4px 16px rgba(${theme.primaryRgb},.4)`,
           }}
         >
           ↓ Descargar HTML
@@ -474,18 +449,54 @@ const LandingViewer = () => {
       {d.hero && (
         <section id="hero" style={{
           position:'relative', overflow:'hidden', paddingTop:140, paddingBottom:100,
-          background: `linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : theme.primaryDark} 100%)`,
+          // Con imagen: fondo oscuro para que el overlay tenga base.
+          // Sin imagen: gradiente original de color de marca.
+          background: heroImageUrl
+            ? theme.isDark ? '#05050a' : '#0a0a1a'
+            : `linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : theme.primaryDark} 100%)`,
         }}>
-          {/* Decoración de fondo */}
-          <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
-            <div style={{ position:'absolute', top:'-20%', right:'-10%', width:'70%', height:'140%', background:'rgba(255,255,255,0.04)', borderRadius:'50%', transform:'rotate(-15deg)' }}/>
-            <div style={{ position:'absolute', top:'10%', left:'-5%', width:'50%', height:'80%', background:'rgba(255,255,255,0.03)', borderRadius:'50%' }}/>
-            <svg style={{ position:'absolute', bottom:0, left:0, right:0 }} viewBox="0 0 1440 80" preserveAspectRatio="none">
-              <path d="M0,80 C480,0 960,0 1440,80 L1440,80 L0,80 Z" fill={theme.bgPrimary}/>
-            </svg>
-          </div>
- 
+
+          {/* ── Imagen de fondo personalizada (solo si existe) ── */}
+          {heroImageUrl && (
+            <div className="hero-img-overlay">
+              <img
+                src={heroImageUrl}
+                alt={`Imagen de ${projectName}`}
+                loading="eager"
+              />
+            </div>
+          )}
+
+          {/* ── Decoración geométrica (solo cuando NO hay imagen) ── */}
+          {!heroImageUrl && (
+            <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
+              <div style={{ position:'absolute', top:'-20%', right:'-10%', width:'70%', height:'140%', background:'rgba(255,255,255,0.04)', borderRadius:'50%', transform:'rotate(-15deg)' }}/>
+              <div style={{ position:'absolute', top:'10%', left:'-5%', width:'50%', height:'80%', background:'rgba(255,255,255,0.03)', borderRadius:'50%' }}/>
+              <svg style={{ position:'absolute', bottom:0, left:0, right:0 }} viewBox="0 0 1440 80" preserveAspectRatio="none">
+                <path d="M0,80 C480,0 960,0 1440,80 L1440,80 L0,80 Z" fill={theme.bgPrimary}/>
+              </svg>
+            </div>
+          )}
+
+          {/* ── Contenido del hero (z-index sobre imagen/overlay) ── */}
           <div className="container" style={{ position:'relative', zIndex:1 }}>
+
+            {/* Logo personalizado (si existe) */}
+            {logoImageUrl && (
+              <div className="sr" style={{ textAlign:'center', marginBottom:28 }}>
+                <img
+                  src={logoImageUrl}
+                  alt={`Logo de ${projectName}`}
+                  style={{
+                    maxHeight:72, maxWidth:240, objectFit:'contain',
+                    display:'inline-block',
+                    filter:'drop-shadow(0 2px 12px rgba(0,0,0,0.35))',
+                  }}
+                  loading="eager"
+                />
+              </div>
+            )}
+
             {/* Badge */}
             {d.hero.badge && (
               <div className="sr" style={{ textAlign:'center', marginBottom:24 }}>
@@ -547,7 +558,7 @@ const LandingViewer = () => {
         </section>
       )}
  
-      {/* ── FEATURES ───────────────────────────────────────────────────────── */}
+      {/* ── FEATURES ─────────────────────────────────────────────────────────── */}
       {d.features?.length > 0 && (
         <section style={{ padding:'96px 0', background:theme.bgPrimary }}>
           <div className="container">
@@ -587,7 +598,6 @@ const LandingViewer = () => {
               )}
             </div>
             <div className="steps-grid" style={{ display:'grid', gridTemplateColumns:`repeat(${steps.length}, 1fr)`, gap:32, position:'relative' }}>
-              {/* Línea conectora */}
               {steps.length > 1 && (
                 <div style={{ position:'absolute', top:28, left:'15%', right:'15%', height:2, background:`linear-gradient(90deg, ${theme.primaryLight}, ${theme.primaryColor}, ${theme.primaryLight})`, zIndex:0 }}/>
               )}
@@ -626,15 +636,10 @@ const LandingViewer = () => {
             <div className="testimonials-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:24 }}>
               {testimonials.map((t, i) => (
                 <div key={i} className={`sr sr-delay-${(i%3)+1} card`} style={{ display:'flex', flexDirection:'column' }}>
-                  {/* Stars */}
-                  <div className="stars" style={{ marginBottom:16 }}>
-                    {'★'.repeat(t.rating || 5)}
-                  </div>
-                  {/* Quote */}
+                  <div className="stars" style={{ marginBottom:16 }}>{'★'.repeat(t.rating || 5)}</div>
                   <blockquote style={{ flex:1, fontSize:'0.97rem', color:theme.textBase, lineHeight:1.85, fontStyle:'italic', marginBottom:24, borderLeft:`3px solid ${theme.primaryColor}`, paddingLeft:16 }}>
                     "{t.quote}"
                   </blockquote>
-                  {/* Author */}
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div className="avatar">{(t.name||'U')[0].toUpperCase()}</div>
                     <div>
@@ -774,7 +779,6 @@ const LandingViewer = () => {
                 {d.urgency.subtitle}
               </p>
             )}
-            {/* Countdown */}
             {d.urgency.countdown?.enabled && (
               <div className="sr sr-delay-3" style={{ marginBottom:36 }}>
                 <p style={{ fontSize:'0.8rem', textTransform:'uppercase', letterSpacing:'.12em', color:'rgba(255,255,255,.6)', marginBottom:12 }}>
@@ -793,7 +797,6 @@ const LandingViewer = () => {
                 </div>
               </div>
             )}
-            {/* Benefits */}
             {d.urgency.benefitsList?.length > 0 && (
               <div className="sr sr-delay-4" style={{ display:'flex', flexWrap:'wrap', justifyContent:'center', gap:'8px 20px', marginBottom:36 }}>
                 {d.urgency.benefitsList.map((b,i) => (
@@ -845,9 +848,20 @@ const LandingViewer = () => {
         <footer style={{ padding:'64px 0 32px', background:theme.isDark ? '#05050a' : '#0a0a1a' }}>
           <div className="container">
             <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:48, marginBottom:48, alignItems:'start' }}>
-              {/* Brand */}
               <div>
-                <div style={{ fontSize:'1.5rem', fontWeight:900, color:'#fff', marginBottom:12, letterSpacing:'-0.02em' }}>{projectName}</div>
+                {/* Logo en footer (si existe) */}
+                {logoImageUrl ? (
+                  <img
+                    src={logoImageUrl}
+                    alt={`Logo de ${projectName}`}
+                    style={{ maxHeight:48, maxWidth:180, objectFit:'contain', marginBottom:12, display:'block' }}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div style={{ fontSize:'1.5rem', fontWeight:900, color:'#fff', marginBottom:12, letterSpacing:'-0.02em' }}>
+                    {projectName}
+                  </div>
+                )}
                 {d.footer.description && <p style={{ fontSize:'0.9rem', color:'#6b7280', lineHeight:1.75, maxWidth:420 }}>{d.footer.description}</p>}
                 {d.footer.contact && (
                   <a href={`mailto:${d.footer.contact}`} style={{ display:'block', marginTop:16, fontSize:'0.9rem', color:theme.secondaryColor }}>
@@ -856,7 +870,6 @@ const LandingViewer = () => {
                 )}
                 {d.footer.phone && <p style={{ fontSize:'0.85rem', color:'#6b7280', marginTop:6 }}>{d.footer.phone}</p>}
               </div>
-              {/* Links */}
               {d.footer.links?.length > 0 && (
                 <div>
                   <p style={{ fontSize:'0.75rem', fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:'#6b7280', marginBottom:16 }}>Navegación</p>
