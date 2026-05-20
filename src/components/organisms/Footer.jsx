@@ -32,16 +32,12 @@ const Footer = () => {
             <ul className="space-y-3 text-sm text-sapphire-100/60">
               <li><Link to="/templates" className="hover:text-blue-400 transition-colors">Plantillas IA</Link></li>
               <li><Link to="/planes" className="hover:text-blue-400 transition-colors">Planes de Precios</Link></li>
-              <li><button className="hover:text-blue-400 transition-colors">Componentes</button></li>
-              <li><button className="hover:text-blue-400 transition-colors">Casos de Uso</button></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold text-white mb-6 uppercase text-xs tracking-[0.2em]">Soporte</h4>
             <ul className="space-y-3 text-sm text-sapphire-100/60">
               <li><button className="hover:text-blue-400 transition-colors">Documentación</button></li>
-              <li><button className="hover:text-blue-400 transition-colors">Guías Rápidas</button></li>
-              <li><button className="hover:text-blue-400 transition-colors">API Status</button></li>
               <li><Link to="/soporte" className="hover:text-blue-400 transition-colors">Soporte</Link></li>
             </ul>
           </div>
@@ -50,7 +46,6 @@ const Footer = () => {
             <ul className="space-y-3 text-sm text-sapphire-100/60">
               <li><button className="hover:text-blue-400 transition-colors">Términos</button></li>
               <li><button className="hover:text-blue-400 transition-colors">Privacidad</button></li>
-              <li><button className="hover:text-blue-400 transition-colors">Cookies</button></li>
             </ul>
           </div>
         </div>

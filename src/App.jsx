@@ -9,8 +9,10 @@ const Plans          = lazy(() => import('./pages/Plans'));
 const Templates      = lazy(() => import('./pages/Templates'));
 const Register       = lazy(() => import('./pages/Register'));
 const Login          = lazy(() => import('./pages/Login'));
+const Checkout       = lazy(() => import('./pages/Checkout'));
 const CreateLanding  = lazy(() => import('./pages/CreateLanding'));
 const ProjectResult  = lazy(() => import('./pages/ProjectResult'));
+const LandingViewer  = lazy(() => import('./pages/LandingViewer'));
 const UserDashboard  = lazy(() => import('./pages/user/UserDashboard'));
 const UserProjects   = lazy(() => import('./pages/user/UserProjects'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -69,6 +71,8 @@ function App() {
             <Route path="/templates"      element={<Templates />} />
             <Route path="/create-landing" element={<ProtectedRoute><CreateLanding /></ProtectedRoute>} />
             <Route path="/project-result" element={<ProtectedRoute><ProjectResult /></ProtectedRoute>} />
+            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/landings/:id" element={<LandingViewer />} />
             <Route path="/dashboard"          element={<UserOnlyRoute><UserDashboard /></UserOnlyRoute>} />
             <Route path="/dashboard/projects" element={<UserOnlyRoute><UserProjects /></UserOnlyRoute>} />
             <Route path="/admin"          element={<AdminRoute><AdminDashboard /></AdminRoute>} />

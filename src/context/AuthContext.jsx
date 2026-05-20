@@ -6,14 +6,14 @@ export const AuthContext = createContext();
 const decodeJwtPayload = (token) => {
   try {
     const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const base64    = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
-      atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+      atob(base64).split('').map((c) =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join('')
     );
     return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 };
 
 const isTokenExpired = (token) => {
@@ -36,34 +36,31 @@ const extractRoleFromToken = (token) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
   const clearSession = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('userName');
-    localStorage.removeItem('userId');
+    // userId eliminado del localStorage
     setUser(null);
   }, []);
 
   useEffect(() => {
     try {
-      const token = localStorage.getItem('token');
+      const token      = localStorage.getItem('token');
       const storedName = localStorage.getItem('userName');
-      const storedUserId = localStorage.getItem('userId');
       if (token) {
         if (isTokenExpired(token)) {
           clearSession();
         } else {
           const role = extractRoleFromToken(token);
-          setUser({ name: storedName || 'Usuario', userId: storedUserId ? parseInt(storedUserId) : null, token, role });
+          // userId eliminado del estado: el backend lo deduce del JWT
+          setUser({ name: storedName || 'Usuario', token, role });
         }
       }
-    } catch {
-      clearSession();
-    } finally {
-      setLoading(false);
-    }
+    } catch { clearSession(); }
+    finally  { setLoading(false); }
   }, [clearSession]);
 
   useEffect(() => {
@@ -75,17 +72,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, name, userId } = response.data;
+      const { token, name } = response.data; // userId ya no viene del backend
       if (!token) return { success: false, message: 'Respuesta del servidor inválida.' };
+
       localStorage.setItem('token', token);
       localStorage.setItem('userName', name);
-      if (userId) localStorage.setItem('userId', String(userId));
+
       const role = extractRoleFromToken(token);
-      setUser({ name, token, userId: userId || null, role });
+      setUser({ name, token, role });
       return { success: true, role };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Error al conectar con el servidor.';
-      return { success: false, message: errorMessage };
+      return { success: false, message: error.response?.data?.message || 'Error al conectar con el servidor.' };
     }
   };
 
