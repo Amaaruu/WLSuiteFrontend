@@ -20,7 +20,7 @@ const UserDashboard = () => {
       setIsLoading(false);
       return;
     }
-    api.get('/projects?size=5&sort=createdAt,desc')
+    api.get('/projects', { params: { size: 5, page: 0, sort: 'createdAt,desc' } })
       .then(res => setProjects(res.data.content || []))
       .catch(() => setError('No se pudieron cargar tus proyectos.'))
       .finally(() => setIsLoading(false));

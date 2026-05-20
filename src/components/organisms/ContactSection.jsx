@@ -1,3 +1,4 @@
+// src/components/organisms/ContactSection.jsx
 import React, { useState } from 'react';
 import FormField from '../molecules/FormField';
 import TextArea from '../atoms/TextArea';
@@ -12,26 +13,30 @@ const ContactSection = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const [status, setStatus] = useState({ type: '', message: '' });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  try {
-    await api.post('/soporte', formData);
-    setFormData({ name: '', email: '', message: '' });
-    alert('¡Mensaje enviado correctamente!');
-  } catch (err) {
-    alert('Error al enviar el mensaje. Intenta de nuevo.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setStatus({ type: '', message: '' });
+    try {
+      await api.post('/contact', formData);
+      setFormData({ name: '', email: '', message: '' });
+      setStatus({ type: 'success', message: '¡Mensaje enviado correctamente! Te responderemos pronto.' });
+    } catch (err) {
+      setStatus({
+        type: 'error',
+        message: err.response?.data?.message || 'Error al enviar el mensaje. Intenta de nuevo.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="grid lg:grid-cols-2 gap-16 items-start">
       
@@ -66,6 +71,7 @@ const handleSubmit = async (e) => {
       <form onSubmit={handleSubmit} className="space-y-6 w-full">
         <FormField 
           label="Nombre Completo" 
+          id="name"
           name="name" 
           type="text" 
           value={formData.name} 
@@ -74,6 +80,7 @@ const handleSubmit = async (e) => {
         />
         <FormField 
           label="Correo Electrónico" 
+          id="email"
           name="email" 
           type="email" 
           value={formData.email} 
@@ -91,6 +98,7 @@ const handleSubmit = async (e) => {
             className="w-full"
           />
         </div>
+
         {status.message && (
           <div className={`p-4 rounded-xl text-sm font-medium border ${
             status.type === 'success' 
