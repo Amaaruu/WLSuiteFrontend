@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { generateAndDownloadZip } from '../utils/exportProject';
- 
+import { generateAndDownloadZip, generateIndexHTML } from '../utils/exportProject';
+
 // ── Helpers de color ──────────────────────────────────────────────────────────
 const COLOR_HEX_MAP = {
   'azul-marino':    '#1e3a5f', 'azul-cielo':      '#3b82f6',
@@ -14,7 +14,7 @@ const COLOR_HEX_MAP = {
   'crema':          '#fef9f0', 'amarillo-dorado':  '#d97706',
   'naranja':        '#ea580c', 'cian':             '#0891b2',
 };
- 
+
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return `${r}, ${g}, ${b}`;
@@ -27,7 +27,7 @@ function darken(hex, a=0.15) {
   const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
   return `#${Math.round(r*(1-a)).toString(16).padStart(2,'0')}${Math.round(g*(1-a)).toString(16).padStart(2,'0')}${Math.round(b*(1-a)).toString(16).padStart(2,'0')}`;
 }
- 
+
 // ── Construir tema visual ─────────────────────────────────────────────────────
 function buildTheme(aiMetadata, designPreferences) {
   const t  = aiMetadata?._theme || {};
@@ -36,10 +36,10 @@ function buildTheme(aiMetadata, designPreferences) {
   const secondaryKey = dp.secondaryColor || 'azul-cielo';
   const baseMode     = t.baseMode || dp.baseMode || 'claro';
   const isDark       = baseMode === 'oscuro';
-  const primaryHex   = t.primaryColor  || COLOR_HEX_MAP[primaryKey]   || '#1e3a5f';
-  const secondaryHex = t.secondaryColor|| COLOR_HEX_MAP[secondaryKey] || '#3b82f6';
+  const primaryHex   = t.primaryColor   || COLOR_HEX_MAP[primaryKey]   || '#1e3a5f';
+  const secondaryHex = t.secondaryColor || COLOR_HEX_MAP[secondaryKey] || '#3b82f6';
   const LIGHT_COLORS = ['blanco','crema','amarillo-dorado','gris-neutro'];
- 
+
   return {
     primaryColor:   primaryHex,
     primaryDark:    t.primaryDark    || darken(primaryHex, 0.15),
@@ -67,12 +67,12 @@ function buildTheme(aiMetadata, designPreferences) {
     scrollEffect:   t.scrollEffect   || dp.scrollEffect   || 'fade-in',
   };
 }
- 
+
 // ── Radios de botones ─────────────────────────────────────────────────────────
 function getBtnRadius(shape) {
   return { cuadrado:'6px', redondeado:'12px', pildora:'9999px' }[shape] || '12px';
 }
- 
+
 // ── CSS global inyectado en el head ──────────────────────────────────────────
 const GLOBAL_CSS = (theme) => {
   const r = getBtnRadius(theme.buttonShape);
@@ -80,7 +80,7 @@ const GLOBAL_CSS = (theme) => {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body { font-family: ${theme.fontFamily}; background: ${theme.bgPrimary}; color: ${theme.textBase}; -webkit-font-smoothing: antialiased; }
- 
+
   .sr { opacity: 0; transform: translateY(32px); transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1); }
   .sr.visible { opacity: 1; transform: none; }
   .sr-delay-1 { transition-delay: .1s; }
@@ -89,7 +89,7 @@ const GLOBAL_CSS = (theme) => {
   .sr-delay-4 { transition-delay: .4s; }
   .sr-delay-5 { transition-delay: .5s; }
   .sr-delay-6 { transition-delay: .6s; }
- 
+
   .btn-primary {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 16px 36px; background: ${theme.primaryColor}; color: ${theme.primaryText};
@@ -99,7 +99,7 @@ const GLOBAL_CSS = (theme) => {
     box-shadow: 0 4px 20px rgba(${theme.primaryRgb}, 0.35);
   }
   .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(${theme.primaryRgb}, 0.5); background: ${theme.primaryDark}; }
- 
+
   .btn-secondary {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 16px 36px; background: transparent; color: ${theme.textBase};
@@ -108,7 +108,7 @@ const GLOBAL_CSS = (theme) => {
     transition: background .2s, border-color .2s;
   }
   .btn-secondary:hover { background: ${theme.bgSecondary}; border-color: ${theme.primaryColor}; color: ${theme.primaryColor}; }
- 
+
   .btn-ghost-white {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 14px 32px; background: rgba(255,255,255,0.12); color: #fff;
@@ -118,7 +118,7 @@ const GLOBAL_CSS = (theme) => {
     backdrop-filter: blur(8px);
   }
   .btn-ghost-white:hover { background: rgba(255,255,255,0.22); }
- 
+
   .badge {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 16px; background: ${theme.primaryLight}; color: ${theme.primaryColor};
@@ -133,19 +133,19 @@ const GLOBAL_CSS = (theme) => {
     letter-spacing: 0.06em; text-transform: uppercase;
     border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(8px);
   }
- 
+
   .card {
     background: ${theme.cardBg}; border: 1px solid ${theme.cardBorder};
     border-radius: 20px; padding: 32px; transition: transform .25s, box-shadow .25s;
   }
   .card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.1); }
- 
+
   .card-featured {
     background: ${theme.primaryColor}; border: none; border-radius: 24px;
     padding: 36px; position: relative;
     box-shadow: 0 20px 64px rgba(${theme.primaryRgb}, 0.35);
   }
- 
+
   .section-tag {
     font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: ${theme.primaryColor}; margin-bottom: 12px;
@@ -154,7 +154,7 @@ const GLOBAL_CSS = (theme) => {
   .section-tag::before {
     content: ''; display: block; width: 24px; height: 2px; background: ${theme.primaryColor};
   }
- 
+
   .section-title {
     font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15;
     letter-spacing: -0.02em; color: ${theme.textBase};
@@ -162,12 +162,12 @@ const GLOBAL_CSS = (theme) => {
   .section-subtitle {
     font-size: 1.15rem; color: ${theme.textMuted}; line-height: 1.75; max-width: 600px; margin: 0 auto;
   }
- 
+
   .section-divider { height: 1px; background: ${theme.cardBorder}; margin: 0; }
   .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
   .container-sm { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 24px; }
   .stars { color: #f59e0b; font-size: 0.95rem; letter-spacing: 2px; }
- 
+
   .nav-floating {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
     z-index: 999; display: flex; align-items: center; gap: 12px;
@@ -180,7 +180,7 @@ const GLOBAL_CSS = (theme) => {
   }
   .nav-floating a { color: ${theme.textMuted}; text-decoration: none; transition: color .2s; }
   .nav-floating a:hover { color: ${theme.primaryColor}; }
- 
+
   .faq-item { border-bottom: 1px solid ${theme.cardBorder}; overflow: hidden; }
   .faq-question {
     width: 100%; display: flex; justify-content: space-between; align-items: center;
@@ -197,28 +197,28 @@ const GLOBAL_CSS = (theme) => {
   .faq-item.open .faq-icon { transform: rotate(45deg); background: ${theme.primaryColor}; color: ${theme.primaryText}; }
   .faq-answer { overflow: hidden; max-height: 0; transition: max-height .4s cubic-bezier(.22,1,.36,1); }
   .faq-answer-inner { padding: 0 0 22px; font-size: 0.97rem; color: ${theme.textMuted}; line-height: 1.8; }
- 
+
   .headline-highlight { color: ${theme.primaryColor}; position: relative; }
- 
+
   .trust-bar {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
     gap: 8px 24px; font-size: 0.85rem; color: ${theme.textMuted}; margin-top: 20px;
   }
   .trust-bar span { display: flex; align-items: center; gap: 6px; }
   .trust-bar span::before { content: '✓'; color: ${theme.primaryColor}; font-weight: 700; }
- 
+
   .step-number {
     width: 56px; height: 56px; border-radius: 16px; background: ${theme.primaryLight};
     color: ${theme.primaryColor}; font-size: 1.4rem; font-weight: 800;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
- 
+
   .stat-number { font-size: 3rem; font-weight: 900; color: ${theme.primaryColor}; line-height: 1; letter-spacing: -0.03em; }
   .stat-label  { font-size: 0.9rem; font-weight: 600; color: ${theme.textBase}; margin-top: 4px; }
   .stat-desc   { font-size: 0.8rem; color: ${theme.textMuted}; margin-top: 2px; }
- 
+
   .not-included { color: ${theme.textMuted}; opacity: 0.5; text-decoration: line-through; }
- 
+
   .countdown-box {
     background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
     border-radius: 16px; padding: 20px 32px;
@@ -229,7 +229,7 @@ const GLOBAL_CSS = (theme) => {
   .countdown-value { font-size: 2.5rem; font-weight: 900; color: #fff; line-height: 1; }
   .countdown-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.6); }
   .countdown-sep { font-size: 2rem; font-weight: 900; color: rgba(255,255,255,.5); margin-top: -8px; }
- 
+
   .feature-highlight {
     border: 2px solid ${theme.primaryColor}; position: relative;
   }
@@ -239,7 +239,7 @@ const GLOBAL_CSS = (theme) => {
     padding: 2px 12px; border-radius: 9999px; font-size: 0.65rem; font-weight: 700;
     letter-spacing: .08em; text-transform: uppercase;
   }
- 
+
   .avatar {
     width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
@@ -259,7 +259,7 @@ const GLOBAL_CSS = (theme) => {
     content: ''; position: absolute; inset: 0;
     background: linear-gradient(145deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.38) 100%);
   }
- 
+
   @media (max-width: 768px) {
     .hero-grid { flex-direction: column !important; }
     .features-grid { grid-template-columns: 1fr !important; }
@@ -273,13 +273,13 @@ const GLOBAL_CSS = (theme) => {
   }
 `;
 };
- 
+
 // ── Componente principal ──────────────────────────────────────────────────────
 const LandingViewer = () => {
   const { id }         = useParams();
   const [searchParams] = useSearchParams();
   const token          = searchParams.get('token');
- 
+
   const [landingData,       setLandingData]       = useState(null);
   const [designPreferences, setDesignPreferences] = useState(null);
   const [projectName,       setProjectName]       = useState('Landing Page');
@@ -288,8 +288,9 @@ const LandingViewer = () => {
   const [countdown,         setCountdown]         = useState({ h:23, m:59, s:59 });
   const [openFaq,           setOpenFaq]           = useState(null);
   const [isZipping,         setIsZipping]         = useState(false);
-  const containerRef = useRef(null);
- 
+  // CORRECCIÓN: containerRef eliminado — era una referencia declarada pero nunca
+  // asignada a ningún elemento ni usada en ningún efecto. Era código muerto.
+
   // Countdown
   useEffect(() => {
     const t = setInterval(() => {
@@ -303,7 +304,7 @@ const LandingViewer = () => {
     }, 1000);
     return () => clearInterval(t);
   }, []);
- 
+
   // Fetch data
   useEffect(() => {
     if (!token) { setError('Token no proporcionado.'); setIsLoading(false); return; }
@@ -323,7 +324,7 @@ const LandingViewer = () => {
     };
     fetchData();
   }, [id, token]);
- 
+
   // Inject font + scroll reveal
   useEffect(() => {
     if (!landingData) return;
@@ -341,7 +342,7 @@ const LandingViewer = () => {
     }, 100);
     return () => { clearTimeout(timer); obs.disconnect(); };
   }, [landingData, designPreferences]);
- 
+
   if (isLoading) return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ textAlign:'center' }}>
@@ -351,7 +352,7 @@ const LandingViewer = () => {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
- 
+
   if (error) return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
       <div style={{ background:'#fff', padding:48, borderRadius:24, maxWidth:440, textAlign:'center', border:'1px solid #fee2e2', boxShadow:'0 4px 32px rgba(0,0,0,0.08)' }}>
@@ -362,32 +363,41 @@ const LandingViewer = () => {
       </div>
     </div>
   );
- 
+
   if (!landingData) return null;
- 
-  const theme = buildTheme(landingData, designPreferences);
-  const d     = landingData;
-  const faq   = d.faq?.items || d.faq || [];
+
+  const theme        = buildTheme(landingData, designPreferences);
+  const d            = landingData;
+  const faq          = d.faq?.items || d.faq || [];
   const testimonials = d.socialProof?.testimonials || d.testimonials || [];
   const stats        = d.socialProof?.stats || [];
   const pricingPlans = d.pricing?.plans || (Array.isArray(d.pricing) ? d.pricing : []);
   const steps        = d.howItWorks?.steps || [];
 
-  // ── Imágenes personalizadas desde designPreferences ───────────────────────
+  // Imágenes personalizadas desde designPreferences
   const heroImageUrl = designPreferences?.heroImageUrl || null;
   const logoImageUrl = designPreferences?.logoImageUrl || null;
- 
+
   const toggleFaq = (i) => setOpenFaq(prev => prev === i ? null : i);
- 
-  const handleDownload = () => {
-    const html = document.documentElement.outerHTML;
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = `${projectName.toLowerCase().replace(/\s+/g,'-')}.html`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    try {
+      const currentTheme = buildTheme(landingData, designPreferences);
+      const cleanHtml    = generateIndexHTML(landingData, currentTheme, projectName);
+      const blob         = new Blob([cleanHtml], { type: 'text/html;charset=utf-8' });
+      const url          = URL.createObjectURL(blob);
+      const a            = document.createElement('a');
+      a.href             = url;
+      a.download         = `${projectName.toLowerCase().replace(/\s+/g, '-')}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[LandingViewer] Error al generar descarga HTML:', err);
+      alert('No se pudo generar el archivo HTML. Intenta descargar el ZIP en su lugar.');
+    }
   };
- 
+
   const handleDownloadZip = async () => {
     setIsZipping(true);
     try {
@@ -399,11 +409,11 @@ const LandingViewer = () => {
       setIsZipping(false);
     }
   };
- 
+
   return (
     <>
       <style>{GLOBAL_CSS(theme)}</style>
- 
+
       {/* ── Barra de herramientas flotante ── */}
       <div style={{ position:'fixed', top:16, right:16, zIndex:9999, display:'flex', gap:10 }}>
         <button
@@ -431,7 +441,7 @@ const LandingViewer = () => {
           ↓ Descargar HTML
         </button>
       </div>
- 
+
       {/* NAV flotante */}
       <nav className="nav-floating">
         <span style={{ fontWeight:800, color:theme.textBase, marginRight:8 }}>{projectName}</span>
@@ -444,19 +454,17 @@ const LandingViewer = () => {
           {d.hero?.ctaButton || 'Comenzar'}
         </a>
       </nav>
- 
+
       {/* ── HERO ───────────────────────────────────────────────────────────── */}
       {d.hero && (
         <section id="hero" style={{
           position:'relative', overflow:'hidden', paddingTop:140, paddingBottom:100,
-          // Con imagen: fondo oscuro para que el overlay tenga base.
-          // Sin imagen: gradiente original de color de marca.
           background: heroImageUrl
             ? theme.isDark ? '#05050a' : '#0a0a1a'
             : `linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : theme.primaryDark} 100%)`,
         }}>
 
-          {/* ── Imagen de fondo personalizada (solo si existe) ── */}
+          {/* Imagen de fondo personalizada (solo si existe) */}
           {heroImageUrl && (
             <div className="hero-img-overlay">
               <img
@@ -467,7 +475,7 @@ const LandingViewer = () => {
             </div>
           )}
 
-          {/* ── Decoración geométrica (solo cuando NO hay imagen) ── */}
+          {/* Decoración geométrica (solo cuando NO hay imagen) */}
           {!heroImageUrl && (
             <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
               <div style={{ position:'absolute', top:'-20%', right:'-10%', width:'70%', height:'140%', background:'rgba(255,255,255,0.04)', borderRadius:'50%', transform:'rotate(-15deg)' }}/>
@@ -478,7 +486,7 @@ const LandingViewer = () => {
             </div>
           )}
 
-          {/* ── Contenido del hero (z-index sobre imagen/overlay) ── */}
+          {/* Contenido del hero (z-index sobre imagen/overlay) */}
           <div className="container" style={{ position:'relative', zIndex:1 }}>
 
             {/* Logo personalizado (si existe) */}
@@ -503,7 +511,7 @@ const LandingViewer = () => {
                 <span className="badge-white">{d.hero.badge}</span>
               </div>
             )}
- 
+
             {/* Headline */}
             <div className="sr sr-delay-1" style={{ textAlign:'center', marginBottom:24 }}>
               <h1 style={{
@@ -513,7 +521,7 @@ const LandingViewer = () => {
                 {d.hero.headline}
               </h1>
             </div>
- 
+
             {/* Subheadline */}
             {d.hero.subheadline && (
               <div className="sr sr-delay-2" style={{ textAlign:'center', marginBottom:36 }}>
@@ -522,7 +530,7 @@ const LandingViewer = () => {
                 </p>
               </div>
             )}
- 
+
             {/* CTAs */}
             <div className="sr sr-delay-3 cta-buttons" style={{ display:'flex', gap:16, justifyContent:'center', marginBottom:28, flexWrap:'wrap' }}>
               <a href="#contact" className="btn-primary" style={{ background:'#fff', color:theme.primaryColor, boxShadow:'0 8px 32px rgba(0,0,0,0.2)', fontSize:'1.1rem', padding:'18px 40px', fontFamily:'inherit', borderColor:'#fff' }}>
@@ -534,14 +542,14 @@ const LandingViewer = () => {
                 </a>
               )}
             </div>
- 
+
             {/* Trust indicators */}
             {d.hero.trustIndicators?.length > 0 && (
               <div className="sr sr-delay-4 trust-bar">
                 {d.hero.trustIndicators.map((t, i) => <span key={i}>{t}</span>)}
               </div>
             )}
- 
+
             {/* Stats rápidas en hero */}
             {stats.length > 0 && (
               <div className="sr sr-delay-5" style={{ marginTop:56, display:'grid', gridTemplateColumns:`repeat(${Math.min(stats.length, 3)}, 1fr)`, gap:1, maxWidth:640, margin:'56px auto 0', background:'rgba(255,255,255,0.1)', borderRadius:20, overflow:'hidden', backdropFilter:'blur(10px)' }}>
@@ -557,7 +565,7 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── FEATURES ─────────────────────────────────────────────────────────── */}
       {d.features?.length > 0 && (
         <section style={{ padding:'96px 0', background:theme.bgPrimary }}>
@@ -583,7 +591,7 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
       {steps.length > 0 && (
         <section id="how" style={{ padding:'96px 0', background:theme.bgSecondary }}>
@@ -619,7 +627,7 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── TESTIMONIALS ───────────────────────────────────────────────────── */}
       {testimonials.length > 0 && (
         <section id="testimonials" style={{ padding:'96px 0', background:theme.bgPrimary }}>
@@ -653,7 +661,7 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── PRICING ────────────────────────────────────────────────────────── */}
       {pricingPlans.length > 0 && (
         <section id="pricing" style={{ padding:'96px 0', background:theme.bgSecondary }}>
@@ -725,7 +733,7 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── FAQ ────────────────────────────────────────────────────────────── */}
       {faq.length > 0 && (
         <section id="faq" style={{ padding:'96px 0', background:theme.bgPrimary }}>
@@ -755,7 +763,7 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── URGENCY ────────────────────────────────────────────────────────── */}
       {d.urgency && (
         <section style={{
@@ -817,7 +825,7 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── CTA FINAL ──────────────────────────────────────────────────────── */}
       {d.cta && (
         <section id="contact" style={{ padding:'96px 0', background:theme.bgSecondary }}>
@@ -842,14 +850,13 @@ const LandingViewer = () => {
           </div>
         </section>
       )}
- 
+
       {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
       {d.footer && (
         <footer style={{ padding:'64px 0 32px', background:theme.isDark ? '#05050a' : '#0a0a1a' }}>
           <div className="container">
             <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:48, marginBottom:48, alignItems:'start' }}>
               <div>
-                {/* Logo en footer (si existe) */}
                 {logoImageUrl ? (
                   <img
                     src={logoImageUrl}
@@ -900,5 +907,5 @@ const LandingViewer = () => {
     </>
   );
 };
- 
+
 export default LandingViewer;

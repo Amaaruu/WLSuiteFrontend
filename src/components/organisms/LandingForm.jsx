@@ -1,3 +1,4 @@
+// src/components/organisms/LandingForm.jsx
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useFormContext } from '../../context/FormContext';
@@ -5,11 +6,11 @@ import Button from '../atoms/Button';
 import StepperBar from '../molecules/StepperBar';
 import PlanBadge from '../molecules/PlanBadge';
 import UpgradeBanner from '../molecules/UpgradeBanner';
-import Step1Identity   from './steps/Step1Identity';
+import Step1Identity      from './steps/Step1Identity';
 import Step2Communication from './steps/Step2Communication';
-import Step3Visual     from './steps/Step3Visual';
-import Step4Advanced   from './steps/Step4Advanced';
-import StepReview      from './steps/StepReview';
+import Step3Visual        from './steps/Step3Visual';
+import Step4Advanced      from './steps/Step4Advanced';
+import StepReview         from './steps/StepReview';
 import api from '../../services/api';
 
 const PLAN_LEVELS = {
@@ -18,35 +19,35 @@ const PLAN_LEVELS = {
 const getPlanLevel = (name) => PLAN_LEVELS[name?.toLowerCase()] ?? 1;
 
 // Los pasos disponibles dependen del nivel del plan.
-// Plan Básico: paso 1 + revisión.
-// Intermedio: pasos 1–3 + revisión.
-// Premium: pasos 1–4 + revisión.
+// Plan Básico:     paso 1 + revisión.
+// Intermedio:      pasos 1–3 + revisión.
+// Premium:         pasos 1–4 + revisión.
 const getSteps = (planLevel) => {
   const all = [
-    { id: 'identity',      label: 'Tu negocio' },
-    { id: 'communication', label: 'Comunicación' },
-    { id: 'visual',        label: 'Estilo' },
+    { id: 'identity',      label: 'Tu negocio'     },
+    { id: 'communication', label: 'Comunicación'    },
+    { id: 'visual',        label: 'Estilo'          },
     { id: 'advanced',      label: 'Diseño avanzado' },
-    { id: 'review',        label: 'Revisión' },
+    { id: 'review',        label: 'Revisión'        },
   ];
 
-  if (planLevel === 1) return [all[0], all[4]];           
-  if (planLevel === 2) return [all[0], all[1], all[2], all[4]]; 
-  return all;                                              // Premium: todos
+  if (planLevel === 1) return [all[0], all[4]];
+  if (planLevel === 2) return [all[0], all[1], all[2], all[4]];
+  return all;
 };
 
-//Validación mínima por paso
+// Validación mínima por paso
 const validateStep = (stepId, formData) => {
   if (stepId === 'identity') {
     return (
-      formData.projectName.trim() !== '' &&
-      formData.projectIdea.trim() !== '' &&
-      formData.callToAction.trim() !== '' &&
-      formData.businessSector !== '' &&
-      formData.landingGoal !== '' &&
-      formData.targetAudience !== '' &&
-      formData.brandPositioning !== '' &&
-      formData.brandStage !== ''
+      formData.projectName.trim()    !== '' &&
+      formData.projectIdea.trim()    !== '' &&
+      formData.callToAction.trim()   !== '' &&
+      formData.businessSector        !== '' &&
+      formData.landingGoal           !== '' &&
+      formData.targetAudience        !== '' &&
+      formData.brandPositioning      !== '' &&
+      formData.brandStage            !== ''
     );
   }
   return true;
@@ -80,9 +81,8 @@ const LandingForm = () => {
 
   const currentStepIndex  = currentStep - 1;
   const currentStepConfig = steps[currentStepIndex];
-  const isReviewStep = currentStepConfig?.id === 'review';
-
-  const canAdvance = validateStep(currentStepConfig?.id, formData);
+  const isReviewStep      = currentStepConfig?.id === 'review';
+  const canAdvance        = validateStep(currentStepConfig?.id, formData);
 
   const handleNext = () => {
     if (!canAdvance) {
@@ -113,11 +113,13 @@ const LandingForm = () => {
     try {
       const payload  = buildPayload(transactionId);
       const response = await api.post('/projects', payload);
-      navigate('/project-result', { state: { project: response.data } });
+      navigate(`/project-result/${response.data.projectId}`, {
+        state: { project: response.data },
+      });
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          'Ocurrió un error al generar tu landing. Intenta de nuevo.'
+        'Ocurrió un error al generar tu landing. Intenta de nuevo.'
       );
     } finally {
       setIsLoading(false);
@@ -136,76 +138,76 @@ const LandingForm = () => {
   };
 
   const STEP_TITLES = {
-    identity:      { title: 'Tu negocio',               desc: 'Define quién eres, a quién le hablas y qué quieres lograr.' },
-    communication: { title: 'Comunicación y colores',    desc: 'Define el tono de tu marca y la identidad visual de color.' },
-    visual:        { title: 'Estilo y secciones',        desc: 'Elige la estética y estructura de contenido de tu landing.' },
-    advanced:      { title: 'Diseño avanzado',           desc: 'Configura tipografía, botones, animaciones y creatividad.' },
-    review:        { title: 'Revisa tu configuración',   desc: 'Confirma todos los detalles antes de generar tu landing.' },
+    identity:      { title: 'Tu negocio',              desc: 'Define quién eres, a quién le hablas y qué quieres lograr.'          },
+    communication: { title: 'Comunicación y colores',   desc: 'Define el tono de tu marca y la identidad visual de color.'          },
+    visual:        { title: 'Estilo y secciones',       desc: 'Elige la estética y estructura de contenido de tu landing.'          },
+    advanced:      { title: 'Diseño avanzado',          desc: 'Configura tipografía, botones, animaciones y creatividad.'           },
+    review:        { title: 'Revisa tu configuración',  desc: 'Confirma todos los detalles antes de generar tu landing.'            },
   };
 
-  const { title, desc } = STEP_TITLES[currentStepConfig?.id] || {};
+  const stepTitle = STEP_TITLES[currentStepConfig?.id] || {};
 
   return (
     <div className="space-y-6">
+      {/* Barra de progreso */}
+      <StepperBar steps={steps} currentStep={currentStep} />
 
-      <PlanBadge planName={selectedPlan?.name} transactionId={transactionId} />
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5">
-        <StepperBar steps={steps} currentStep={currentStep} />
+      {/* Badge y título del paso */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          {stepTitle.title && (
+            <h2 className="text-xl font-bold text-gray-900">{stepTitle.title}</h2>
+          )}
+          {stepTitle.desc && (
+            <p className="text-sm text-gray-500 mt-0.5">{stepTitle.desc}</p>
+          )}
+        </div>
+        <PlanBadge planName={selectedPlan?.name} />
       </div>
 
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-        <p className="text-sm text-gray-500">{desc}</p>
-      </div>
+      {/* Banner de upgrade si el plan es básico y está en step 1 */}
+      {planLevel === 1 && currentStep === 1 && (
+        <UpgradeBanner />
+      )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-8">
-        {renderStep()}
-      </div>
+      {/* Contenido del paso actual */}
+      <div>{renderStep()}</div>
 
-      <UpgradeBanner planLevel={planLevel} />
-
+      {/* Error de validación */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-xl">
-          <p className="text-red-700 text-sm">{error}</p>
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm font-medium px-4 py-3 rounded-xl">
+          {error}
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4">
+      {/* Navegación entre pasos */}
+      <div className="flex items-center justify-between pt-2">
         <Button
-          variant="secondary"
+          variant="ghost"
           onClick={handleBack}
-          disabled={currentStep === 1}
-          className="px-6 py-3"
+          disabled={currentStep === 1 || isLoading}
         >
-          ← Anterior
+          ← Atrás
         </Button>
-
-        <span className="text-xs text-gray-400 font-medium">
-          Paso {currentStep} de {steps.length}
-        </span>
 
         {isReviewStep ? (
           <Button
             variant="primary"
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-8 py-3"
           >
-            {isLoading ? 'Generando tu landing...' : '✦ Generar mi landing page'}
+            {isLoading ? 'Generando landing…' : 'Generar mi landing page'}
           </Button>
         ) : (
           <Button
             variant="primary"
             onClick={handleNext}
-            disabled={!canAdvance}
-            className="px-6 py-3"
+            disabled={!canAdvance || isLoading}
           >
-            Siguiente →
+            Continuar →
           </Button>
         )}
       </div>
-
     </div>
   );
 };

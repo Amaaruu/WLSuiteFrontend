@@ -20,7 +20,7 @@ const AdminUsers     = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminProjects  = lazy(() => import('./pages/admin/AdminProjects'));
 const AdminLogs      = lazy(() => import('./pages/admin/AdminLogs'));
 const AdminSupport   = lazy(() => import('./pages/admin/AdminSupport'));
-const AdminPlans = lazy(() => import('./pages/admin/AdminPlans'));
+const AdminPlans     = lazy(() => import('./pages/admin/AdminPlans'));
 
 const PageLoader = () => (
   <div className="flex h-screen w-screen items-center justify-center">
@@ -66,21 +66,29 @@ function App() {
             <Route path="/about"     element={<About />} />
             <Route path="/soporte"   element={<Support />} />
             <Route path="/planes"    element={<Plans />} />
-            <Route path="/login"    element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-            <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
-            <Route path="/templates"      element={<Templates />} />
+            <Route path="/login"     element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+            <Route path="/register"  element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+            <Route path="/templates" element={<Templates />} />
+
             <Route path="/create-landing" element={<ProtectedRoute><CreateLanding /></ProtectedRoute>} />
-            <Route path="/project-result" element={<ProtectedRoute><ProjectResult /></ProtectedRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/checkout"       element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route
+              path="/project-result/:projectId"
+              element={<ProtectedRoute><ProjectResult /></ProtectedRoute>}
+            />
+
             <Route path="/landings/:id" element={<LandingViewer />} />
+
             <Route path="/dashboard"          element={<UserOnlyRoute><UserDashboard /></UserOnlyRoute>} />
             <Route path="/dashboard/projects" element={<UserOnlyRoute><UserProjects /></UserOnlyRoute>} />
+
             <Route path="/admin"          element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/users"    element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="/admin/projects" element={<AdminRoute><AdminProjects /></AdminRoute>} />
             <Route path="/admin/logs"     element={<AdminRoute><AdminLogs /></AdminRoute>} />
             <Route path="/admin/support"  element={<AdminRoute><AdminSupport /></AdminRoute>} />
             <Route path="/admin/planes"   element={<AdminRoute><AdminPlans /></AdminRoute>} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

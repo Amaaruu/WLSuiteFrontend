@@ -1,31 +1,31 @@
 // src/pages/ProjectResult.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/organisms/Navbar';
 import Footer from '../components/organisms/Footer';
 import api from '../services/api';
 
 const STATUS_CONFIG = {
   Ready: {
-    label: 'Lista',
-    bg: '#f0fdf4',
+    label:  'Lista',
+    bg:     '#f0fdf4',
     border: '#bbf7d0',
-    color: '#15803d',
-    dot: '#22c55e',
+    color:  '#15803d',
+    dot:    '#22c55e',
   },
   Processing: {
-    label: 'Generando',
-    bg: '#fffbeb',
+    label:  'Generando',
+    bg:     '#fffbeb',
     border: '#fde68a',
-    color: '#b45309',
-    dot: '#f59e0b',
+    color:  '#b45309',
+    dot:    '#f59e0b',
   },
   Failed: {
-    label: 'Error',
-    bg: '#fef2f2',
+    label:  'Error',
+    bg:     '#fef2f2',
     border: '#fecaca',
-    color: '#b91c1c',
-    dot: '#ef4444',
+    color:  '#b91c1c',
+    dot:    '#ef4444',
   },
 };
 
@@ -33,18 +33,18 @@ function MetaChip({ label, value, icon }) {
   if (!value) return null;
   return (
     <div style={{
-      background: '#f8fafc',
-      border: '1px solid #e2e8f0',
-      borderRadius: '12px',
-      padding: '16px 20px',
-      display: 'flex',
+      background:    '#f8fafc',
+      border:        '1px solid #e2e8f0',
+      borderRadius:  '12px',
+      padding:       '16px 20px',
+      display:       'flex',
       flexDirection: 'column',
-      gap: '4px',
+      gap:           '4px',
     }}>
       <span style={{
-        fontSize: '0.72rem',
-        fontWeight: '700',
-        color: '#94a3b8',
+        fontSize:      '0.72rem',
+        fontWeight:    '700',
+        color:         '#94a3b8',
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
       }}>
@@ -52,9 +52,9 @@ function MetaChip({ label, value, icon }) {
         {label}
       </span>
       <span style={{
-        fontSize: '0.9rem',
+        fontSize:   '0.9rem',
         fontWeight: '600',
-        color: '#0f172a',
+        color:      '#0f172a',
         lineHeight: '1.4',
       }}>
         {value}
@@ -67,30 +67,35 @@ const ProjectResult = () => {
   const location  = useLocation();
   const navigate  = useNavigate();
 
-  // ── El proyecto puede venir directo desde location.state (flujo normal)
-  // o necesitar ser recargado por polling cuando está en Processing
+  const { projectId } = useParams();
+
   const initialProject = location.state?.project || null;
 
   const [project,   setProject]   = useState(initialProject);
   const [isLoading, setIsLoading] = useState(!initialProject);
   const [error,     setError]     = useState(null);
 
-  // Si no vino project en state, no tenemos ID → redirigir a proyectos
   useEffect(() => {
-    if (!initialProject) {
+    if (initialProject) return;
+
+    if (!projectId) {
       setError('No se encontró información del proyecto.');
       setIsLoading(false);
+      return;
     }
-  }, [initialProject]);
 
-  // ── Polling: si el proyecto está en Processing, recargamos cada 5s
+    api.get(`/projects/${projectId}`)
+      .then(res => setProject(res.data))
+      .catch(() => setError('No se pudo cargar el proyecto. Verifica que tengas acceso.'))
+      .finally(() => setIsLoading(false));
+  }, [projectId, initialProject]);
+
   const fetchProject = useCallback(async () => {
     if (!project?.projectId) return;
     try {
       const res = await api.get(`/projects/${project.projectId}`);
       setProject(res.data);
     } catch {
-      // silencioso: mantenemos el estado anterior si falla el polling
     }
   }, [project?.projectId]);
 
@@ -100,7 +105,7 @@ const ProjectResult = () => {
     return () => clearInterval(interval);
   }, [project, fetchProject]);
 
-  // ── Estados de carga / error ──────────────────────────────────────
+  // ── Estados de carga / error ──────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -156,14 +161,17 @@ const ProjectResult = () => {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4"
               style={{
                 background: statusCfg.bg,
-                color: statusCfg.color,
-                border: `1px solid ${statusCfg.border}`,
+                color:      statusCfg.color,
+                border:     `1px solid ${statusCfg.border}`,
               }}
             >
               <span style={{
-                width: '8px', height: '8px', borderRadius: '50%',
-                background: statusCfg.dot, flexShrink: 0,
-                animation: isProcessing ? 'pulse 1.5s ease infinite' : 'none',
+                width:       '8px',
+                height:      '8px',
+                borderRadius:'50%',
+                background:  statusCfg.dot,
+                flexShrink:  0,
+                animation:   isProcessing ? 'pulse 1.5s ease infinite' : 'none',
               }} />
               {isProcessing ? 'IA generando tu landing…' : `Estado: ${statusCfg.label}`}
             </div>
@@ -207,49 +215,30 @@ const ProjectResult = () => {
 
             {/* Metadatos */}
             <div className="px-8 py-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <MetaChip label="Idea del negocio"      value={project.projectIdea}       icon="💡" />
-              <MetaChip label="Call to Action"        value={project.callToAction}      icon="🎯" />
-              <MetaChip label="Sector"                value={project.businessSector}    icon="🏢" />
-              <MetaChip label="Tono de comunicación"  value={project.communicationTone} icon="💬" />
-              {project.landingGoal    && <MetaChip label="Objetivo"         value={project.landingGoal}    icon="📊" />}
-              {project.targetAudience && <MetaChip label="Público objetivo" value={project.targetAudience} icon="👥" />}
+              <MetaChip label="Idea del negocio"  value={project.projectIdea}    icon="💡" />
+              <MetaChip label="Call to Action"    value={project.callToAction}   icon="🎯" />
+              <MetaChip label="Sector"            value={project.businessSector} icon="🏢" />
+              <MetaChip label="Objetivo"          value={project.landingGoal}    icon="📈" />
             </div>
 
             {/* ── Estado: Ready ────────────────────────────────── */}
             {isReady && project.signedUrl && (
-              <div className="px-8 py-6 bg-gradient-to-br from-green-50 to-emerald-50 border-t border-green-100">
-                <p className="text-xs font-bold text-green-600 uppercase tracking-widest mb-4">
-                  ✦ Tu landing page está lista
+              <div className="px-8 py-6 bg-green-50 border-t border-green-100">
+                <p className="text-sm font-bold text-green-800 mb-3">
+                  ✓ Tu landing page está generada y disponible
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <a
-                    href={project.signedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition text-sm"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-                    </svg>
-                    Ver mi landing page
-                  </a>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(project.signedUrl)}
-                    className="flex items-center justify-center gap-2 px-5 py-3.5 border border-green-200 text-green-700 font-bold rounded-xl hover:bg-green-100 transition text-sm"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                    </svg>
-                    Copiar URL
-                  </button>
-                </div>
-                <p className="text-xs text-green-500 mt-3 flex items-center gap-1.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 8v4l3 3"/>
-                  </svg>
-                  Este enlace es válido por 24 horas desde la generación.
+                
+                {/* LA ETIQUETA <a FALTABA AQUÍ */}
+                <a
+                  href={project.signedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition"
+                >
+                  Ver mi landing page →
+                </a>
+                <p className="text-xs text-green-600 mt-3">
+                  Este enlace es válido por 24 horas. Descarga tu proyecto para tenerlo de forma permanente.
                 </p>
               </div>
             )}
