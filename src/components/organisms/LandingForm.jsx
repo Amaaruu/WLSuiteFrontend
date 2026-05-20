@@ -167,7 +167,7 @@ const LandingForm = () => {
 
       {/* Banner de upgrade si el plan es básico y está en step 1 */}
       {planLevel === 1 && currentStep === 1 && (
-        <UpgradeBanner />
+        <UpgradeBanner planLevel={planLevel} />
       )}
 
       {/* Contenido del paso actual */}

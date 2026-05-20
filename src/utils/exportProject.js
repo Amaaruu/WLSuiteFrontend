@@ -90,16 +90,20 @@ function generateIndexHTML(landingData, theme, projectName) {
       </div>
     </div>
   </section>` : '';
+  
+  const faqItems = landingData.faq?.items ||
+    (Array.isArray(landingData.faq) ? landingData.faq : []);
 
-  const faqHTML = landingData.faq?.length ? `
+  const faqHTML = faqItems.length ? `
   <section class="faq section" id="faq">
     <div class="container container--narrow">
       <div class="section__header" data-animate>
         <span class="badge">Preguntas frecuentes</span>
-        <h2 class="section__title">FAQ</h2>
+        <h2 class="section__title">${landingData.faq?.title || 'FAQ'}</h2>
+        ${landingData.faq?.subtitle ? `<p class="section__subtitle">${landingData.faq.subtitle}</p>` : ''}
       </div>
       <div class="faq__list">
-        ${landingData.faq.map((item, i) => `
+        ${faqItems.map((item, i) => `
         <div class="faq__item" data-animate data-delay="${i * 80}">
           <button class="faq__question" aria-expanded="false" aria-controls="faq-answer-${i}">
             <span>${item.question || ''}</span>
