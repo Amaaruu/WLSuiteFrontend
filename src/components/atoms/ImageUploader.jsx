@@ -14,14 +14,14 @@ const ImageUploader = ({
   aspectRatio = '16/9',
   disabled    = false,
 }) => {
-  const fileInputRef        = useRef(null);
-  const [isUploading,   setIsUploading]   = useState(false);
+  const fileInputRef         = useRef(null);
+  const [isUploading,    setIsUploading]    = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [localPreview,  setLocalPreview]  = useState(null);
-  const [error,         setError]         = useState(null);
-  const [isDragging,    setIsDragging]    = useState(false);
+  const [localPreview,   setLocalPreview]   = useState(null);
+  const [error,          setError]          = useState(null);
+  const [isDragging,     setIsDragging]     = useState(false);
 
-  //Validación local antes de subir
+  // ── Validación local antes de subir ──────────────────────────────────────
   const validateFile = (file) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
       return `Tipo no permitido. Usa: ${ALLOWED_EXT}`;
@@ -32,7 +32,7 @@ const ImageUploader = ({
     return null;
   };
 
-  //Lógica de upload 
+  // ── Lógica de upload ──────────────────────────────────────────────────────
   const handleFile = useCallback(async (file) => {
     if (!file || disabled) return;
 
@@ -70,12 +70,17 @@ const ImageUploader = ({
       const cdnUrl = response.data.imageUrl;
       onChange?.(cdnUrl);
 
-      // Liberar blob URL (ya tenemos la URL de CDN)
       URL.revokeObjectURL(blobUrl);
       setLocalPreview(null);
 
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al subir la imagen. Intenta de nuevo.');
+      const backendMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error   ||
+        err.message                 ||
+        'Error al subir la imagen. Intenta de nuevo.';
+
+      setError(backendMessage);
       setLocalPreview(null);
       URL.revokeObjectURL(blobUrl);
       onChange?.(null);
@@ -100,7 +105,7 @@ const ImageUploader = ({
     if (file) handleFile(file);
   }, [handleFile, disabled]);
 
-  const handleDragOver = (e) => { e.preventDefault(); if (!disabled) setIsDragging(true); };
+  const handleDragOver  = (e) => { e.preventDefault(); if (!disabled) setIsDragging(true); };
   const handleDragLeave = () => setIsDragging(false);
 
   const handleRemove = (e) => {
@@ -109,10 +114,10 @@ const ImageUploader = ({
     setLocalPreview(null);
     setError(null);
   };
-  
+
   const displayImage = value || localPreview;
 
-  //Render
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-2">
       {label && (
