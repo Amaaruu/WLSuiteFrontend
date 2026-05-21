@@ -288,8 +288,6 @@ const LandingViewer = () => {
   const [countdown,         setCountdown]         = useState({ h:23, m:59, s:59 });
   const [openFaq,           setOpenFaq]           = useState(null);
   const [isZipping,         setIsZipping]         = useState(false);
-  // CORRECCIÓN: containerRef eliminado — era una referencia declarada pero nunca
-  // asignada a ningún elemento ni usada en ningún efecto. Era código muerto.
 
   // Countdown
   useEffect(() => {
@@ -379,29 +377,35 @@ const LandingViewer = () => {
   const logoImageUrl = designPreferences?.logoImageUrl || null;
 
   const toggleFaq = (i) => setOpenFaq(prev => prev === i ? null : i);
+
   const handleDownload = async () => {
-    try {
-      const currentTheme = buildTheme(landingData, designPreferences);
-      const cleanHtml    = generateIndexHTML(landingData, currentTheme, projectName);
-      const blob         = new Blob([cleanHtml], { type: 'text/html;charset=utf-8' });
-      const url          = URL.createObjectURL(blob);
-      const a            = document.createElement('a');
-      a.href             = url;
-      a.download         = `${projectName.toLowerCase().replace(/\s+/g, '-')}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('[LandingViewer] Error al generar descarga HTML:', err);
-      alert('No se pudo generar el archivo HTML. Intenta descargar el ZIP en su lugar.');
-    }
-  };
+  try {
+    const currentTheme = buildTheme(landingData, designPreferences);
+    const images = {
+      heroImageUrl: designPreferences?.heroImageUrl || null,
+      logoImageUrl: designPreferences?.logoImageUrl || null,
+    };
+    const cleanHtml = generateIndexHTML(landingData, currentTheme, projectName, images);
+    const blob      = new Blob([cleanHtml], { type: 'text/html;charset=utf-8' });
+    const url       = URL.createObjectURL(blob);
+    const a         = document.createElement('a');
+    a.href          = url;
+    a.download      = `${projectName.toLowerCase().replace(/\s+/g, '-')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('[LandingViewer] Error al generar descarga HTML:', err);
+    alert('No se pudo generar el archivo HTML. Intenta descargar el ZIP en su lugar.');
+  }
+};
 
   const handleDownloadZip = async () => {
     setIsZipping(true);
     try {
-      await generateAndDownloadZip(landingData, theme, projectName);
+      // ── Pasa designPreferences para que el ZIP incluya hero image y logo
+      await generateAndDownloadZip(landingData, theme, projectName, designPreferences);
     } catch (err) {
       console.error('Error generando ZIP:', err);
       alert('No se pudo generar el ZIP. Verifica tu conexión a internet.');
