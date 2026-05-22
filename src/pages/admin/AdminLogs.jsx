@@ -11,10 +11,9 @@ const AdminLogs = () => {
   const fetchLogs = () => {
     setLoading(true);
     setError(null);
-
-    api.get('/logs')
+    api.get('/logs/all')
       .then(res => {
-        console.debug('[AdminLogs] Logs recibidos:', res.data?.length ?? 0, res.data);
+        console.debug('[AdminLogs] Logs recibidos:', res.data?.length ?? 0);
         setLogs(Array.isArray(res.data) ? res.data : []);
       })
       .catch(err => {
@@ -42,21 +41,10 @@ const AdminLogs = () => {
   const getEventBadgeClass = (eventType) => {
     const type = eventType?.toUpperCase() ?? '';
 
-    if (type.includes('LOGIN')) {
-      return 'bg-blue-100 text-blue-700';
-    }
-
-    if (type.includes('REGISTER')) {
-      return 'bg-green-100 text-green-700';
-    }
-
-    if (type.includes('DELETE')) {
-      return 'bg-red-100 text-red-700';
-    }
-
-    if (type.includes('CREATE') || type.includes('PROJECT')) {
-      return 'bg-purple-100 text-purple-700';
-    }
+    if (type.includes('LOGIN'))   return 'bg-blue-100 text-blue-700';
+    if (type.includes('REGISTER')) return 'bg-green-100 text-green-700';
+    if (type.includes('DELETE'))  return 'bg-red-100 text-red-700';
+    if (type.includes('CREATE') || type.includes('PROJECT')) return 'bg-purple-100 text-purple-700';
 
     return 'bg-gray-100 text-gray-600';
   };
@@ -76,10 +64,9 @@ const AdminLogs = () => {
               </h1>
 
               <p className="text-gray-500 mt-1">
-                {
-                  !loading && !error
-                    ? `${logs.length} evento${logs.length !== 1 ? 's' : ''} registrado${logs.length !== 1 ? 's' : ''}.`
-                    : 'Monitoreo de actividad del sistema.'
+                {!loading && !error
+                  ? `${logs.length} evento${logs.length !== 1 ? 's' : ''} registrado${logs.length !== 1 ? 's' : ''}.`
+                  : 'Monitoreo de actividad del sistema.'
                 }
               </p>
             </div>
@@ -89,10 +76,7 @@ const AdminLogs = () => {
               disabled={loading}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all disabled:opacity-50"
             >
-              <RefreshCw
-                size={16}
-                className={loading ? 'animate-spin' : ''}
-              />
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               Actualizar
             </button>
           </div>
@@ -100,15 +84,9 @@ const AdminLogs = () => {
           {error && (
             <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
               <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
-
               <div>
-                <p className="font-semibold">
-                  No se pudieron cargar los logs
-                </p>
-
-                <p className="text-red-500 mt-0.5">
-                  {error}
-                </p>
+                <p className="font-semibold">No se pudieron cargar los logs</p>
+                <p className="text-red-500 mt-0.5">{error}</p>
               </div>
             </div>
           )}
@@ -136,23 +114,15 @@ const AdminLogs = () => {
                     ))
                   ) : error ? null : logs.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-10 text-center text-gray-400 text-sm"
-                      >
+                      <td colSpan={4} className="px-6 py-10 text-center text-gray-400 text-sm">
                         No hay eventos registrados aún. Los logs aparecerán aquí tras el primer login o registro en el sistema.
                       </td>
                     </tr>
                   ) : (
                     logs.map(log => (
-                      <tr
-                        key={log.logId}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
+                      <tr key={log.logId} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
-                          <span
-                            className={`text-xs font-bold px-2.5 py-1 rounded-full ${getEventBadgeClass(log.eventType)}`}
-                          >
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${getEventBadgeClass(log.eventType)}`}>
                             {log.eventType}
                           </span>
                         </td>
@@ -168,16 +138,15 @@ const AdminLogs = () => {
                         </td>
 
                         <td className="px-6 py-4 text-gray-400 text-xs">
-                          {
-                            log.eventAt
-                              ? new Date(log.eventAt).toLocaleString('es-CL', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
-                              : '—'
+                          {log.eventAt
+                            ? new Date(log.eventAt).toLocaleString('es-CL', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : '—'
                           }
                         </td>
                       </tr>

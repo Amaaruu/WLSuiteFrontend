@@ -1,3 +1,55 @@
+function loadJSZip() {
+  return new Promise(function (resolve, reject) {
+    if (window.JSZip) { resolve(window.JSZip); return; }
+    const script   = document.createElement('script');
+    script.src     = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    script.onload  = function () {
+      if (window.JSZip) resolve(window.JSZip);
+      else reject(new Error('JSZip no se cargó correctamente desde CDN.'));
+    };
+    script.onerror = function () {
+      reject(new Error('No se pudo cargar JSZip. Verifica tu conexión a internet.'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchImageAsBlob(url) {
+  if (!url) return null;
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    if (!blob || blob.size === 0) throw new Error('Blob vacío');
+    const ext = getImageExtension(url, blob);
+    return { blob, ext };
+  } catch (err) {
+    console.warn(`[exportProject] No se pudo descargar imagen como blob: ${url}`, err.message);
+    return null;
+  }
+}
+
+// ── Helper: deduce extensión desde blob MIME type o URL ──────────────────────
+function getImageExtension(url, blob) {
+  if (blob?.type) {
+    const mimeMap = {
+      'image/jpeg': 'jpg',
+      'image/jpg':  'jpg',
+      'image/png':  'png',
+      'image/webp': 'webp',
+      'image/gif':  'gif',
+    };
+    if (mimeMap[blob.type]) return mimeMap[blob.type];
+  }
+  const match = (url || '').split('?')[0].match(/\.(\w+)$/);
+  return match ? match[1].toLowerCase() : 'jpg';
+}
+
+// ── Helpers de color ──────────────────────────────────────────────────────────
 function getButtonRadius(shape) {
   const map = { cuadrado: '4px', redondeado: '10px', pildora: '9999px' };
   return map[shape] || '10px';
@@ -23,19 +75,45 @@ function hexDarken(hex, amount = 0.2) {
   return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
 }
 
-function generateIndexHTML(landingData, theme, projectName) {
-  const btnRadius = getButtonRadius(theme.buttonShape);
+// ── generateIndexHTML ─────────────────────────────────────────────────────────
+// images = {
+//   heroImageUrl: string|null,  — ruta local 'assets/hero-image.jpg' o URL externa
+//   logoImageUrl: string|null,  — ruta local 'assets/logo.png' o URL externa
+//   heroExt: string,            — extensión del archivo hero (solo en ZIP)
+//   logoExt: string,            — extensión del archivo logo (solo en ZIP)
+// }
+export function generateIndexHTML(landingData, theme, projectName, images = {}) {
+  const { heroImageUrl = null, logoImageUrl = null } = images;
 
+  // ── Hero ──────────────────────────────────────────────────────────────────
   const heroHTML = landingData.hero ? `
   <header class="hero" id="inicio">
     <div class="hero__bg-decoration" aria-hidden="true"></div>
+    ${heroImageUrl ? `
+    <div class="hero__image-wrapper" aria-hidden="true">
+      <img
+        src="${heroImageUrl}"
+        alt="Imagen principal de ${projectName}"
+        class="hero__image"
+        loading="eager"
+      />
+    </div>` : ''}
     <div class="container hero__content">
+      ${logoImageUrl ? `
+      <div class="hero__logo">
+        <img
+          src="${logoImageUrl}"
+          alt="Logo de ${projectName}"
+          class="hero__logo-img"
+          loading="eager"
+        />
+      </div>` : ''}
       <span class="hero__badge">${projectName}</span>
       <h1 class="hero__headline">${landingData.hero.headline || ''}</h1>
       <p class="hero__subheadline">${landingData.hero.subheadline || ''}</p>
       <div class="hero__actions">
-        ${landingData.hero.ctaButton ? `<a href="#contacto" class="btn btn--primary btn--lg">${landingData.hero.ctaButton}</a>` : ''}
-        ${landingData.hero.secondaryCta ? `<a href="#contacto" class="btn btn--ghost btn--lg">${landingData.hero.secondaryCta}</a>` : ''}
+        ${landingData.hero.ctaButton    ? `<a href="#contacto" class="btn btn--primary btn--lg">${landingData.hero.ctaButton}</a>` : ''}
+        ${landingData.hero.secondaryCta ? `<a href="#contacto" class="btn btn--ghost   btn--lg">${landingData.hero.secondaryCta}</a>` : ''}
       </div>
       ${landingData.hero.supportingText ? `<p class="hero__supporting">${landingData.hero.supportingText}</p>` : ''}
     </div>
@@ -46,6 +124,7 @@ function generateIndexHTML(landingData, theme, projectName) {
     </div>
   </header>` : '';
 
+  // ── Features ──────────────────────────────────────────────────────────────
   const featuresHTML = landingData.features?.length ? `
   <section class="features section" id="caracteristicas">
     <div class="container">
@@ -64,6 +143,7 @@ function generateIndexHTML(landingData, theme, projectName) {
     </div>
   </section>` : '';
 
+  // ── Testimonials ──────────────────────────────────────────────────────────
   const testimonialsData = landingData.testimonials ||
     landingData.socialProof?.testimonials || [];
 
@@ -91,15 +171,20 @@ function generateIndexHTML(landingData, theme, projectName) {
     </div>
   </section>` : '';
 
-  const faqHTML = landingData.faq?.length ? `
+  // ── FAQ ───────────────────────────────────────────────────────────────────
+  const faqItems = landingData.faq?.items ||
+    (Array.isArray(landingData.faq) ? landingData.faq : []);
+
+  const faqHTML = faqItems.length ? `
   <section class="faq section" id="faq">
     <div class="container container--narrow">
       <div class="section__header" data-animate>
         <span class="badge">Preguntas frecuentes</span>
-        <h2 class="section__title">FAQ</h2>
+        <h2 class="section__title">${landingData.faq?.title || 'FAQ'}</h2>
+        ${landingData.faq?.subtitle ? `<p class="section__subtitle">${landingData.faq.subtitle}</p>` : ''}
       </div>
       <div class="faq__list">
-        ${landingData.faq.map((item, i) => `
+        ${faqItems.map((item, i) => `
         <div class="faq__item" data-animate data-delay="${i * 80}">
           <button class="faq__question" aria-expanded="false" aria-controls="faq-answer-${i}">
             <span>${item.question || ''}</span>
@@ -113,9 +198,10 @@ function generateIndexHTML(landingData, theme, projectName) {
     </div>
   </section>` : '';
 
+  // ── Pricing ───────────────────────────────────────────────────────────────
   const pricingData = Array.isArray(landingData.pricing)
     ? landingData.pricing
-    : landingData.pricing?.plans || [];
+    : (landingData.pricing?.plans || []);
 
   const pricingHTML = pricingData.length ? `
   <section class="pricing section section--alt" id="precios">
@@ -148,6 +234,7 @@ function generateIndexHTML(landingData, theme, projectName) {
     </div>
   </section>` : '';
 
+  // ── Urgency ───────────────────────────────────────────────────────────────
   const urgencyHTML = landingData.urgency ? `
   <section class="urgency" id="oferta">
     <div class="container urgency__content" data-animate>
@@ -157,13 +244,20 @@ function generateIndexHTML(landingData, theme, projectName) {
     </div>
   </section>` : '';
 
+  // ── Footer ────────────────────────────────────────────────────────────────
   const footerHTML = landingData.footer ? `
   <footer class="footer" id="contacto">
     <div class="container footer__content">
-      <p class="footer__brand">${projectName}</p>
-      ${landingData.footer.tagline ? `<p class="footer__tagline">${landingData.footer.tagline}</p>` : ''}
-      ${landingData.footer.contact ? `<a href="mailto:${landingData.footer.contact}" class="footer__email">${landingData.footer.contact}</a>` : ''}
-      <p class="footer__copy">&copy; ${new Date().getFullYear()} ${projectName}. Todos los derechos reservados.</p>
+      ${logoImageUrl
+        ? `<div class="footer__logo">
+             <img src="${logoImageUrl}" alt="Logo de ${projectName}" class="footer__logo-img" loading="lazy" />
+           </div>`
+        : `<p class="footer__brand">${projectName}</p>`
+      }
+      ${landingData.footer.tagline  ? `<p class="footer__tagline">${landingData.footer.tagline}</p>`          : ''}
+      ${landingData.footer.contact  ? `<a href="mailto:${landingData.footer.contact}" class="footer__email">${landingData.footer.contact}</a>` : ''}
+      ${landingData.footer.phone    ? `<p class="footer__phone">${landingData.footer.phone}</p>`              : ''}
+      ${landingData.footer.legalText ? `<p class="footer__copy">&copy; ${new Date().getFullYear()} ${projectName}. ${landingData.footer.legalText}</p>` : `<p class="footer__copy">&copy; ${new Date().getFullYear()} ${projectName}. Todos los derechos reservados.</p>`}
     </div>
   </footer>` : '';
 
@@ -192,140 +286,281 @@ ${footerHTML}
 </html>`;
 }
 
-function generateStylesCSS(theme) {
+// ── generateStylesCSS ─────────────────────────────────────────────────────────
+// images se usa para agregar estilos condicionales de hero image y logo
+export function generateStylesCSS(theme, images = {}) {
   const btnRadius    = getButtonRadius(theme.buttonShape);
   const primaryLight = hexLighten(theme.primaryColor, 0.88);
   const primaryDark  = hexDarken(theme.primaryColor, 0.2);
 
+  const heroImageStyles = images.heroImageUrl ? `
+/* ── Hero con imagen de fondo ── */
+.hero__image-wrapper {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+}
+.hero__image {
+  width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
+}
+.hero__image-wrapper::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(145deg, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.38) 100%);
+}
+.hero__bg-decoration { z-index: 1; }
+.hero__content { z-index: 2; position: relative; }
+.hero__wave    { z-index: 2; }
+` : '';
+
+  const logoStyles = images.logoImageUrl ? `
+/* ── Logo ── */
+.hero__logo { display: flex; justify-content: center; margin-bottom: 24px; }
+.hero__logo-img {
+  height: 64px; width: auto; max-width: 240px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+.footer__logo { display: flex; justify-content: center; margin-bottom: 8px; }
+.footer__logo-img {
+  height: 48px; width: auto; max-width: 180px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+@media (max-width: 768px) {
+  .hero__logo-img { height: 48px; }
+}
+` : '';
+
   return `
 :root {
-  --color-primary:       ${theme.primaryColor};
-  --color-primary-dark:  ${primaryDark};
-  --color-primary-light: ${primaryLight};
-  --color-primary-text:  ${theme.primaryText};
+  --color-primary:        ${theme.primaryColor};
+  --color-primary-dark:   ${primaryDark};
+  --color-primary-light:  ${primaryLight};
+  --color-primary-text:   ${theme.primaryText};
   --color-secondary:      ${theme.secondaryColor};
   --color-secondary-text: ${theme.secondaryText};
-  --bg-primary:   ${theme.bgPrimary};
-  --bg-secondary: ${theme.bgSecondary};
-  --text-base:  ${theme.textBase};
-  --text-muted: ${theme.textMuted};
-  --card-bg:     ${theme.cardBg};
-  --card-border: ${theme.cardBorder};
-  --font-family: ${theme.fontFamily};
-  --btn-radius: ${btnRadius};
-  --section-py: clamp(64px, 8vw, 96px);
-  --container: 1140px;
+  --bg-primary:    ${theme.bgPrimary};
+  --bg-secondary:  ${theme.bgSecondary};
+  --text-base:     ${theme.textBase};
+  --text-muted:    ${theme.textMuted};
+  --card-bg:       ${theme.cardBg};
+  --card-border:   ${theme.cardBorder};
+  --font-family:   ${theme.fontFamily};
+  --btn-radius:    ${btnRadius};
+  --section-py:    clamp(64px, 8vw, 96px);
+  --container:     1140px;
   --container-narrow: 760px;
-  --shadow-sm: 0 2px 16px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.16);
+  --shadow-sm:  0 2px 16px rgba(0, 0, 0, 0.06);
+  --shadow-md:  0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-lg:  0 20px 48px rgba(0, 0, 0, 0.16);
   --transition: 0.25s ease;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; font-size: 16px; }
-body { font-family: var(--font-family); background-color: var(--bg-primary); color: var(--text-base); line-height: 1.6; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 img, video { max-width: 100%; height: auto; display: block; }
 a { color: inherit; text-decoration: none; }
 ul { list-style: none; }
 button { font-family: inherit; cursor: pointer; }
 
-.container { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: 24px; }
+.container        { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: 24px; }
 .container--narrow { max-width: var(--container-narrow); }
 
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 32px; border-radius: var(--btn-radius); font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; border: 2px solid transparent; transition: filter var(--transition), transform var(--transition), box-shadow var(--transition); white-space: nowrap; cursor: pointer; }
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 32px; border-radius: var(--btn-radius); font-weight: 700; font-size: 1rem;
+  letter-spacing: -0.01em; border: 2px solid transparent;
+  transition: filter var(--transition), transform var(--transition), box-shadow var(--transition);
+  white-space: nowrap; cursor: pointer;
+}
 .btn:hover { filter: brightness(0.92); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .btn:active { transform: translateY(0); }
 .btn--primary { background-color: var(--color-primary); color: var(--color-primary-text); border-color: var(--color-primary); }
-.btn--ghost { background-color: transparent; color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.35); }
+.btn--ghost   { background-color: transparent; color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.35); }
 .btn--ghost:hover { background-color: rgba(255,255,255,0.1); }
-.btn--white { background-color: #ffffff; color: var(--color-primary); border-color: #ffffff; }
-.btn--lg { padding: 16px 40px; font-size: 1.05rem; }
-.btn--block { width: 100%; }
+.btn--white   { background-color: #ffffff; color: var(--color-primary); border-color: #ffffff; }
+.btn--lg      { padding: 16px 40px; font-size: 1.05rem; }
+.btn--block   { width: 100%; }
 
-.badge { display: inline-block; padding: 4px 14px; background-color: var(--color-primary-light); color: var(--color-primary); border-radius: 9999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+/* ── Badge ── */
+.badge {
+  display: inline-block; padding: 4px 14px;
+  background-color: var(--color-primary-light); color: var(--color-primary);
+  border-radius: 9999px; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px;
+}
 
-.section { padding-block: var(--section-py); }
-.section--alt { background-color: var(--bg-secondary); }
+/* ── Sections ── */
+.section         { padding-block: var(--section-py); }
+.section--alt    { background-color: var(--bg-secondary); }
 .section__header { text-align: center; margin-bottom: 56px; }
-.section__title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; color: var(--text-base); letter-spacing: -0.02em; line-height: 1.15; }
+.section__title  { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; color: var(--text-base); letter-spacing: -0.02em; line-height: 1.15; }
 .section__subtitle { margin-top: 16px; font-size: 1.05rem; color: var(--text-muted); }
 
-.hero { position: relative; padding-block: clamp(80px, 12vw, 140px) clamp(80px, 10vw, 120px); background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); text-align: center; overflow: hidden; }
-.hero__bg-decoration { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 80% at 20% 40%, rgba(255,255,255,0.07) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 60%, rgba(255,255,255,0.04) 0%, transparent 70%); pointer-events: none; }
-.hero__content { position: relative; z-index: 1; }
-.hero__badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 18px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; color: rgba(255,255,255,0.9); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 28px; }
-.hero__headline { font-size: clamp(2.4rem, 6vw, 4.8rem); font-weight: 900; color: #ffffff; line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 24px; }
+/* ── Hero ── */
+.hero {
+  position: relative;
+  padding-block: clamp(80px, 12vw, 140px) clamp(80px, 10vw, 120px);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  text-align: center; overflow: hidden;
+}
+.hero__bg-decoration {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 80% at 20% 40%, rgba(255,255,255,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 80% 60%, rgba(255,255,255,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero__content  { position: relative; z-index: 1; }
+.hero__badge    {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 18px;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 9999px; color: rgba(255,255,255,0.9); font-size: 0.72rem;
+  font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 28px;
+}
+.hero__headline    { font-size: clamp(2.4rem, 6vw, 4.8rem); font-weight: 900; color: #ffffff; line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 24px; }
 .hero__subheadline { font-size: clamp(1rem, 2.5vw, 1.3rem); color: rgba(255,255,255,0.78); max-width: 620px; margin-inline: auto; margin-bottom: 40px; line-height: 1.75; }
-.hero__actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
-.hero__supporting { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 8px; }
-.hero__wave { position: absolute; bottom: -2px; left: 0; right: 0; height: 60px; overflow: hidden; }
-.hero__wave svg { width: 100%; height: 100%; }
+.hero__actions     { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+.hero__supporting  { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 8px; }
+.hero__wave        { position: absolute; bottom: -2px; left: 0; right: 0; height: 60px; overflow: hidden; }
+.hero__wave svg    { width: 100%; height: 100%; }
 
+${heroImageStyles}
+${logoStyles}
+
+/* ── Features ── */
 .features__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
-.feature-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 36px 32px; box-shadow: var(--shadow-sm); transition: transform var(--transition), box-shadow var(--transition); }
-.feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.feature-card__number { width: 52px; height: 52px; background: var(--color-primary-light); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; color: var(--color-primary); margin-bottom: 24px; }
+.feature-card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 36px 32px; box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.feature-card:hover  { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.feature-card__number {
+  width: 52px; height: 52px; background: var(--color-primary-light);
+  border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 900; color: var(--color-primary); margin-bottom: 24px;
+}
 .feature-card__title { font-size: 1.1rem; font-weight: 700; color: var(--text-base); margin-bottom: 12px; }
-.feature-card__desc { font-size: 0.93rem; color: var(--text-muted); line-height: 1.75; }
+.feature-card__desc  { font-size: 0.93rem; color: var(--text-muted); line-height: 1.75; }
 
+/* ── Testimonials ── */
 .testimonials__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
-.testimonial-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 36px; box-shadow: var(--shadow-sm); transition: transform var(--transition), box-shadow var(--transition); }
+.testimonial-card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 36px; box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
 .testimonial-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.testimonial-card__stars { color: #f59e0b; font-size: 1rem; letter-spacing: 2px; margin-bottom: 20px; }
-.testimonial-card__quote { font-size: 0.97rem; color: var(--text-base); line-height: 1.8; font-style: italic; border-left: 3px solid var(--color-primary); padding-left: 16px; margin-bottom: 28px; }
+.testimonial-card__stars  { color: #f59e0b; font-size: 1rem; letter-spacing: 2px; margin-bottom: 20px; }
+.testimonial-card__quote  {
+  font-size: 0.97rem; color: var(--text-base); line-height: 1.8; font-style: italic;
+  border-left: 3px solid var(--color-primary); padding-left: 16px; margin-bottom: 28px;
+}
 .testimonial-card__author { display: flex; align-items: center; gap: 12px; }
-.testimonial-card__avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1rem; flex-shrink: 0; }
+.testimonial-card__avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 800; font-size: 1rem;
+}
 .testimonial-card__name { font-weight: 700; color: var(--text-base); font-size: 0.9rem; font-style: normal; display: block; }
 .testimonial-card__role { color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
 
+/* ── FAQ ── */
 .faq__list { display: flex; flex-direction: column; gap: 8px; }
-.faq__item { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; transition: border-color var(--transition); }
+.faq__item {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 14px; overflow: hidden; transition: border-color var(--transition);
+}
 .faq__item.is-open { border-color: var(--color-primary); }
-.faq__question { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 24px; background: transparent; border: none; text-align: left; font-size: 0.97rem; font-weight: 700; color: var(--text-base); line-height: 1.4; cursor: pointer; }
-.faq__icon { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary-light); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; transition: transform var(--transition), background var(--transition), color var(--transition); }
+.faq__question {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding: 20px 24px; background: transparent; border: none; text-align: left;
+  font-size: 0.97rem; font-weight: 700; color: var(--text-base); line-height: 1.4; cursor: pointer;
+}
+.faq__icon {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-primary-light); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 700;
+  transition: transform var(--transition), background var(--transition), color var(--transition);
+}
 .faq__item.is-open .faq__icon { transform: rotate(45deg); background: var(--color-primary); color: var(--color-primary-text); }
-.faq__answer { padding: 0 24px 20px; font-size: 0.93rem; color: var(--text-muted); line-height: 1.75; }
+.faq__answer         { padding: 0 24px 20px; font-size: 0.93rem; color: var(--text-muted); line-height: 1.75; }
 .faq__answer[hidden] { display: none; }
 
+/* ── Pricing ── */
 .pricing__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; align-items: start; }
-.pricing-card { position: relative; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px 32px; box-shadow: var(--shadow-sm); transition: transform var(--transition), box-shadow var(--transition); }
+.pricing-card {
+  position: relative; background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 24px; padding: 40px 32px; box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
 .pricing-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.pricing-card--featured { background: var(--color-primary); border: 2px solid var(--color-primary); box-shadow: 0 20px 48px rgba(0,0,0,0.2); transform: scale(1.03); }
+.pricing-card--featured {
+  background: var(--color-primary); border: 2px solid var(--color-primary);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.2); transform: scale(1.03);
+}
 .pricing-card--featured:hover { transform: scale(1.03) translateY(-4px); }
-.pricing-card__badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--color-secondary); color: var(--color-secondary-text); padding: 4px 18px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; white-space: nowrap; letter-spacing: 0.05em; }
-.pricing-card__name { font-size: 1.15rem; font-weight: 700; color: var(--text-base); margin-bottom: 8px; }
-.pricing-card--featured .pricing-card__name { color: #ffffff; }
-.pricing-card__price { font-size: 2.8rem; font-weight: 900; color: var(--color-primary); letter-spacing: -0.04em; margin-block: 16px 4px; }
+.pricing-card__badge {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: var(--color-secondary); color: var(--color-secondary-text);
+  padding: 4px 18px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800;
+  white-space: nowrap; letter-spacing: 0.05em;
+}
+.pricing-card__name             { font-size: 1.15rem; font-weight: 700; color: var(--text-base); margin-bottom: 8px; }
+.pricing-card--featured .pricing-card__name  { color: #ffffff; }
+.pricing-card__price            { font-size: 2.8rem; font-weight: 900; color: var(--color-primary); letter-spacing: -0.04em; margin-block: 16px 4px; }
 .pricing-card--featured .pricing-card__price { color: #ffffff; }
-.pricing-card__period { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 28px; }
+.pricing-card__period           { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 28px; }
 .pricing-card--featured .pricing-card__period { color: rgba(255,255,255,0.65); }
-.pricing-card__benefits { margin-bottom: 32px; }
-.pricing-card__benefits li { display: flex; align-items: flex-start; gap: 10px; padding-block: 10px; font-size: 0.9rem; color: var(--text-base); border-bottom: 1px solid var(--card-border); }
+.pricing-card__benefits         { margin-bottom: 32px; }
+.pricing-card__benefits li      { display: flex; align-items: flex-start; gap: 10px; padding-block: 10px; font-size: 0.9rem; color: var(--text-base); border-bottom: 1px solid var(--card-border); }
 .pricing-card--featured .pricing-card__benefits li { color: rgba(255,255,255,0.9); border-bottom-color: rgba(255,255,255,0.12); }
 .pricing-card__benefits li span { color: var(--color-primary); font-weight: 700; flex-shrink: 0; }
 .pricing-card--featured .pricing-card__benefits li span { color: #ffffff; }
 
-.urgency { position: relative; padding-block: clamp(60px, 8vw, 80px); background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); text-align: center; overflow: hidden; }
-.urgency::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.06) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(255,255,255,0.04) 0%, transparent 50%); pointer-events: none; }
-.urgency__content { position: relative; z-index: 1; max-width: 700px; }
-.urgency__title { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 16px; }
+/* ── Urgency ── */
+.urgency {
+  position: relative; padding-block: clamp(60px, 8vw, 80px);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  text-align: center; overflow: hidden;
+}
+.urgency::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255,255,255,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(255,255,255,0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+.urgency__content  { position: relative; z-index: 1; max-width: 700px; }
+.urgency__title    { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 16px; }
 .urgency__countdown { font-size: 1.1rem; color: rgba(255,255,255,0.75); margin-bottom: 32px; }
 
-.footer { background: #0f172a; padding-block: clamp(48px, 6vw, 72px); text-align: center; }
+/* ── Footer ── */
+.footer          { background: #0f172a; padding-block: clamp(48px, 6vw, 72px); text-align: center; }
 .footer__content { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.footer__brand { font-size: 1.5rem; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
+.footer__brand   { font-size: 1.5rem; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
 .footer__tagline { color: #94a3b8; font-size: 0.95rem; }
-.footer__email { color: var(--color-secondary); font-weight: 600; font-size: 0.95rem; transition: opacity var(--transition); }
+.footer__email   { color: var(--color-secondary); font-weight: 600; font-size: 0.95rem; transition: opacity var(--transition); }
 .footer__email:hover { opacity: 0.8; }
-.footer__copy { color: #475569; font-size: 0.8rem; margin-top: 20px; }
+.footer__phone   { color: #6b7280; font-size: 0.9rem; }
+.footer__copy    { color: #475569; font-size: 0.8rem; margin-top: 20px; }
 
-@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+/* ── Scroll animations ── */
 [data-animate] { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
 [data-animate].is-visible { opacity: 1; transform: translateY(0); }
 
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .hero__actions { flex-direction: column; align-items: center; }
   .btn--lg { width: 100%; max-width: 320px; }
@@ -333,7 +568,6 @@ button { font-family: inherit; cursor: pointer; }
   .pricing-card--featured { transform: scale(1); }
   .pricing-card--featured:hover { transform: translateY(-4px); }
 }
-
 @media (max-width: 480px) {
   .hero__headline { font-size: 2.2rem; }
   .section__title { font-size: 1.8rem; }
@@ -343,25 +577,26 @@ button { font-family: inherit; cursor: pointer; }
 `;
 }
 
-function generateScriptJS() {
+// ── generateScriptJS ──────────────────────────────────────────────────────────
+export function generateScriptJS() {
   return `(function () {
   'use strict';
 
   function initFAQ() {
-    const items = document.querySelectorAll('.faq__item');
+    var items = document.querySelectorAll('.faq__item');
     items.forEach(function (item) {
-      const btn    = item.querySelector('.faq__question');
-      const answer = item.querySelector('.faq__answer');
+      var btn    = item.querySelector('.faq__question');
+      var answer = item.querySelector('.faq__answer');
       if (!btn || !answer) return;
       btn.addEventListener('click', function () {
-        const isOpen = item.classList.contains('is-open');
+        var isOpen = item.classList.contains('is-open');
         items.forEach(function (other) {
           if (other !== item) {
             other.classList.remove('is-open');
-            const otherBtn    = other.querySelector('.faq__question');
-            const otherAnswer = other.querySelector('.faq__answer');
-            if (otherBtn)    otherBtn.setAttribute('aria-expanded', 'false');
-            if (otherAnswer) otherAnswer.hidden = true;
+            var ob = other.querySelector('.faq__question');
+            var oa = other.querySelector('.faq__answer');
+            if (ob) ob.setAttribute('aria-expanded', 'false');
+            if (oa) oa.hidden = true;
           }
         });
         item.classList.toggle('is-open', !isOpen);
@@ -378,11 +613,11 @@ function generateScriptJS() {
       });
       return;
     }
-    const observer = new IntersectionObserver(function (entries) {
+    var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
-        const el    = entry.target;
-        const delay = parseInt(el.dataset.delay || '0', 10);
+        var el    = entry.target;
+        var delay = parseInt(el.dataset.delay || '0', 10);
         setTimeout(function () { el.classList.add('is-visible'); }, delay);
         observer.unobserve(el);
       });
@@ -395,9 +630,9 @@ function generateScriptJS() {
   function initSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
       anchor.addEventListener('click', function (e) {
-        const targetId = anchor.getAttribute('href');
+        var targetId = anchor.getAttribute('href');
         if (targetId === '#') return;
-        const target = document.querySelector(targetId);
+        var target = document.querySelector(targetId);
         if (!target) return;
         e.preventDefault();
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -414,6 +649,7 @@ function generateScriptJS() {
 }());`;
 }
 
+// ── generateREADME ────────────────────────────────────────────────────────────
 function generateREADME(projectName, theme) {
   return `# ${projectName} — Landing Page
 
@@ -427,75 +663,101 @@ ${projectName.toLowerCase().replace(/\s+/g, '-')}/
 ├── styles.css
 ├── script.js
 └── assets/
+    ├── hero-image.jpg   (imagen del hero, si fue subida)
+    ├── logo.png         (logo del negocio, si fue subido)
     └── README.md
 \`\`\`
 
 ## Cómo usar
 
-Abre index.html directamente en tu navegador, no necesita servidor.
+Abre index.html directamente en tu navegador. No necesita servidor.
 
-Para publicar sube los 3 archivos a cualquier hosting estático:
+Para publicar, sube todos los archivos y la carpeta assets a tu hosting estático:
 - Netlify: arrastra la carpeta a app.netlify.com/drop
-- GitHub Pages: sube al repositorio y activa Pages
-- cPanel: sube por FTP al public_html
+- GitHub Pages: sube el repositorio y activa Pages
+- cPanel: sube por FTP al directorio public_html
 
 ## Personalización
 
-Edita las variables CSS en styles.css:
-
-:root {
-  --color-primary:  ${theme.primaryColor};
-  --color-secondary: ${theme.secondaryColor};
-}
+Edita las variables CSS en styles.css bajo :root { ... }
 
 ## Tecnologías
 
-- HTML5 semántico
-- CSS3 con variables nativas
-- JavaScript ES6 vanilla sin dependencias
+- HTML5 semántico con accesibilidad básica
+- CSS3 con custom properties (variables nativas)
+- JavaScript ES5 vanilla, sin dependencias externas
 - Google Fonts
+
+Generado el ${new Date().toLocaleDateString('es-CL')}.
 `;
 }
 
-function loadJSZip() {
-  return new Promise(function (resolve, reject) {
-    if (window.JSZip) {
-      resolve(window.JSZip);
-      return;
+// ── generateAndDownloadZip ────────────────────────────────────────────────────
+// Flujo:
+// 1. Intenta descargar hero y logo desde Cloudinary como Blob
+// 2. Si descarga ok → incluye archivos en assets/ y referencia rutas locales
+// 3. Si descarga falla (CORS u otro) → usa la URL de Cloudinary directamente en el HTML
+//    El ZIP funcionará online pero no offline para las imágenes
+export async function generateAndDownloadZip(landingData, theme, projectName, designPreferences = {}) {
+  const JSZip = await loadJSZip();
+  const slug  = projectName.toLowerCase().replace(/\s+/g, '-');
+  const zip   = new JSZip();
+  const rootFolder   = zip.folder(slug);
+  const assetsFolder = rootFolder.folder('assets');
+
+  // URLs originales desde designPreferences
+  const heroImageUrlOriginal = designPreferences?.heroImageUrl || null;
+  const logoImageUrlOriginal = designPreferences?.logoImageUrl || null;
+
+  // Objeto images que se construye según resultado de descarga
+  const images = {
+    heroImageUrl: null,
+    logoImageUrl: null,
+    heroExt: 'jpg',
+    logoExt: 'png',
+  };
+
+  // ── Descarga hero image ───────────────────────────────────────────────────
+  if (heroImageUrlOriginal) {
+    const result = await fetchImageAsBlob(heroImageUrlOriginal);
+    if (result) {
+      // Descarga exitosa: archivo local en assets/
+      images.heroExt      = result.ext;
+      images.heroImageUrl = `assets/hero-image.${result.ext}`;
+      assetsFolder.file(`hero-image.${result.ext}`, result.blob);
+      console.info(`[exportProject] Hero image incluida como archivo local: assets/hero-image.${result.ext}`);
+    } else {
+      // Fallback: URL externa de Cloudinary directamente en el HTML
+      images.heroImageUrl = heroImageUrlOriginal;
+      console.warn('[exportProject] Hero image incluida como URL externa (fallback CORS).');
     }
-    const script   = document.createElement('script');
-    script.src     = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-    script.onload  = function () {
-      if (window.JSZip) {
-        resolve(window.JSZip);
-      } else {
-        reject(new Error('JSZip no se cargó correctamente desde CDN.'));
-      }
-    };
-    script.onerror = function () {
-      reject(new Error('No se pudo cargar JSZip. Verifica tu conexión a internet.'));
-    };
-    document.head.appendChild(script);
-  });
-}
+  }
 
-export async function generateAndDownloadZip(landingData, theme, projectName) {
-  const JSZip      = await loadJSZip();
-  const slug       = projectName.toLowerCase().replace(/\s+/g, '-');
-  const zip        = new JSZip();
-  const rootFolder = zip.folder(slug);
+  // ── Descarga logo ─────────────────────────────────────────────────────────
+  if (logoImageUrlOriginal) {
+    const result = await fetchImageAsBlob(logoImageUrlOriginal);
+    if (result) {
+      images.logoExt      = result.ext;
+      images.logoImageUrl = `assets/logo.${result.ext}`;
+      assetsFolder.file(`logo.${result.ext}`, result.blob);
+      console.info(`[exportProject] Logo incluido como archivo local: assets/logo.${result.ext}`);
+    } else {
+      images.logoImageUrl = logoImageUrlOriginal;
+      console.warn('[exportProject] Logo incluido como URL externa (fallback CORS).');
+    }
+  }
 
-  rootFolder.file('index.html', generateIndexHTML(landingData, theme, projectName));
-  rootFolder.file('styles.css', generateStylesCSS(theme));
+  // ── Generación de archivos ────────────────────────────────────────────────
+  assetsFolder.file('README.md', generateREADME(projectName, theme));
+  rootFolder.file('index.html', generateIndexHTML(landingData, theme, projectName, images));
+  rootFolder.file('styles.css', generateStylesCSS(theme, images));
   rootFolder.file('script.js',  generateScriptJS());
 
-  const assetsFolder = rootFolder.folder('assets');
-  assetsFolder.file('README.md', generateREADME(projectName, theme));
-
-  const blob     = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-  const url      = URL.createObjectURL(blob);
-  const anchor   = document.createElement('a');
-  anchor.href    = url;
+  // ── Descarga ──────────────────────────────────────────────────────────────
+  const blob   = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  const url    = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href     = url;
   anchor.download = `${slug}-proyecto.zip`;
   document.body.appendChild(anchor);
   anchor.click();
