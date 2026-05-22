@@ -39,7 +39,7 @@ const Home = () => {
       title: 'Creative Portfolio',
       category: 'Freelance',
       description: 'Destaca tus trabajos creativos con esta galería.',
-      imageUrl: 'https://images.unsplash.com/photo-1507238692062-8a0cb44ce740?q=80&w=2070&auto=format&fit=crop'
+      imageUrl: 'https://images.unsplash.com/photo-1545235617-9465d2a55698?q=80&w=2080&auto=format&fit=crop'
     }
   ];
 
@@ -62,7 +62,7 @@ const Home = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sapphire-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sapphire-400" />
                 </span>
-                WEBLANDING SUITE 2.0
+                WebLandingSuite Beta
               </div>
             </RevealOnScroll>
 

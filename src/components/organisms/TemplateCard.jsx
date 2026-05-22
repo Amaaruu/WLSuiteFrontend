@@ -11,8 +11,39 @@ const CATEGORY_COLORS = {
 
 const DEFAULT_COLOR = { bg: '#eef2ff', text: '#4f46e5', border: '#c7d2fe' };
 
+// ── Fallback local sin dependencias externas ───────────────────────────────
+const ImageFallback = ({ title, catColor }) => (
+  <div style={{
+    width: '100%', height: '100%',
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center', gap: '10px',
+    background: `linear-gradient(135deg, ${catColor.bg} 0%, #f8fafc 100%)`,
+    borderBottom: `1px solid ${catColor.border}`,
+  }}>
+    <svg
+      width="44" height="44" viewBox="0 0 24 24"
+      fill="none" stroke={catColor.text}
+      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      style={{ opacity: 0.45 }}
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </svg>
+    <span style={{
+      fontSize: '0.72rem', fontWeight: 700,
+      color: catColor.text, opacity: 0.55,
+      letterSpacing: '0.03em', textAlign: 'center',
+      padding: '0 16px',
+    }}>
+      {title}
+    </span>
+  </div>
+);
+
 const TemplateCard = ({ template }) => {
-  const [hovered, setHovered] = useState(false);
+  const [hovered, setHovered]   = useState(false);
+  const [imgError, setImgError] = useState(false); // ← nuevo
   const catColor = CATEGORY_COLORS[template.category] || DEFAULT_COLOR;
 
   return (
@@ -31,59 +62,69 @@ const TemplateCard = ({ template }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {/* ── Bloque de imagen ────────────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{ height: '210px', flexShrink: 0 }}>
-        <img
-          src={template.imageUrl}
-          alt={template.title}
-          loading="lazy"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'top',
-            transform: hovered ? 'scale(1.07)' : 'scale(1)',
-            transition: 'transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
-            display: 'block',
-          }}
-          onError={(e) => {
-            e.currentTarget.src = `https://placehold.co/600x400/f1f5f9/94a3b8?text=${encodeURIComponent(template.title)}`;
-          }}
-        />
 
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.35) 100%)',
-          pointerEvents: 'none',
-        }} />
+        {imgError ? (
+          <ImageFallback title={template.title} catColor={catColor} />
+        ) : (
+          // Imagen normal
+          <img
+            src={template.imageUrl}
+            alt={template.title}
+            loading="lazy"
+            style={{
+              width: '100%', height: '100%',
+              objectFit: 'cover', objectPosition: 'top',
+              transform: hovered ? 'scale(1.07)' : 'scale(1)',
+              transition: 'transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
+              display: 'block',
+            }}
+            onError={() => setImgError(true)} // ← activa fallback local
+          />
+        )}
 
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(15,23,42,0.55)',
-          backdropFilter: 'blur(2px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          opacity: hovered ? 1 : 0,
-          transition: 'opacity 0.3s ease',
-          pointerEvents: hovered ? 'auto' : 'none',
-        }}>
-          <button style={{
-            padding: '10px 26px',
-            background: '#ffffff',
-            color: '#0f172a',
-            fontWeight: '800',
-            fontSize: '0.8rem',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            borderRadius: '9999px',
-            border: 'none',
-            cursor: 'pointer',
-            transform: hovered ? 'translateY(0)' : 'translateY(10px)',
-            transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+        {/* Gradiente inferior — solo cuando imagen carga OK */}
+        {!imgError && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.35) 100%)',
+            pointerEvents: 'none',
+          }} />
+        )}
+
+        {/* Overlay "Ver demo" en hover — solo cuando imagen carga OK */}
+        {!imgError && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(15,23,42,0.55)',
+            backdropFilter: 'blur(2px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: hovered ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: hovered ? 'auto' : 'none',
           }}>
-            Ver demo →
-          </button>
-        </div>
+            <button style={{
+              padding: '10px 26px',
+              background: '#ffffff',
+              color: '#0f172a',
+              fontWeight: '800',
+              fontSize: '0.8rem',
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              borderRadius: '9999px',
+              border: 'none',
+              cursor: 'pointer',
+              transform: hovered ? 'translateY(0)' : 'translateY(10px)',
+              transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+            }}>
+              Ver demo →
+            </button>
+          </div>
+        )}
 
+        {/* Badge de categoría — siempre visible */}
         <div style={{
           position: 'absolute', top: '12px', left: '12px',
           padding: '4px 12px',
@@ -97,6 +138,7 @@ const TemplateCard = ({ template }) => {
           {template.category}
         </div>
 
+        {/* Badge "Responsive" — siempre visible */}
         <div style={{
           position: 'absolute', top: '12px', right: '12px',
           display: 'flex', alignItems: 'center', gap: '5px',
@@ -116,6 +158,7 @@ const TemplateCard = ({ template }) => {
         </div>
       </div>
 
+      {/* ── Info card ───────────────────────────────────────────────────── */}
       <div style={{ padding: '18px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
           <h3 style={{
