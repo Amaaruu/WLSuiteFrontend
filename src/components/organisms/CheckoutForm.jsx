@@ -423,21 +423,6 @@ const CheckoutForm = ({ plan }) => {
                   )}
                 </div>
               </div>
-
-              {/* Tarjetas demo */}
-              <div style={{
-                background: '#f0f9ff',
-                border: '1px solid #bae6fd',
-                borderRadius: 12,
-                padding: '12px 16px',
-                fontSize: '0.78rem',
-                color: '#0369a1',
-              }}>
-                <p style={{ fontWeight: 700, margin: '0 0 6px' }}>🧪 Tarjetas de prueba:</p>
-                <p style={{ margin: '0 0 3px', fontFamily: 'monospace' }}>Visa: <strong>4539 1488 0343 6467</strong> · Exp: 12/28 · CVV: 123</p>
-                <p style={{ margin: 0, fontFamily: 'monospace' }}>Mastercard: <strong>5425 2334 3010 9903</strong> · Exp: 06/27 · CVV: 456</p>
-              </div>
-
               {/* Botón de pago */}
               <button
                 type="submit"
