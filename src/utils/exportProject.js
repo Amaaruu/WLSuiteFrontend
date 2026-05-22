@@ -14,14 +14,9 @@ function loadJSZip() {
   });
 }
 
-// ── Helper: descarga imagen desde CDN como Blob ───────────────────────────────
-// Intenta primero con mode:'cors', luego con no-cors como fallback
-// Retorna { blob, ext } o null si falla completamente
 async function fetchImageAsBlob(url) {
   if (!url) return null;
   try {
-    // Cloudinary soporta CORS cuando la URL es servida desde su CDN estándar
-    // Forzamos cache: 'no-store' para evitar respuestas cacheadas sin CORS headers
     const response = await fetch(url, {
       method: 'GET',
       mode: 'cors',
