@@ -28,11 +28,7 @@ function loadJSZip() {
 async function fetchImageAsBlob(url) {
   if (!url) return null;
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      cache: 'no-store',
-    });
+    const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const blob = await response.blob();
     if (!blob || blob.size === 0) throw new Error('Blob vacío');
@@ -44,231 +40,317 @@ async function fetchImageAsBlob(url) {
   }
 }
 
-// ── Helper: deduce extensión desde blob MIME type o URL ──────────────────────
 function getImageExtension(url, blob) {
   if (blob?.type) {
-    const mimeMap = {
-      'image/jpeg': 'jpg',
-      'image/jpg':  'jpg',
-      'image/png':  'png',
-      'image/webp': 'webp',
-      'image/gif':  'gif',
-    };
+    const mimeMap = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
     if (mimeMap[blob.type]) return mimeMap[blob.type];
   }
   const match = (url || '').split('?')[0].match(/\.(\w+)$/);
   return match ? match[1].toLowerCase() : 'jpg';
 }
 
-// ── Helpers de color ──────────────────────────────────────────────────────────
-function getButtonRadius(shape) {
-  const map = { cuadrado: '4px', redondeado: '10px', pildora: '9999px' };
-  return map[shape] || '10px';
+function getBtnRadius(shape) {
+  return { cuadrado:'6px', redondeado:'12px', pildora:'9999px' }[shape] || '12px';
 }
 
-function hexLighten(hex, amount = 0.88) {
-  if (!hex || typeof hex !== 'string' || hex.length < 7) return '#ffffff';
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#ffffff';
-  const lr = Math.round(r + (255 - r) * amount);
-  const lg = Math.round(g + (255 - g) * amount);
-  const lb = Math.round(b + (255 - b) * amount);
-  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
-}
-
-function hexDarken(hex, amount = 0.2) {
-  if (!hex || typeof hex !== 'string' || hex.length < 7) return '#000000';
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#000000';
-  const dr = Math.round(r * (1 - amount));
-  const dg = Math.round(g * (1 - amount));
-  const db = Math.round(b * (1 - amount));
-  return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
-}
-
-// ── generateIndexHTML ─────────────────────────────────────────────────────────
-export function generateIndexHTML(landingData, theme, projectName, images = {}) {
+export function generateIndexHTML(landingData, theme, projectName, images = {}, inlineAssets = false) {
+  const d = landingData;
   const { heroImageUrl = null, logoImageUrl = null } = images;
+  const steps        = d.howItWorks?.steps || [];
+  const testimonials = d.socialProof?.testimonials || d.testimonials || [];
+  const stats        = d.socialProof?.stats || [];
+  const pricingPlans = d.pricing?.plans || (Array.isArray(d.pricing) ? d.pricing : []);
+  const faq          = d.faq?.items || d.faq || [];
 
-  // ── Hero ──────────────────────────────────────────────────────────────────
-  const heroHTML = landingData.hero ? `
-  <header class="hero" id="inicio">
-    <div class="hero__bg-decoration" aria-hidden="true"></div>
-    ${heroImageUrl ? `
-    <div class="hero__image-wrapper" aria-hidden="true">
-      <img
-        src="${heroImageUrl}"
-        alt="Imagen principal de ${projectName}"
-        class="hero__image"
-        loading="eager"
-      />
-    </div>` : ''}
-    <div class="container hero__content">
-      ${logoImageUrl ? `
-      <div class="hero__logo">
-        <img
-          src="${logoImageUrl}"
-          alt="Logo de ${projectName}"
-          class="hero__logo-img"
-          loading="eager"
-        />
-      </div>` : ''}
-      <span class="hero__badge">${projectName}</span>
-      <h1 class="hero__headline">${landingData.hero.headline || ''}</h1>
-      <p class="hero__subheadline">${landingData.hero.subheadline || ''}</p>
-      <div class="hero__actions">
-        ${landingData.hero.ctaButton    ? `<a href="#contacto" class="btn btn--primary btn--lg">${landingData.hero.ctaButton}</a>` : ''}
-        ${landingData.hero.secondaryCta ? `<a href="#contacto" class="btn btn--ghost   btn--lg">${landingData.hero.secondaryCta}</a>` : ''}
-      </div>
-      ${landingData.hero.supportingText ? `<p class="hero__supporting">${landingData.hero.supportingText}</p>` : ''}
-    </div>
-    <div class="hero__wave" aria-hidden="true">
-      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z" fill="var(--bg-secondary)"/>
-      </svg>
-    </div>
-  </header>` : '';
+  const navHTML = `
+    <nav class="nav-floating">
+      <span style="font-weight:800; color:${theme.textBase}; margin-right:8px;">${projectName}</span>
+      ${d.hero ? `<a href="#hero">Inicio</a>` : ''}
+      ${steps.length > 0 ? `<a href="#how">Cómo funciona</a>` : ''}
+      ${testimonials.length > 0 ? `<a href="#testimonials">Clientes</a>` : ''}
+      ${pricingPlans.length > 0 ? `<a href="#pricing">Precios</a>` : ''}
+      ${faq.length > 0 ? `<a href="#faq">FAQ</a>` : ''}
+      <a href="#contact" class="btn-primary" style="padding:8px 20px; font-size:0.82rem;">${d.hero?.ctaButton || 'Comenzar'}</a>
+    </nav>
+  `;
 
-  // ── Features ──────────────────────────────────────────────────────────────
-  const featuresHTML = landingData.features?.length ? `
-  <section class="features section" id="caracteristicas">
-    <div class="container">
-      <div class="section__header" data-animate>
-        <span class="badge">Características</span>
-        <h2 class="section__title">Por qué elegirnos</h2>
-      </div>
-      <div class="features__grid">
-        ${landingData.features.map((f, i) => `
-        <article class="feature-card" data-animate data-delay="${i * 100}">
-          <div class="feature-card__number" aria-hidden="true">${i + 1}</div>
-          <h3 class="feature-card__title">${f.title || ''}</h3>
-          <p class="feature-card__desc">${f.description || ''}</p>
-        </article>`).join('')}
-      </div>
-    </div>
-  </section>` : '';
+  const heroImageStyle = heroImageUrl
+    ? `background: ${theme.isDark ? '#05050a' : '#0a0a1a'};`
+    : `background: linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : theme.primaryDark} 100%);`;
 
-  // ── Testimonials ──────────────────────────────────────────────────────────
-  const testimonialsData = landingData.testimonials ||
-    landingData.socialProof?.testimonials || [];
-
-  const testimonialsHTML = testimonialsData.length ? `
-  <section class="testimonials section section--alt" id="testimonios">
-    <div class="container">
-      <div class="section__header" data-animate>
-        <span class="badge">Testimonios</span>
-        <h2 class="section__title">Lo que dicen nuestros clientes</h2>
-      </div>
-      <div class="testimonials__grid">
-        ${testimonialsData.map((t, i) => `
-        <article class="testimonial-card" data-animate data-delay="${i * 100}">
-          <div class="testimonial-card__stars" aria-label="5 estrellas">★★★★★</div>
-          <blockquote class="testimonial-card__quote">"${t.quote || ''}"</blockquote>
-          <footer class="testimonial-card__author">
-            <div class="testimonial-card__avatar" aria-hidden="true">${(t.name || 'U')[0].toUpperCase()}</div>
-            <div>
-              <cite class="testimonial-card__name">${t.name || ''}</cite>
-              ${t.role ? `<p class="testimonial-card__role">${t.role}</p>` : ''}
-            </div>
-          </footer>
-        </article>`).join('')}
-      </div>
-    </div>
-  </section>` : '';
-
-  // ── FAQ ───────────────────────────────────────────────────────────────────
-  const faqItems = landingData.faq?.items ||
-    (Array.isArray(landingData.faq) ? landingData.faq : []);
-
-  const faqHTML = faqItems.length ? `
-  <section class="faq section" id="faq">
-    <div class="container container--narrow">
-      <div class="section__header" data-animate>
-        <span class="badge">Preguntas frecuentes</span>
-        <h2 class="section__title">${landingData.faq?.title || 'FAQ'}</h2>
-        ${landingData.faq?.subtitle ? `<p class="section__subtitle">${landingData.faq.subtitle}</p>` : ''}
-      </div>
-      <div class="faq__list">
-        ${faqItems.map((item, i) => `
-        <div class="faq__item" data-animate data-delay="${i * 80}">
-          <button class="faq__question" aria-expanded="false" aria-controls="faq-answer-${i}">
-            <span>${item.question || ''}</span>
-            <span class="faq__icon" aria-hidden="true">+</span>
-          </button>
-          <div class="faq__answer" id="faq-answer-${i}" hidden>
-            <p>${item.answer || ''}</p>
+  const heroHTML = d.hero ? `
+    <section id="hero" class="hero-section" style="${heroImageStyle}">
+      ${heroImageUrl ? `
+        <div class="hero-img-overlay">
+          <img src="${heroImageUrl}" alt="Imagen de ${projectName}" loading="eager" />
+        </div>
+      ` : `
+        <div style="position:absolute; inset:0; pointer-events:none; overflow:hidden;">
+          <div style="position:absolute; top:-20%; right:-10%; width:70%; height:140%; background:rgba(255,255,255,0.04); border-radius:50%; transform:rotate(-15deg);"></div>
+          <div style="position:absolute; top:10%; left:-5%; width:50%; height:80%; background:rgba(255,255,255,0.03); border-radius:50%;"></div>
+          <svg style="position:absolute; bottom:0; left:0; right:0;" viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path d="M0,80 C480,0 960,0 1440,80 L1440,80 L0,80 Z" fill="${theme.bgPrimary}"></path>
+          </svg>
+        </div>
+      `}
+      <div class="container" style="position:relative; z-index:1;">
+        ${logoImageUrl ? `
+          <div class="sr text-center mb-28">
+            <img src="${logoImageUrl}" alt="Logo de ${projectName}" style="max-height:72px; max-width:240px; object-fit:contain; display:inline-block; filter:drop-shadow(0 2px 12px rgba(0,0,0,0.35));" loading="eager" />
           </div>
-        </div>`).join('')}
+        ` : ''}
+        ${d.hero.badge ? `
+          <div class="sr text-center mb-24"><span class="badge-white">${d.hero.badge}</span></div>
+        ` : ''}
+        <div class="sr sr-delay-1 text-center mb-24">
+          <h1 class="hero-title">${d.hero.headline}</h1>
+        </div>
+        ${d.hero.subheadline ? `
+          <div class="sr sr-delay-2 text-center mb-36">
+            <p class="hero-subtitle">${d.hero.subheadline}</p>
+          </div>
+        ` : ''}
+        <div class="sr sr-delay-3 cta-buttons flex-center gap-16 mb-28 wrap">
+          <a href="#contact" class="btn-primary" style="background:#fff; color:${theme.primaryColor}; box-shadow:0 8px 32px rgba(0,0,0,0.2); font-size:1.1rem; padding:18px 40px; font-family:inherit; border-color:#fff;">${d.hero.ctaButton} &rarr;</a>
+          ${d.hero.secondaryCta ? `<a href="#how" class="btn-ghost-white" style="font-family:inherit; font-size:1rem;">${d.hero.secondaryCta}</a>` : ''}
+        </div>
+        ${d.hero.trustIndicators?.length ? `
+          <div class="sr sr-delay-4 trust-bar">
+            ${d.hero.trustIndicators.map(t => `<span>${t}</span>`).join('')}
+          </div>
+        ` : ''}
+        ${stats.length ? `
+          <div class="sr sr-delay-5 stats-container grid-cols-${Math.min(stats.length, 3)}">
+            ${stats.slice(0,3).map((s, i) => `
+              <div class="stat-box ${i < stats.length-1 ? 'stat-box-border' : ''}">
+                <div class="stat-number">${s.number}</div>
+                <div class="stat-label">${s.label}</div>
+                ${s.description ? `<div class="stat-desc">${s.description}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
       </div>
-    </div>
-  </section>` : '';
+    </section>
+  ` : '';
 
-  // ── Pricing ───────────────────────────────────────────────────────────────
-  const pricingData = Array.isArray(landingData.pricing)
-    ? landingData.pricing
-    : (landingData.pricing?.plans || []);
-
-  const pricingHTML = pricingData.length ? `
-  <section class="pricing section section--alt" id="precios">
-    <div class="container">
-      <div class="section__header" data-animate>
-        <span class="badge">Precios</span>
-        <h2 class="section__title">${landingData.pricing?.title || 'Nuestros planes'}</h2>
-        ${landingData.pricing?.subtitle ? `<p class="section__subtitle">${landingData.pricing.subtitle}</p>` : ''}
+  const featuresHTML = d.features?.length ? `
+    <section class="section-spacing bg-primary">
+      <div class="container">
+        <div class="text-center mb-64">
+          <div class="sr section-tag flex-center">Características</div>
+          <h2 class="sr sr-delay-1 section-title text-center">¿Por qué elegir ${projectName}?</h2>
+          <p class="sr sr-delay-2 section-subtitle mt-16">Descubre todo lo que obtienes con nosotros</p>
+        </div>
+        <div class="features-grid" data-count="${d.features.length}">
+          ${d.features.map((f, i) => `
+            <div class="sr sr-delay-${(i%3)+1} card ${f.highlight ? 'feature-highlight' : ''}">
+              <div class="feature-icon">${f.icon}</div>
+              <h3 class="feature-title text-base">${f.title}</h3>
+              <p class="feature-desc text-muted">${f.description}</p>
+            </div>
+          `).join('')}
+        </div>
       </div>
-      <div class="pricing__grid">
-        ${pricingData.map((plan, i) => {
-          const isFeatured = plan.featured || i === 1;
-          const name     = plan.name || plan.planName || '';
-          const price    = plan.price || '';
-          const period   = plan.period || '';
-          const benefits = plan.benefits || [];
-          return `
-        <article class="pricing-card${isFeatured ? ' pricing-card--featured' : ''}" data-animate data-delay="${i * 100}">
-          ${isFeatured ? '<div class="pricing-card__badge">MÁS POPULAR</div>' : ''}
-          <h3 class="pricing-card__name">${name}</h3>
-          <div class="pricing-card__price">${price}</div>
-          ${period ? `<p class="pricing-card__period">${period}</p>` : ''}
-          <ul class="pricing-card__benefits">
-            ${benefits.map(b => `<li><span aria-hidden="true">✓</span>${b}</li>`).join('')}
-          </ul>
-          <a href="#contacto" class="btn ${isFeatured ? 'btn--white' : 'btn--primary'} btn--block">Comenzar ahora</a>
-        </article>`;
-        }).join('')}
+    </section>
+  ` : '';
+
+  const howItWorksHTML = steps.length ? `
+    <section id="how" class="section-spacing bg-secondary">
+      <div class="container">
+        <div class="text-center mb-64">
+          <div class="sr section-tag flex-center">Proceso</div>
+          <h2 class="sr sr-delay-1 section-title text-center">${d.howItWorks?.title || '¿Cómo funciona?'}</h2>
+          ${d.howItWorks?.subtitle ? `<p class="sr sr-delay-2 section-subtitle mt-16">${d.howItWorks.subtitle}</p>` : ''}
+        </div>
+        <div class="steps-grid grid-cols-${steps.length}">
+          ${steps.length > 1 ? `<div class="steps-line"></div>` : ''}
+          ${steps.map((s, i) => `
+            <div class="sr sr-delay-${i+1} step-card">
+              <div class="step-icon-wrap">
+                <div class="step-number">${s.number}</div>
+              </div>
+              <h3 class="step-title text-base">${s.title}</h3>
+              <p class="step-desc text-muted">${s.description}</p>
+            </div>
+          `).join('')}
+        </div>
       </div>
-    </div>
-  </section>` : '';
+    </section>
+  ` : '';
 
-  // ── Urgency ───────────────────────────────────────────────────────────────
-  const urgencyHTML = landingData.urgency ? `
-  <section class="urgency" id="oferta">
-    <div class="container urgency__content" data-animate>
-      <h2 class="urgency__title">${landingData.urgency.title || ''}</h2>
-      ${landingData.urgency.countdown ? `<p class="urgency__countdown">⏱ ${landingData.urgency.countdown}</p>` : ''}
-      ${landingData.urgency.ctaButton ? `<a href="#contacto" class="btn btn--white btn--lg">${landingData.urgency.ctaButton}</a>` : ''}
-    </div>
-  </section>` : '';
+  const testimonialsHTML = testimonials.length ? `
+    <section id="testimonials" class="section-spacing bg-primary">
+      <div class="container">
+        <div class="text-center mb-64">
+          <div class="sr section-tag flex-center">Testimonios</div>
+          <h2 class="sr sr-delay-1 section-title text-center">${d.socialProof?.title || 'Lo que dicen nuestros clientes'}</h2>
+          ${d.socialProof?.subtitle ? `<p class="sr sr-delay-2 section-subtitle mt-16">${d.socialProof.subtitle}</p>` : ''}
+        </div>
+        <div class="testimonials-grid">
+          ${testimonials.map((t, i) => `
+            <div class="sr sr-delay-${(i%3)+1} card flex-col">
+              <div class="stars mb-16">${'★'.repeat(t.rating || 5)}</div>
+              <blockquote class="testimonial-quote text-base">"${t.quote}"</blockquote>
+              <div class="testimonial-author">
+                <div class="avatar">${(t.name||'U')[0].toUpperCase()}</div>
+                <div>
+                  <div class="testimonial-name text-base">${t.name}</div>
+                  <div class="testimonial-role text-muted">${t.role}${t.company ? ` &middot; ${t.company}` : ''}</div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </section>
+  ` : '';
 
-  // ── Footer ────────────────────────────────────────────────────────────────
-  const footerHTML = landingData.footer ? `
-  <footer class="footer" id="contacto">
-    <div class="container footer__content">
-      ${logoImageUrl
-        ? `<div class="footer__logo">
-             <img src="${logoImageUrl}" alt="Logo de ${projectName}" class="footer__logo-img" loading="lazy" />
-           </div>`
-        : `<p class="footer__brand">${projectName}</p>`
-      }
-      ${landingData.footer.tagline  ? `<p class="footer__tagline">${landingData.footer.tagline}</p>`          : ''}
-      ${landingData.footer.contact  ? `<a href="mailto:${landingData.footer.contact}" class="footer__email">${landingData.footer.contact}</a>` : ''}
-      ${landingData.footer.phone    ? `<p class="footer__phone">${landingData.footer.phone}</p>`              : ''}
-      ${landingData.footer.legalText ? `<p class="footer__copy">&copy; ${new Date().getFullYear()} ${projectName}. ${landingData.footer.legalText}</p>` : `<p class="footer__copy">&copy; ${new Date().getFullYear()} ${projectName}. Todos los derechos reservados.</p>`}
-    </div>
-  </footer>` : '';
+  const pricingHTML = pricingPlans.length ? `
+    <section id="pricing" class="section-spacing bg-secondary">
+      <div class="container">
+        <div class="text-center mb-64">
+          ${d.pricing?.badge ? `<div class="sr mb-12"><span class="badge">${d.pricing.badge}</span></div>` : ''}
+          <div class="sr section-tag sr-delay-1 flex-center">Precios</div>
+          <h2 class="sr sr-delay-2 section-title text-center">${d.pricing?.title || 'Elige tu plan'}</h2>
+          ${d.pricing?.subtitle ? `<p class="sr sr-delay-3 section-subtitle mt-16">${d.pricing.subtitle}</p>` : ''}
+        </div>
+        <div class="pricing-grid grid-cols-${pricingPlans.length}">
+          ${pricingPlans.map((plan, i) => plan.featured ? `
+            <div class="sr sr-delay-${i+1} card-featured">
+              ${plan.badge ? `<div style="position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:#fff; color:${theme.primaryColor}; padding:4px 18px; border-radius:9999px; font-size:0.72rem; font-weight:800; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.15);">${plan.badge}</div>` : ''}
+              <h3 class="pricing-name-featured">${plan.name}</h3>
+              ${plan.description ? `<p class="pricing-desc-featured">${plan.description}</p>` : ''}
+              <div class="pricing-price-featured">${plan.price}</div>
+              ${plan.period ? `<p class="pricing-period-featured">${plan.period}</p>` : ''}
+              <ul style="list-style:none; margin-bottom:32px;">
+                ${(plan.benefits||[]).map(b => `<li style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; font-size:0.9rem; color:rgba(255,255,255,0.9); border-bottom:1px solid rgba(255,255,255,0.1);"><span style="color:#fff; font-weight:700; flex-shrink:0; margin-top:1px;">✓</span>${b}</li>`).join('')}
+              </ul>
+              <a href="#contact" style="display:block; text-align:center; padding:15px 24px; background:#fff; color:${theme.primaryColor}; border-radius:${getBtnRadius(theme.buttonShape)}; font-weight:800; text-decoration:none; font-size:1rem; font-family:inherit;">${plan.ctaButton || 'Empezar ahora'}</a>
+            </div>
+          ` : `
+            <div class="sr sr-delay-${i+1} card">
+              <h3 class="pricing-name text-base">${plan.name}</h3>
+              ${plan.description ? `<p class="pricing-desc text-muted">${plan.description}</p>` : ''}
+              <div class="pricing-price color-primary">${plan.price}</div>
+              ${plan.period ? `<p class="pricing-period text-muted">${plan.period}</p>` : ''}
+              <ul style="list-style:none; margin-bottom:32px;">
+                ${(plan.benefits||[]).map(b => `<li style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; font-size:0.9rem; color:${theme.textBase}; border-bottom:1px solid ${theme.cardBorder};"><span style="color:${theme.primaryColor}; font-weight:700; flex-shrink:0; margin-top:1px;">✓</span>${b}</li>`).join('')}
+                ${(plan.notIncluded||[]).map(b => `<li style="display:flex; align-items:flex-start; gap:10px; padding:9px 0; font-size:0.9rem; border-bottom:1px solid ${theme.cardBorder};"><span style="color:${theme.textMuted}; flex-shrink:0; margin-top:1px;">✕</span><span class="not-included">${b}</span></li>`).join('')}
+              </ul>
+              <a href="#contact" style="display:block; text-align:center; padding:15px 24px; background:${theme.primaryLight}; color:${theme.primaryColor}; border-radius:${getBtnRadius(theme.buttonShape)}; font-weight:700; text-decoration:none; font-size:1rem; font-family:inherit; border:1.5px solid ${theme.primaryColor};">${plan.ctaButton || 'Elegir plan'}</a>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </section>
+  ` : '';
+
+  const faqHTML = faq.length ? `
+    <section id="faq" class="section-spacing bg-primary">
+      <div class="container-sm">
+        <div class="text-center mb-64">
+          <div class="sr section-tag flex-center">FAQ</div>
+          <h2 class="sr sr-delay-1 section-title text-center">${d.faq?.title || 'Preguntas frecuentes'}</h2>
+          ${d.faq?.subtitle ? `<p class="sr sr-delay-2 section-subtitle mt-16">${d.faq.subtitle}</p>` : ''}
+        </div>
+        <div class="sr sr-delay-1">
+          ${faq.map((item, i) => `
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>${item.question}</span>
+                <span class="faq-icon">+</span>
+              </button>
+              <div class="faq-answer">
+                <div class="faq-answer-inner">${item.answer}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </section>
+  ` : '';
+
+  const urgencyHTML = d.urgency ? `
+    <section class="urgency-section">
+      <div style="position:absolute; inset:0; pointer-events:none;">
+        <div style="position:absolute; top:-30%; right:-10%; width:60%; height:160%; background:rgba(255,255,255,0.04); border-radius:50%;"></div>
+      </div>
+      <div class="container" style="position:relative; z-index:1; text-align:center;">
+        ${d.urgency.badge ? `<div class="sr mb-20"><span class="badge-white">${d.urgency.badge}</span></div>` : ''}
+        <h2 class="sr sr-delay-1 urgency-title">${d.urgency.title}</h2>
+        ${d.urgency.subtitle ? `<p class="sr sr-delay-2 urgency-subtitle">${d.urgency.subtitle}</p>` : ''}
+        ${d.urgency.countdown?.enabled ? `
+          <div class="sr sr-delay-3 mb-36">
+            <p style="font-size:0.8rem; text-transform:uppercase; letter-spacing:.12em; color:rgba(255,255,255,.6); margin-bottom:12px;">${d.urgency.countdown.label || 'La oferta termina en:'}</p>
+            <div class="countdown-box" id="countdown-timer">
+              <div class="countdown-unit"><div class="countdown-value hours">23</div><div class="countdown-label">horas</div></div><span class="countdown-sep">:</span>
+              <div class="countdown-unit"><div class="countdown-value mins">59</div><div class="countdown-label">minutos</div></div><span class="countdown-sep">:</span>
+              <div class="countdown-unit"><div class="countdown-value secs">59</div><div class="countdown-label">segundos</div></div>
+            </div>
+          </div>
+        ` : ''}
+        ${d.urgency.benefitsList?.length ? `
+          <div class="sr sr-delay-4 urgency-benefits">
+            ${d.urgency.benefitsList.map(b => `<span class="urgency-benefit"><span style="color:rgba(255,255,255,0.9); font-weight:700;">✓</span> ${b}</span>`).join('')}
+          </div>
+        ` : ''}
+        <div class="sr sr-delay-5 flex-col items-center gap-12">
+          <a href="#contact" style="display:inline-flex; align-items:center; gap:8px; padding:18px 48px; background:#fff; color:${theme.primaryColor}; border-radius:${getBtnRadius(theme.buttonShape)}; font-weight:800; font-size:1.1rem; text-decoration:none; box-shadow:0 8px 32px rgba(0,0,0,0.25); font-family:inherit;">${d.urgency.ctaButton || d.hero?.ctaButton || 'Aprovechar oferta'} &rarr;</a>
+          ${d.urgency.supportingText ? `<p style="font-size:0.82rem; color:rgba(255,255,255,0.55);">${d.urgency.supportingText}</p>` : ''}
+        </div>
+      </div>
+    </section>
+  ` : '';
+
+  const ctaHTML = d.cta ? `
+    <section id="contact" class="section-spacing bg-secondary">
+      <div class="container-sm text-center">
+        <h2 class="sr section-title mb-16">${d.cta.title}</h2>
+        ${d.cta.subtitle ? `<p class="sr sr-delay-1 section-subtitle margin-auto mb-40">${d.cta.subtitle}</p>` : ''}
+        <div class="sr sr-delay-2 cta-buttons flex-center gap-16 wrap">
+          <a href="mailto:info@empresa.cl" class="btn-primary" style="font-family:inherit; font-size:1.1rem; padding:18px 44px;">${d.cta.ctaButton} &rarr;</a>
+          ${d.cta.secondaryCta ? `<a href="#faq" class="btn-secondary" style="font-family:inherit; font-size:1rem; padding:18px 36px;">${d.cta.secondaryCta}</a>` : ''}
+        </div>
+        ${d.cta.trustText ? `<p class="sr sr-delay-3 mt-20 text-sm text-muted">🔒 ${d.cta.trustText}</p>` : ''}
+      </div>
+    </section>
+  ` : '';
+
+  const footerHTML = d.footer ? `
+    <footer class="footer-section bg-dark">
+      <div class="container">
+        <div class="footer-top">
+          <div>
+            ${logoImageUrl ? `<img src="${logoImageUrl}" alt="Logo de ${projectName}" style="max-height:48px; max-width:180px; object-fit:contain; margin-bottom:12px; display:block;" loading="lazy" />` : `<div class="footer-logo-text">${projectName}</div>`}
+            ${d.footer.description ? `<p class="footer-desc">${d.footer.description}</p>` : ''}
+            ${d.footer.contact ? `<a href="mailto:${d.footer.contact}" class="footer-contact color-secondary">${d.footer.contact}</a>` : ''}
+            ${d.footer.phone ? `<p class="footer-phone">${d.footer.phone}</p>` : ''}
+          </div>
+          ${d.footer.links?.length ? `
+            <div>
+              <p class="footer-nav-title">Navegación</p>
+              <ul style="list-style:none;">
+                ${d.footer.links.map(l => `<li style="margin-bottom:10px;"><a href="${l.href || '#'}" class="footer-link">${l.label}</a></li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+        <div class="footer-bottom">
+          <p class="footer-copy">&copy; ${new Date().getFullYear()} ${projectName}. ${d.footer.legalText || 'Todos los derechos reservados.'}</p>
+          ${d.footer.socialProof ? `<p class="footer-proof">🔒 ${d.footer.socialProof}</p>` : ''}
+        </div>
+      </div>
+    </footer>
+  ` : '';
+
+  const cssTag = inlineAssets 
+    ? `<style>\n${generateStylesCSS(theme, images)}\n</style>`
+    : `<link rel="stylesheet" href="styles.css" />`;
+
+  const jsTag = inlineAssets
+    ? `<script>\n${generateScriptJS()}\n</script>`
+    : `<script src="script.js"></script>`;
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -280,359 +362,365 @@ export function generateIndexHTML(landingData, theme, projectName, images = {}) 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="${theme.fontImport}" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  ${cssTag}
 </head>
 <body>
+${navHTML}
 ${heroHTML}
 ${featuresHTML}
+${howItWorksHTML}
 ${testimonialsHTML}
-${faqHTML}
 ${pricingHTML}
+${faqHTML}
 ${urgencyHTML}
+${ctaHTML}
 ${footerHTML}
-  <script src="script.js"></script>
+  ${jsTag}
 </body>
 </html>`;
 }
 
-// ── generateStylesCSS ─────────────────────────────────────────────────────────
 export function generateStylesCSS(theme, images = {}) {
-  const btnRadius    = getButtonRadius(theme.buttonShape);
-  const primaryLight = hexLighten(theme.primaryColor, 0.88);
-  const primaryDark  = hexDarken(theme.primaryColor, 0.2);
-
-  const heroImageStyles = images.heroImageUrl ? `
-/* ── Hero con imagen de fondo ── */
-.hero__image-wrapper {
-  position: absolute; inset: 0; z-index: 0; overflow: hidden;
-}
-.hero__image {
-  width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
-}
-.hero__image-wrapper::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(145deg, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.38) 100%);
-}
-.hero__bg-decoration { z-index: 1; }
-.hero__content { z-index: 2; position: relative; }
-.hero__wave    { z-index: 2; }
-` : '';
-
-  const logoStyles = images.logoImageUrl ? `
-/* ── Logo ── */
-.hero__logo { display: flex; justify-content: center; margin-bottom: 24px; }
-.hero__logo-img {
-  height: 64px; width: auto; max-width: 240px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
-}
-.footer__logo { display: flex; justify-content: center; margin-bottom: 8px; }
-.footer__logo-img {
-  height: 48px; width: auto; max-width: 180px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-  opacity: 0.8;
-}
-@media (max-width: 768px) {
-  .hero__logo-img { height: 48px; }
-}
-` : '';
+  const r = getBtnRadius(theme.buttonShape);
 
   return `
-:root {
-  --color-primary:        ${theme.primaryColor};
-  --color-primary-dark:   ${primaryDark};
-  --color-primary-light:  ${primaryLight};
-  --color-primary-text:   ${theme.primaryText};
-  --color-secondary:      ${theme.secondaryColor};
-  --color-secondary-text: ${theme.secondaryText};
-  --bg-primary:    ${theme.bgPrimary};
-  --bg-secondary:  ${theme.bgSecondary};
-  --text-base:     ${theme.textBase};
-  --text-muted:    ${theme.textMuted};
-  --card-bg:       ${theme.cardBg};
-  --card-border:   ${theme.cardBorder};
-  --font-family:   ${theme.fontFamily};
-  --btn-radius:    ${btnRadius};
-  --section-py:    clamp(64px, 8vw, 96px);
-  --container:     1140px;
-  --container-narrow: 760px;
-  --shadow-sm:  0 2px 16px rgba(0, 0, 0, 0.06);
-  --shadow-md:  0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-lg:  0 20px 48px rgba(0, 0, 0, 0.16);
-  --transition: 0.25s ease;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: ${theme.fontFamily}; background: ${theme.bgPrimary}; color: ${theme.textBase}; -webkit-font-smoothing: antialiased; }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; font-size: 16px; }
-body {
-  font-family: var(--font-family);
-  background-color: var(--bg-primary);
-  color: var(--text-base);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-img, video { max-width: 100%; height: auto; display: block; }
-a { color: inherit; text-decoration: none; }
-ul { list-style: none; }
-button { font-family: inherit; cursor: pointer; }
+  .sr { opacity: 0; transform: translateY(32px); transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1); }
+  .sr.visible { opacity: 1; transform: none; }
+  .sr-delay-1 { transition-delay: .1s; }
+  .sr-delay-2 { transition-delay: .2s; }
+  .sr-delay-3 { transition-delay: .3s; }
+  .sr-delay-4 { transition-delay: .4s; }
+  .sr-delay-5 { transition-delay: .5s; }
+  .sr-delay-6 { transition-delay: .6s; }
 
-.container        { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: 24px; }
-.container--narrow { max-width: var(--container-narrow); }
+  .btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 16px 36px; background: ${theme.primaryColor}; color: ${theme.primaryText};
+    border-radius: ${r}; font-weight: 700; font-size: 1.05rem;
+    border: 2px solid ${theme.primaryColor}; cursor: pointer; text-decoration: none;
+    transition: transform .2s, box-shadow .2s, background .2s;
+    box-shadow: 0 4px 20px rgba(${theme.primaryRgb}, 0.35);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(${theme.primaryRgb}, 0.5); background: ${theme.primaryDark}; }
 
-/* ── Buttons ── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 14px 32px; border-radius: var(--btn-radius); font-weight: 700; font-size: 1rem;
-  letter-spacing: -0.01em; border: 2px solid transparent;
-  transition: filter var(--transition), transform var(--transition), box-shadow var(--transition);
-  white-space: nowrap; cursor: pointer;
-}
-.btn:hover { filter: brightness(0.92); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.btn:active { transform: translateY(0); }
-.btn--primary { background-color: var(--color-primary); color: var(--color-primary-text); border-color: var(--color-primary); }
-.btn--ghost   { background-color: transparent; color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.35); }
-.btn--ghost:hover { background-color: rgba(255,255,255,0.1); }
-.btn--white   { background-color: #ffffff; color: var(--color-primary); border-color: #ffffff; }
-.btn--lg      { padding: 16px 40px; font-size: 1.05rem; }
-.btn--block   { width: 100%; }
+  .btn-secondary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 16px 36px; background: transparent; color: ${theme.textBase};
+    border-radius: ${r}; font-weight: 600; font-size: 1rem;
+    border: 1.5px solid ${theme.cardBorder}; cursor: pointer; text-decoration: none;
+    transition: background .2s, border-color .2s;
+  }
+  .btn-secondary:hover { background: ${theme.bgSecondary}; border-color: ${theme.primaryColor}; color: ${theme.primaryColor}; }
 
-/* ── Badge ── */
-.badge {
-  display: inline-block; padding: 4px 14px;
-  background-color: var(--color-primary-light); color: var(--color-primary);
-  border-radius: 9999px; font-size: 0.72rem; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px;
-}
+  .btn-ghost-white {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 32px; background: rgba(255,255,255,0.12); color: #fff;
+    border-radius: ${r}; font-weight: 600; font-size: 0.95rem;
+    border: 1.5px solid rgba(255,255,255,0.3); cursor: pointer; text-decoration: none;
+    transition: background .2s;
+    backdrop-filter: blur(8px);
+  }
+  .btn-ghost-white:hover { background: rgba(255,255,255,0.22); }
 
-/* ── Sections ── */
-.section         { padding-block: var(--section-py); }
-.section--alt    { background-color: var(--bg-secondary); }
-.section__header { text-align: center; margin-bottom: 56px; }
-.section__title  { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; color: var(--text-base); letter-spacing: -0.02em; line-height: 1.15; }
-.section__subtitle { margin-top: 16px; font-size: 1.05rem; color: var(--text-muted); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; background: ${theme.primaryLight}; color: ${theme.primaryColor};
+    border-radius: 9999px; font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1px solid ${theme.primaryMedium};
+  }
+  .badge-white {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; background: rgba(255,255,255,0.15); color: #fff;
+    border-radius: 9999px; font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(8px);
+  }
 
-/* ── Hero ── */
-.hero {
-  position: relative;
-  padding-block: clamp(80px, 12vw, 140px) clamp(80px, 10vw, 120px);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  text-align: center; overflow: hidden;
-}
-.hero__bg-decoration {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 60% 80% at 20% 40%, rgba(255,255,255,0.07) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 60% at 80% 60%, rgba(255,255,255,0.04) 0%, transparent 70%);
-  pointer-events: none;
-}
-.hero__content  { position: relative; z-index: 1; }
-.hero__badge    {
-  display: inline-flex; align-items: center; gap: 8px; padding: 6px 18px;
-  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 9999px; color: rgba(255,255,255,0.9); font-size: 0.72rem;
-  font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 28px;
-}
-.hero__headline    { font-size: clamp(2.4rem, 6vw, 4.8rem); font-weight: 900; color: #ffffff; line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 24px; }
-.hero__subheadline { font-size: clamp(1rem, 2.5vw, 1.3rem); color: rgba(255,255,255,0.78); max-width: 620px; margin-inline: auto; margin-bottom: 40px; line-height: 1.75; }
-.hero__actions     { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
-.hero__supporting  { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 8px; }
-.hero__wave        { position: absolute; bottom: -2px; left: 0; right: 0; height: 60px; overflow: hidden; }
-.hero__wave svg    { width: 100%; height: 100%; }
+  .card {
+    background: ${theme.cardBg}; border: 1px solid ${theme.cardBorder};
+    border-radius: 20px; padding: 32px; transition: transform .25s, box-shadow .25s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.1); }
 
-${heroImageStyles}
-${logoStyles}
+  .card-featured {
+    background: ${theme.primaryColor}; border: none; border-radius: 24px;
+    padding: 36px; position: relative;
+    box-shadow: 0 20px 64px rgba(${theme.primaryRgb}, 0.35);
+  }
 
-/* ── Features ── */
-.features__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
-.feature-card {
-  background: var(--card-bg); border: 1px solid var(--card-border);
-  border-radius: 20px; padding: 36px 32px; box-shadow: var(--shadow-sm);
-  transition: transform var(--transition), box-shadow var(--transition);
-}
-.feature-card:hover  { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.feature-card__number {
-  width: 52px; height: 52px; background: var(--color-primary-light);
-  border-radius: 14px; display: flex; align-items: center; justify-content: center;
-  font-size: 1.4rem; font-weight: 900; color: var(--color-primary); margin-bottom: 24px;
-}
-.feature-card__title { font-size: 1.1rem; font-weight: 700; color: var(--text-base); margin-bottom: 12px; }
-.feature-card__desc  { font-size: 0.93rem; color: var(--text-muted); line-height: 1.75; }
+  .section-tag {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: ${theme.primaryColor}; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-tag::before {
+    content: ''; display: block; width: 24px; height: 2px; background: ${theme.primaryColor};
+  }
 
-/* ── Testimonials ── */
-.testimonials__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
-.testimonial-card {
-  background: var(--card-bg); border: 1px solid var(--card-border);
-  border-radius: 20px; padding: 36px; box-shadow: var(--shadow-sm);
-  transition: transform var(--transition), box-shadow var(--transition);
-}
-.testimonial-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.testimonial-card__stars  { color: #f59e0b; font-size: 1rem; letter-spacing: 2px; margin-bottom: 20px; }
-.testimonial-card__quote  {
-  font-size: 0.97rem; color: var(--text-base); line-height: 1.8; font-style: italic;
-  border-left: 3px solid var(--color-primary); padding-left: 16px; margin-bottom: 28px;
-}
-.testimonial-card__author { display: flex; align-items: center; gap: 12px; }
-.testimonial-card__avatar {
-  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 800; font-size: 1rem;
-}
-.testimonial-card__name { font-weight: 700; color: var(--text-base); font-size: 0.9rem; font-style: normal; display: block; }
-.testimonial-card__role { color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
+  .section-title {
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.02em; color: ${theme.textBase};
+  }
+  .section-subtitle {
+    font-size: 1.15rem; color: ${theme.textMuted}; line-height: 1.75; max-width: 600px; margin: 0 auto;
+  }
 
-/* ── FAQ ── */
-.faq__list { display: flex; flex-direction: column; gap: 8px; }
-.faq__item {
-  background: var(--card-bg); border: 1px solid var(--card-border);
-  border-radius: 14px; overflow: hidden; transition: border-color var(--transition);
-}
-.faq__item.is-open { border-color: var(--color-primary); }
-.faq__question {
-  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px;
-  padding: 20px 24px; background: transparent; border: none; text-align: left;
-  font-size: 0.97rem; font-weight: 700; color: var(--text-base); line-height: 1.4; cursor: pointer;
-}
-.faq__icon {
-  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
-  background: var(--color-primary-light); color: var(--color-primary);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; font-weight: 700;
-  transition: transform var(--transition), background var(--transition), color var(--transition);
-}
-.faq__item.is-open .faq__icon { transform: rotate(45deg); background: var(--color-primary); color: var(--color-primary-text); }
-.faq__answer         { padding: 0 24px 20px; font-size: 0.93rem; color: var(--text-muted); line-height: 1.75; }
-.faq__answer[hidden] { display: none; }
+  .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .container-sm { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 24px; }
+  .stars { color: #f59e0b; font-size: 0.95rem; letter-spacing: 2px; }
 
-/* ── Pricing ── */
-.pricing__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; align-items: start; }
-.pricing-card {
-  position: relative; background: var(--card-bg); border: 1px solid var(--card-border);
-  border-radius: 24px; padding: 40px 32px; box-shadow: var(--shadow-sm);
-  transition: transform var(--transition), box-shadow var(--transition);
-}
-.pricing-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.pricing-card--featured {
-  background: var(--color-primary); border: 2px solid var(--color-primary);
-  box-shadow: 0 20px 48px rgba(0,0,0,0.2); transform: scale(1.03);
-}
-.pricing-card--featured:hover { transform: scale(1.03) translateY(-4px); }
-.pricing-card__badge {
-  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-  background: var(--color-secondary); color: var(--color-secondary-text);
-  padding: 4px 18px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800;
-  white-space: nowrap; letter-spacing: 0.05em;
-}
-.pricing-card__name             { font-size: 1.15rem; font-weight: 700; color: var(--text-base); margin-bottom: 8px; }
-.pricing-card--featured .pricing-card__name  { color: #ffffff; }
-.pricing-card__price            { font-size: 2.8rem; font-weight: 900; color: var(--color-primary); letter-spacing: -0.04em; margin-block: 16px 4px; }
-.pricing-card--featured .pricing-card__price { color: #ffffff; }
-.pricing-card__period           { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 28px; }
-.pricing-card--featured .pricing-card__period { color: rgba(255,255,255,0.65); }
-.pricing-card__benefits         { margin-bottom: 32px; }
-.pricing-card__benefits li      { display: flex; align-items: flex-start; gap: 10px; padding-block: 10px; font-size: 0.9rem; color: var(--text-base); border-bottom: 1px solid var(--card-border); }
-.pricing-card--featured .pricing-card__benefits li { color: rgba(255,255,255,0.9); border-bottom-color: rgba(255,255,255,0.12); }
-.pricing-card__benefits li span { color: var(--color-primary); font-weight: 700; flex-shrink: 0; }
-.pricing-card--featured .pricing-card__benefits li span { color: #ffffff; }
+  .nav-floating {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 999; display: flex; align-items: center; gap: 12px;
+    padding: 10px 20px; border-radius: 9999px;
+    background: ${theme.isDark ? 'rgba(10,10,20,0.85)' : 'rgba(255,255,255,0.85)'};
+    backdrop-filter: blur(20px); border: 1px solid ${theme.cardBorder};
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    font-size: 0.875rem; font-weight: 600; color: ${theme.textBase};
+    max-width: calc(100vw - 48px);
+  }
+  .nav-floating a { color: ${theme.textMuted}; text-decoration: none; transition: color .2s; }
+  .nav-floating a:hover { color: ${theme.primaryColor}; }
 
-/* ── Urgency ── */
-.urgency {
-  position: relative; padding-block: clamp(60px, 8vw, 80px);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  text-align: center; overflow: hidden;
-}
-.urgency::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 20% 50%, rgba(255,255,255,0.06) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(255,255,255,0.04) 0%, transparent 50%);
-  pointer-events: none;
-}
-.urgency__content  { position: relative; z-index: 1; max-width: 700px; }
-.urgency__title    { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 16px; }
-.urgency__countdown { font-size: 1.1rem; color: rgba(255,255,255,0.75); margin-bottom: 32px; }
+  .faq-item { border-bottom: 1px solid ${theme.cardBorder}; overflow: hidden; }
+  .faq-question {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 0; background: none; border: none; cursor: pointer; text-align: left;
+    font-size: 1.05rem; font-weight: 600; color: ${theme.textBase}; gap: 16px;
+    font-family: inherit;
+  }
+  .faq-icon {
+    width: 32px; height: 32px; flex-shrink: 0; border-radius: 9999px;
+    background: ${theme.primaryLight}; color: ${theme.primaryColor};
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    font-weight: 300; transition: transform .3s, background .3s, color .3s;
+  }
+  .faq-item.open .faq-icon { transform: rotate(45deg); background: ${theme.primaryColor}; color: ${theme.primaryText}; }
+  .faq-answer { overflow: hidden; max-height: 0; transition: max-height .4s cubic-bezier(.22,1,.36,1); }
+  .faq-answer-inner { padding: 0 0 22px; font-size: 0.97rem; color: ${theme.textMuted}; line-height: 1.8; }
 
-/* ── Footer ── */
-.footer          { background: #0f172a; padding-block: clamp(48px, 6vw, 72px); text-align: center; }
-.footer__content { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.footer__brand   { font-size: 1.5rem; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
-.footer__tagline { color: #94a3b8; font-size: 0.95rem; }
-.footer__email   { color: var(--color-secondary); font-weight: 600; font-size: 0.95rem; transition: opacity var(--transition); }
-.footer__email:hover { opacity: 0.8; }
-.footer__phone   { color: #6b7280; font-size: 0.9rem; }
-.footer__copy    { color: #475569; font-size: 0.8rem; margin-top: 20px; }
+  .trust-bar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 8px 24px; font-size: 0.85rem; color: ${theme.textMuted}; margin-top: 20px;
+  }
+  .trust-bar span { display: flex; align-items: center; gap: 6px; }
+  .trust-bar span::before { content: '✓'; color: ${theme.primaryColor}; font-weight: 700; }
 
-/* ── Scroll animations ── */
-[data-animate] { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
-[data-animate].is-visible { opacity: 1; transform: translateY(0); }
+  .step-number {
+    width: 56px; height: 56px; border-radius: 16px; background: ${theme.primaryLight};
+    color: ${theme.primaryColor}; font-size: 1.4rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(${theme.primaryRgb},.3);
+  }
 
-/* ── Responsive ── */
-@media (max-width: 768px) {
-  .hero__actions { flex-direction: column; align-items: center; }
-  .btn--lg { width: 100%; max-width: 320px; }
-  .features__grid, .testimonials__grid, .pricing__grid { grid-template-columns: 1fr; }
-  .pricing-card--featured { transform: scale(1); }
-  .pricing-card--featured:hover { transform: translateY(-4px); }
-}
-@media (max-width: 480px) {
-  .hero__headline { font-size: 2.2rem; }
-  .section__title { font-size: 1.8rem; }
-  .feature-card, .testimonial-card, .pricing-card { padding: 28px 20px; }
-  .faq__question { padding: 16px 20px; }
-}
+  .stat-number { font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; }
+  .stat-label  { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.8); margin-top: 4px; }
+  .stat-desc   { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin-top: 2px; }
+
+  .not-included { color: ${theme.textMuted}; opacity: 0.5; text-decoration: line-through; }
+
+  .countdown-box {
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 16px; padding: 20px 32px;
+    display: inline-flex; gap: 24px; align-items: center;
+    backdrop-filter: blur(8px);
+  }
+  .countdown-unit { text-align: center; }
+  .countdown-value { font-size: 2.5rem; font-weight: 900; color: #fff; line-height: 1; }
+  .countdown-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.6); }
+  .countdown-sep { font-size: 2rem; font-weight: 900; color: rgba(255,255,255,.5); margin-top: -8px; }
+
+  .feature-highlight { border: 2px solid ${theme.primaryColor}; position: relative; }
+  .feature-highlight::before {
+    content: '★ Destacado'; position: absolute; top: -12px; left: 20px;
+    background: ${theme.primaryColor}; color: ${theme.primaryText};
+    padding: 2px 12px; border-radius: 9999px; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; color: ${theme.primaryText};
+    background: linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor});
+  }
+
+  .hero-img-overlay { position: absolute; inset: 0; z-index: 0; }
+  .hero-img-overlay img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+  .hero-img-overlay::after { content: ''; position: absolute; inset: 0; background: linear-gradient(145deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.38) 100%); }
+
+  .section-spacing { padding: 96px 0; }
+  .bg-primary { background: ${theme.bgPrimary}; }
+  .bg-secondary { background: ${theme.bgSecondary}; }
+  .bg-dark { background: ${theme.isDark ? '#05050a' : '#0a0a1a'}; }
+  .hero-section { position: relative; overflow: hidden; padding-top: 140px; padding-bottom: 100px; }
+  .hero-title { font-size: clamp(2.4rem, 5.5vw, 4.2rem); font-weight: 900; line-height: 1.08; letter-spacing: -0.03em; color: #ffffff; max-width: 860px; margin: 0 auto; }
+  .hero-subtitle { font-size: clamp(1.05rem,2vw,1.3rem); color: rgba(255,255,255,0.82); line-height: 1.75; max-width: 640px; margin: 0 auto; }
+  .text-center { text-align: center; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .mb-28 { margin-bottom: 28px; }
+  .mb-36 { margin-bottom: 36px; }
+  .mb-40 { margin-bottom: 40px; }
+  .mb-64 { margin-bottom: 64px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+  .flex-center { display: flex; justify-content: center; align-items: center; }
+  .flex-col { display: flex; flex-direction: column; }
+  .gap-12 { gap: 12px; }
+  .gap-16 { gap: 16px; }
+  .wrap { flex-wrap: wrap; }
+  .margin-auto { margin: 0 auto; }
+  .text-sm { font-size: 0.85rem; }
+  .text-base { color: ${theme.textBase}; }
+  .text-muted { color: ${theme.textMuted}; }
+  .color-primary { color: ${theme.primaryColor}; }
+  .color-secondary { color: ${theme.secondaryColor}; }
+  
+  .stats-container { margin-top: 56px; display: grid; gap: 1px; max-width: 640px; margin: 56px auto 0; background: rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; backdrop-filter: blur(10px); }
+  .stat-box { padding: 24px 20px; text-align: center; }
+  .stat-box-border { border-right: 1px solid rgba(255,255,255,0.15); }
+  
+  .features-grid { display: grid; gap: 24px; }
+  .features-grid[data-count="4"], .features-grid[data-count="2"] { grid-template-columns: repeat(2, 1fr); }
+  .features-grid:not([data-count="4"]):not([data-count="2"]) { grid-template-columns: repeat(3, 1fr); }
+  .feature-icon { font-size: 2.2rem; margin-bottom: 16px; }
+  .feature-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; line-height: 1.3; }
+  .feature-desc { font-size: 0.93rem; line-height: 1.8; }
+  
+  .steps-grid { display: grid; gap: 32px; position: relative; }
+  .steps-line { position: absolute; top: 28px; left: 15%; right: 15%; height: 2px; z-index: 0; background: linear-gradient(90deg, ${theme.primaryLight}, ${theme.primaryColor}, ${theme.primaryLight}); }
+  .step-card { text-align: center; position: relative; z-index: 1; }
+  .step-icon-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
+  .step-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+  .step-desc { font-size: 0.9rem; line-height: 1.75; }
+
+  .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .testimonial-quote { flex: 1; font-size: 0.97rem; line-height: 1.85; font-style: italic; margin-bottom: 24px; padding-left: 16px; border-left: 3px solid ${theme.primaryColor}; }
+  .testimonial-author { display: flex; align-items: center; gap: 12px; }
+  .testimonial-name { font-weight: 700; font-size: 0.9rem; }
+  .testimonial-role { font-size: 0.8rem; }
+
+  .pricing-grid { display: grid; gap: 24px; align-items: start; }
+  .pricing-name { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+  .pricing-name-featured { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: rgba(255,255,255,0.9); }
+  .pricing-desc { font-size: 0.87rem; margin-bottom: 20px; line-height: 1.6; }
+  .pricing-desc-featured { font-size: 0.87rem; color: rgba(255,255,255,0.65); margin-bottom: 20px; line-height: 1.6; }
+  .pricing-price { font-size: 2.8rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+  .pricing-price-featured { font-size: 3rem; font-weight: 900; color: #fff; letter-spacing: -0.04em; line-height: 1; }
+  .pricing-period { font-size: 0.85rem; margin-top: 4px; margin-bottom: 28px; }
+  .pricing-period-featured { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 4px; margin-bottom: 28px; }
+
+  .urgency-section { padding: 96px 0; position: relative; overflow: hidden; background: linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 100%); }
+  .urgency-title { font-size: clamp(2rem,4vw,3.2rem); font-weight: 900; color: #fff; margin-bottom: 16px; letter-spacing: -0.02em; }
+  .urgency-subtitle { font-size: 1.15rem; color: rgba(255,255,255,0.8); max-width: 560px; margin: 0 auto 32px; }
+  .urgency-benefits { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin-bottom: 36px; }
+  .urgency-benefit { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.85); font-size: 0.9rem; }
+
+  .footer-section { padding: 64px 0 32px; }
+  .footer-top { display: grid; grid-template-columns: 2fr 1fr; gap: 48px; margin-bottom: 48px; align-items: start; }
+  .footer-logo-text { font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 12px; letter-spacing: -0.02em; }
+  .footer-desc { font-size: 0.9rem; color: #6b7280; line-height: 1.75; max-width: 420px; }
+  .footer-contact { display: block; margin-top: 16px; font-size: 0.9rem; text-decoration: none; }
+  .footer-phone { font-size: 0.85rem; color: #6b7280; margin-top: 6px; }
+  .footer-nav-title { font-size: 0.75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #6b7280; margin-bottom: 16px; }
+  .footer-link { font-size: 0.9rem; color: #9ca3af; text-decoration: none; transition: color .2s; }
+  .footer-link:hover { color: #fff; }
+  .footer-bottom { border-top: 1px solid #1f2937; padding-top: 28px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+  .footer-copy { font-size: 0.8rem; color: #4b5563; }
+  .footer-proof { font-size: 0.8rem; color: #6b7280; }
+
+  .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+  .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
+
+  @media (max-width: 768px) {
+    .features-grid, .features-grid[data-count="4"], .features-grid[data-count="2"] { grid-template-columns: 1fr; }
+    .testimonials-grid, .pricing-grid, .steps-grid, .footer-top { grid-template-columns: 1fr !important; }
+    .stats-container { grid-template-columns: repeat(2, 1fr) !important; }
+    .cta-buttons { flex-direction: column !important; align-items: stretch !important; }
+    .nav-floating { display: none !important; }
+    .countdown-box { flex-wrap: wrap; gap: 12px; }
+  }
 `;
 }
 
-// ── generateScriptJS ──────────────────────────────────────────────────────────
 export function generateScriptJS() {
   return `(function () {
   'use strict';
 
   function initFAQ() {
-    var items = document.querySelectorAll('.faq__item');
+    var items = document.querySelectorAll('.faq-item');
     items.forEach(function (item) {
-      var btn    = item.querySelector('.faq__question');
-      var answer = item.querySelector('.faq__answer');
+      var btn    = item.querySelector('.faq-question');
+      var answer = item.querySelector('.faq-answer');
       if (!btn || !answer) return;
       btn.addEventListener('click', function () {
-        var isOpen = item.classList.contains('is-open');
+        var isOpen = item.classList.contains('open');
         items.forEach(function (other) {
-          if (other !== item) {
-            other.classList.remove('is-open');
-            var ob = other.querySelector('.faq__question');
-            var oa = other.querySelector('.faq__answer');
-            if (ob) ob.setAttribute('aria-expanded', 'false');
-            if (oa) oa.hidden = true;
-          }
+          other.classList.remove('open');
+          var oa = other.querySelector('.faq-answer');
+          if (oa) oa.style.maxHeight = null;
         });
-        item.classList.toggle('is-open', !isOpen);
-        btn.setAttribute('aria-expanded', String(!isOpen));
-        answer.hidden = isOpen;
+        if (!isOpen) {
+          item.classList.add('open');
+          answer.style.maxHeight = '400px';
+        }
       });
     });
   }
 
+  function initCountdown() {
+    var timerEl = document.getElementById('countdown-timer');
+    if (!timerEl) return;
+    var hEl = timerEl.querySelector('.hours');
+    var mEl = timerEl.querySelector('.mins');
+    var sEl = timerEl.querySelector('.secs');
+    if(!hEl || !mEl || !sEl) return;
+
+    var h = 23, m = 59, s = 59;
+    var t = setInterval(function() {
+      if(h === 0 && m === 0 && s === 0) { clearInterval(t); return; }
+      if(s > 0) { s--; }
+      else if(m > 0) { m--; s = 59; }
+      else if(h > 0) { h--; m = 59; s = 59; }
+
+      hEl.textContent = h < 10 ? '0'+h : h;
+      mEl.textContent = m < 10 ? '0'+m : m;
+      sEl.textContent = s < 10 ? '0'+s : s;
+    }, 1000);
+  }
+
   function initScrollAnimations() {
     if (!('IntersectionObserver' in window)) {
-      document.querySelectorAll('[data-animate]').forEach(function (el) {
-        el.classList.add('is-visible');
+      document.querySelectorAll('.sr').forEach(function (el) {
+        el.classList.add('visible');
       });
       return;
     }
     var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
-        var el    = entry.target;
-        var delay = parseInt(el.dataset.delay || '0', 10);
-        setTimeout(function () { el.classList.add('is-visible'); }, delay);
+        var el = entry.target;
+        el.classList.add('visible');
         observer.unobserve(el);
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-    document.querySelectorAll('[data-animate]').forEach(function (el) {
-      observer.observe(el);
-    });
+    
+    setTimeout(function() {
+      document.querySelectorAll('.sr').forEach(function (el) {
+        observer.observe(el);
+      });
+    }, 100);
   }
 
   function initSmoothScroll() {
@@ -650,6 +738,7 @@ export function generateScriptJS() {
 
   document.addEventListener('DOMContentLoaded', function () {
     initFAQ();
+    initCountdown();
     initScrollAnimations();
     initSmoothScroll();
   });
@@ -657,7 +746,6 @@ export function generateScriptJS() {
 }());`;
 }
 
-// ── generateREADME ────────────────────────────────────────────────────────────
 function generateREADME(projectName, theme) {
   return `# ${projectName} — Landing Page
 
@@ -687,20 +775,19 @@ Para publicar, sube todos los archivos y la carpeta assets a tu hosting estátic
 
 ## Personalización
 
-Edita las variables CSS en styles.css bajo :root { ... }
+Edita las clases CSS en styles.css
 
 ## Tecnologías
 
-- HTML5 semántico con accesibilidad básica
-- CSS3 con custom properties (variables nativas)
-- JavaScript ES5 vanilla, sin dependencias externas
+- HTML5 semántico
+- CSS3 vanilla
+- JavaScript ES5 vanilla
 - Google Fonts
 
 Generado el ${new Date().toLocaleDateString('es-CL')}.
 `;
 }
 
-// ── generateAndDownloadZip ────────────────────────────────────────────────────
 export async function generateAndDownloadZip(landingData, theme, projectName, designPreferences = {}) {
   const JSZip = await loadJSZip();
   const slug  = (projectName || 'landing-page').toLowerCase().replace(/\s+/g, '-');
@@ -718,41 +805,33 @@ export async function generateAndDownloadZip(landingData, theme, projectName, de
     logoExt: 'png',
   };
 
-  // ── Descarga hero image ───────────────────────────────────────────────────
   if (heroImageUrlOriginal) {
     const result = await fetchImageAsBlob(heroImageUrlOriginal);
     if (result) {
       images.heroExt      = result.ext;
       images.heroImageUrl = `assets/hero-image.${result.ext}`;
       assetsFolder.file(`hero-image.${result.ext}`, result.blob);
-      console.info(`[exportProject] Hero image incluida como archivo local: assets/hero-image.${result.ext}`);
     } else {
       images.heroImageUrl = heroImageUrlOriginal;
-      console.warn('[exportProject] Hero image incluida como URL externa (fallback CORS).');
     }
   }
 
-  // ── Descarga logo ─────────────────────────────────────────────────────────
   if (logoImageUrlOriginal) {
     const result = await fetchImageAsBlob(logoImageUrlOriginal);
     if (result) {
       images.logoExt      = result.ext;
       images.logoImageUrl = `assets/logo.${result.ext}`;
       assetsFolder.file(`logo.${result.ext}`, result.blob);
-      console.info(`[exportProject] Logo incluido como archivo local: assets/logo.${result.ext}`);
     } else {
       images.logoImageUrl = logoImageUrlOriginal;
-      console.warn('[exportProject] Logo incluido como URL externa (fallback CORS).');
     }
   }
 
-  // ── Generación de archivos ────────────────────────────────────────────────
   assetsFolder.file('README.md', generateREADME(projectName, theme));
   rootFolder.file('index.html', generateIndexHTML(landingData, theme, projectName, images));
   rootFolder.file('styles.css', generateStylesCSS(theme, images));
   rootFolder.file('script.js',  generateScriptJS());
 
-  // ── Descarga ──────────────────────────────────────────────────────────────
   const blob   = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
   const url    = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
