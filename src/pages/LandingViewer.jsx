@@ -3,7 +3,6 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { generateAndDownloadZip, generateIndexHTML } from '../utils/exportProject';
 
-// ── Helpers de color ──────────────────────────────────────────────────────────
 const COLOR_HEX_MAP = {
   'azul-marino':    '#1e3a5f', 'azul-cielo':      '#3b82f6',
   'verde-bosque':   '#166534', 'verde-menta':      '#10b981',
@@ -16,19 +15,25 @@ const COLOR_HEX_MAP = {
 };
 
 function hexToRgb(hex) {
+  if (!hex || typeof hex !== 'string' || hex.length < 7) return '30, 58, 95';
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  return `${r}, ${g}, ${b}`;
+  return `${isNaN(r) ? 30 : r}, ${isNaN(g) ? 58 : g}, ${isNaN(b) ? 95 : b}`;
 }
+
 function lighten(hex, a=0.9) {
+  if (!hex || typeof hex !== 'string' || hex.length < 7) return '#ffffff';
   const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#ffffff';
   return `#${Math.round(r+(255-r)*a).toString(16).padStart(2,'0')}${Math.round(g+(255-g)*a).toString(16).padStart(2,'0')}${Math.round(b+(255-b)*a).toString(16).padStart(2,'0')}`;
 }
+
 function darken(hex, a=0.15) {
+  if (!hex || typeof hex !== 'string' || hex.length < 7) return '#000000';
   const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#000000';
   return `#${Math.round(r*(1-a)).toString(16).padStart(2,'0')}${Math.round(g*(1-a)).toString(16).padStart(2,'0')}${Math.round(b*(1-a)).toString(16).padStart(2,'0')}`;
 }
 
-// ── Construir tema visual ─────────────────────────────────────────────────────
 function buildTheme(aiMetadata, designPreferences) {
   const t  = aiMetadata?._theme || {};
   const dp = designPreferences  || {};
@@ -68,12 +73,10 @@ function buildTheme(aiMetadata, designPreferences) {
   };
 }
 
-// ── Radios de botones ─────────────────────────────────────────────────────────
 function getBtnRadius(shape) {
   return { cuadrado:'6px', redondeado:'12px', pildora:'9999px' }[shape] || '12px';
 }
 
-// ── CSS global inyectado en el head ──────────────────────────────────────────
 const GLOBAL_CSS = (theme) => {
   const r = getBtnRadius(theme.buttonShape);
   return `
@@ -247,7 +250,6 @@ const GLOBAL_CSS = (theme) => {
     background: linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor});
   }
 
-  /* ── Hero image overlay ── */
   .hero-img-overlay {
     position: absolute; inset: 0; z-index: 0;
   }
@@ -274,7 +276,6 @@ const GLOBAL_CSS = (theme) => {
 `;
 };
 
-// ── Componente principal ──────────────────────────────────────────────────────
 const LandingViewer = () => {
   const { id }         = useParams();
   const [searchParams] = useSearchParams();
@@ -289,10 +290,14 @@ const LandingViewer = () => {
   const [openFaq,           setOpenFaq]           = useState(null);
   const [isZipping,         setIsZipping]         = useState(false);
 
-  // Countdown
   useEffect(() => {
-    const t = setInterval(() => {
+    let t;
+    t = setInterval(() => {
       setCountdown(prev => {
+        if (prev.h === 0 && prev.m === 0 && prev.s === 0) {
+          clearInterval(t);
+          return prev;
+        }
         let { h, m, s } = prev;
         if (s > 0) return { h, m, s: s-1 };
         if (m > 0) return { h, m: m-1, s: 59 };
@@ -303,7 +308,6 @@ const LandingViewer = () => {
     return () => clearInterval(t);
   }, []);
 
-  // Fetch data
   useEffect(() => {
     if (!token) { setError('Token no proporcionado.'); setIsLoading(false); return; }
     const fetchData = async () => {
@@ -323,7 +327,6 @@ const LandingViewer = () => {
     fetchData();
   }, [id, token]);
 
-  // Inject font + scroll reveal
   useEffect(() => {
     if (!landingData) return;
     const theme = buildTheme(landingData, designPreferences);
@@ -372,39 +375,37 @@ const LandingViewer = () => {
   const pricingPlans = d.pricing?.plans || (Array.isArray(d.pricing) ? d.pricing : []);
   const steps        = d.howItWorks?.steps || [];
 
-  // Imágenes personalizadas desde designPreferences
   const heroImageUrl = designPreferences?.heroImageUrl || null;
   const logoImageUrl = designPreferences?.logoImageUrl || null;
 
   const toggleFaq = (i) => setOpenFaq(prev => prev === i ? null : i);
 
   const handleDownload = async () => {
-  try {
-    const currentTheme = buildTheme(landingData, designPreferences);
-    const images = {
-      heroImageUrl: designPreferences?.heroImageUrl || null,
-      logoImageUrl: designPreferences?.logoImageUrl || null,
-    };
-    const cleanHtml = generateIndexHTML(landingData, currentTheme, projectName, images);
-    const blob      = new Blob([cleanHtml], { type: 'text/html;charset=utf-8' });
-    const url       = URL.createObjectURL(blob);
-    const a         = document.createElement('a');
-    a.href          = url;
-    a.download      = `${projectName.toLowerCase().replace(/\s+/g, '-')}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error('[LandingViewer] Error al generar descarga HTML:', err);
-    alert('No se pudo generar el archivo HTML. Intenta descargar el ZIP en su lugar.');
-  }
-};
+    try {
+      const currentTheme = buildTheme(landingData, designPreferences);
+      const images = {
+        heroImageUrl: designPreferences?.heroImageUrl || null,
+        logoImageUrl: designPreferences?.logoImageUrl || null,
+      };
+      const cleanHtml = generateIndexHTML(landingData, currentTheme, projectName, images);
+      const blob      = new Blob([cleanHtml], { type: 'text/html;charset=utf-8' });
+      const url       = URL.createObjectURL(blob);
+      const a         = document.createElement('a');
+      a.href          = url;
+      a.download      = `${projectName.toLowerCase().replace(/\s+/g, '-')}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[LandingViewer] Error al generar descarga HTML:', err);
+      alert('No se pudo generar el archivo HTML. Intenta descargar el ZIP en su lugar.');
+    }
+  };
 
   const handleDownloadZip = async () => {
     setIsZipping(true);
     try {
-      // ── Pasa designPreferences para que el ZIP incluya hero image y logo
       await generateAndDownloadZip(landingData, theme, projectName, designPreferences);
     } catch (err) {
       console.error('Error generando ZIP:', err);
@@ -418,7 +419,6 @@ const LandingViewer = () => {
     <>
       <style>{GLOBAL_CSS(theme)}</style>
 
-      {/* ── Barra de herramientas flotante ── */}
       <div style={{ position:'fixed', top:16, right:16, zIndex:9999, display:'flex', gap:10 }}>
         <button
           onClick={handleDownloadZip}
@@ -446,7 +446,6 @@ const LandingViewer = () => {
         </button>
       </div>
 
-      {/* NAV flotante */}
       <nav className="nav-floating">
         <span style={{ fontWeight:800, color:theme.textBase, marginRight:8 }}>{projectName}</span>
         {d.hero && <a href="#hero">Inicio</a>}
@@ -459,7 +458,6 @@ const LandingViewer = () => {
         </a>
       </nav>
 
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
       {d.hero && (
         <section id="hero" style={{
           position:'relative', overflow:'hidden', paddingTop:140, paddingBottom:100,
@@ -468,7 +466,6 @@ const LandingViewer = () => {
             : `linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.primaryDark} 60%, ${theme.isDark ? '#0a0a0f' : theme.primaryDark} 100%)`,
         }}>
 
-          {/* Imagen de fondo personalizada (solo si existe) */}
           {heroImageUrl && (
             <div className="hero-img-overlay">
               <img
@@ -479,7 +476,6 @@ const LandingViewer = () => {
             </div>
           )}
 
-          {/* Decoración geométrica (solo cuando NO hay imagen) */}
           {!heroImageUrl && (
             <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
               <div style={{ position:'absolute', top:'-20%', right:'-10%', width:'70%', height:'140%', background:'rgba(255,255,255,0.04)', borderRadius:'50%', transform:'rotate(-15deg)' }}/>
@@ -490,10 +486,8 @@ const LandingViewer = () => {
             </div>
           )}
 
-          {/* Contenido del hero (z-index sobre imagen/overlay) */}
           <div className="container" style={{ position:'relative', zIndex:1 }}>
 
-            {/* Logo personalizado (si existe) */}
             {logoImageUrl && (
               <div className="sr" style={{ textAlign:'center', marginBottom:28 }}>
                 <img
@@ -509,14 +503,12 @@ const LandingViewer = () => {
               </div>
             )}
 
-            {/* Badge */}
             {d.hero.badge && (
               <div className="sr" style={{ textAlign:'center', marginBottom:24 }}>
                 <span className="badge-white">{d.hero.badge}</span>
               </div>
             )}
 
-            {/* Headline */}
             <div className="sr sr-delay-1" style={{ textAlign:'center', marginBottom:24 }}>
               <h1 style={{
                 fontSize:'clamp(2.4rem, 5.5vw, 4.2rem)', fontWeight:900, lineHeight:1.08,
@@ -526,7 +518,6 @@ const LandingViewer = () => {
               </h1>
             </div>
 
-            {/* Subheadline */}
             {d.hero.subheadline && (
               <div className="sr sr-delay-2" style={{ textAlign:'center', marginBottom:36 }}>
                 <p style={{ fontSize:'clamp(1.05rem,2vw,1.3rem)', color:'rgba(255,255,255,0.82)', lineHeight:1.75, maxWidth:640, margin:'0 auto' }}>
@@ -535,7 +526,6 @@ const LandingViewer = () => {
               </div>
             )}
 
-            {/* CTAs */}
             <div className="sr sr-delay-3 cta-buttons" style={{ display:'flex', gap:16, justifyContent:'center', marginBottom:28, flexWrap:'wrap' }}>
               <a href="#contact" className="btn-primary" style={{ background:'#fff', color:theme.primaryColor, boxShadow:'0 8px 32px rgba(0,0,0,0.2)', fontSize:'1.1rem', padding:'18px 40px', fontFamily:'inherit', borderColor:'#fff' }}>
                 {d.hero.ctaButton} →
@@ -547,14 +537,12 @@ const LandingViewer = () => {
               )}
             </div>
 
-            {/* Trust indicators */}
             {d.hero.trustIndicators?.length > 0 && (
               <div className="sr sr-delay-4 trust-bar">
                 {d.hero.trustIndicators.map((t, i) => <span key={i}>{t}</span>)}
               </div>
             )}
 
-            {/* Stats rápidas en hero */}
             {stats.length > 0 && (
               <div className="sr sr-delay-5" style={{ marginTop:56, display:'grid', gridTemplateColumns:`repeat(${Math.min(stats.length, 3)}, 1fr)`, gap:1, maxWidth:640, margin:'56px auto 0', background:'rgba(255,255,255,0.1)', borderRadius:20, overflow:'hidden', backdropFilter:'blur(10px)' }}>
                 {stats.slice(0,3).map((s, i) => (
@@ -570,7 +558,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── FEATURES ─────────────────────────────────────────────────────────── */}
       {d.features?.length > 0 && (
         <section style={{ padding:'96px 0', background:theme.bgPrimary }}>
           <div className="container">
@@ -596,7 +583,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
       {steps.length > 0 && (
         <section id="how" style={{ padding:'96px 0', background:theme.bgSecondary }}>
           <div className="container">
@@ -632,7 +618,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── TESTIMONIALS ───────────────────────────────────────────────────── */}
       {testimonials.length > 0 && (
         <section id="testimonials" style={{ padding:'96px 0', background:theme.bgPrimary }}>
           <div className="container">
@@ -666,7 +651,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── PRICING ────────────────────────────────────────────────────────── */}
       {pricingPlans.length > 0 && (
         <section id="pricing" style={{ padding:'96px 0', background:theme.bgSecondary }}>
           <div className="container">
@@ -738,7 +722,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── FAQ ────────────────────────────────────────────────────────────── */}
       {faq.length > 0 && (
         <section id="faq" style={{ padding:'96px 0', background:theme.bgPrimary }}>
           <div className="container-sm">
@@ -768,7 +751,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── URGENCY ────────────────────────────────────────────────────────── */}
       {d.urgency && (
         <section style={{
           padding:'96px 0', position:'relative', overflow:'hidden',
@@ -830,7 +812,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── CTA FINAL ──────────────────────────────────────────────────────── */}
       {d.cta && (
         <section id="contact" style={{ padding:'96px 0', background:theme.bgSecondary }}>
           <div className="container-sm" style={{ textAlign:'center' }}>
@@ -855,7 +836,6 @@ const LandingViewer = () => {
         </section>
       )}
 
-      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
       {d.footer && (
         <footer style={{ padding:'64px 0 32px', background:theme.isDark ? '#05050a' : '#0a0a1a' }}>
           <div className="container">

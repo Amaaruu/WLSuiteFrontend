@@ -1,17 +1,28 @@
+let jsZipPromise = null;
+
 function loadJSZip() {
-  return new Promise(function (resolve, reject) {
+  if (jsZipPromise) return jsZipPromise;
+
+  jsZipPromise = new Promise(function (resolve, reject) {
     if (window.JSZip) { resolve(window.JSZip); return; }
     const script   = document.createElement('script');
     script.src     = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
     script.onload  = function () {
-      if (window.JSZip) resolve(window.JSZip);
-      else reject(new Error('JSZip no se cargó correctamente desde CDN.'));
+      if (window.JSZip) {
+        resolve(window.JSZip);
+      } else {
+        jsZipPromise = null;
+        reject(new Error('JSZip no se cargó correctamente desde CDN.'));
+      }
     };
     script.onerror = function () {
+      jsZipPromise = null;
       reject(new Error('No se pudo cargar JSZip. Verifica tu conexión a internet.'));
     };
     document.head.appendChild(script);
   });
+
+  return jsZipPromise;
 }
 
 async function fetchImageAsBlob(url) {
@@ -56,9 +67,11 @@ function getButtonRadius(shape) {
 }
 
 function hexLighten(hex, amount = 0.88) {
+  if (!hex || typeof hex !== 'string' || hex.length < 7) return '#ffffff';
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#ffffff';
   const lr = Math.round(r + (255 - r) * amount);
   const lg = Math.round(g + (255 - g) * amount);
   const lb = Math.round(b + (255 - b) * amount);
@@ -66,9 +79,11 @@ function hexLighten(hex, amount = 0.88) {
 }
 
 function hexDarken(hex, amount = 0.2) {
+  if (!hex || typeof hex !== 'string' || hex.length < 7) return '#000000';
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return '#000000';
   const dr = Math.round(r * (1 - amount));
   const dg = Math.round(g * (1 - amount));
   const db = Math.round(b * (1 - amount));
@@ -76,12 +91,6 @@ function hexDarken(hex, amount = 0.2) {
 }
 
 // ── generateIndexHTML ─────────────────────────────────────────────────────────
-// images = {
-//   heroImageUrl: string|null,  — ruta local 'assets/hero-image.jpg' o URL externa
-//   logoImageUrl: string|null,  — ruta local 'assets/logo.png' o URL externa
-//   heroExt: string,            — extensión del archivo hero (solo en ZIP)
-//   logoExt: string,            — extensión del archivo logo (solo en ZIP)
-// }
 export function generateIndexHTML(landingData, theme, projectName, images = {}) {
   const { heroImageUrl = null, logoImageUrl = null } = images;
 
@@ -287,7 +296,6 @@ ${footerHTML}
 }
 
 // ── generateStylesCSS ─────────────────────────────────────────────────────────
-// images se usa para agregar estilos condicionales de hero image y logo
 export function generateStylesCSS(theme, images = {}) {
   const btnRadius    = getButtonRadius(theme.buttonShape);
   const primaryLight = hexLighten(theme.primaryColor, 0.88);
@@ -693,23 +701,16 @@ Generado el ${new Date().toLocaleDateString('es-CL')}.
 }
 
 // ── generateAndDownloadZip ────────────────────────────────────────────────────
-// Flujo:
-// 1. Intenta descargar hero y logo desde Cloudinary como Blob
-// 2. Si descarga ok → incluye archivos en assets/ y referencia rutas locales
-// 3. Si descarga falla (CORS u otro) → usa la URL de Cloudinary directamente en el HTML
-//    El ZIP funcionará online pero no offline para las imágenes
 export async function generateAndDownloadZip(landingData, theme, projectName, designPreferences = {}) {
   const JSZip = await loadJSZip();
-  const slug  = projectName.toLowerCase().replace(/\s+/g, '-');
+  const slug  = (projectName || 'landing-page').toLowerCase().replace(/\s+/g, '-');
   const zip   = new JSZip();
   const rootFolder   = zip.folder(slug);
   const assetsFolder = rootFolder.folder('assets');
 
-  // URLs originales desde designPreferences
   const heroImageUrlOriginal = designPreferences?.heroImageUrl || null;
   const logoImageUrlOriginal = designPreferences?.logoImageUrl || null;
 
-  // Objeto images que se construye según resultado de descarga
   const images = {
     heroImageUrl: null,
     logoImageUrl: null,
@@ -721,13 +722,11 @@ export async function generateAndDownloadZip(landingData, theme, projectName, de
   if (heroImageUrlOriginal) {
     const result = await fetchImageAsBlob(heroImageUrlOriginal);
     if (result) {
-      // Descarga exitosa: archivo local en assets/
       images.heroExt      = result.ext;
       images.heroImageUrl = `assets/hero-image.${result.ext}`;
       assetsFolder.file(`hero-image.${result.ext}`, result.blob);
       console.info(`[exportProject] Hero image incluida como archivo local: assets/hero-image.${result.ext}`);
     } else {
-      // Fallback: URL externa de Cloudinary directamente en el HTML
       images.heroImageUrl = heroImageUrlOriginal;
       console.warn('[exportProject] Hero image incluida como URL externa (fallback CORS).');
     }
