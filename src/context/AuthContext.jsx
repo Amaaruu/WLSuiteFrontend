@@ -36,32 +36,31 @@ const extractRoleFromToken = (token) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user,    setUser]    = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      const token = localStorage.getItem('token');
+      const storedName = localStorage.getItem('userName');
+      if (token) {
+        if (isTokenExpired(token)) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userName');
+          return null;
+        }
+        const role = extractRoleFromToken(token);
+        return { name: storedName || 'Usuario', token, role };
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(false);
 
   const clearSession = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('userName');
-    // userId eliminado del localStorage
     setUser(null);
   }, []);
-
-  useEffect(() => {
-    try {
-      const token      = localStorage.getItem('token');
-      const storedName = localStorage.getItem('userName');
-      if (token) {
-        if (isTokenExpired(token)) {
-          clearSession();
-        } else {
-          const role = extractRoleFromToken(token);
-          // userId eliminado del estado: el backend lo deduce del JWT
-          setUser({ name: storedName || 'Usuario', token, role });
-        }
-      }
-    } catch { clearSession(); }
-    finally  { setLoading(false); }
-  }, [clearSession]);
 
   useEffect(() => {
     const handleAuthError = () => clearSession();
@@ -72,7 +71,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, name } = response.data; // userId ya no viene del backend
+      const { token, name } = response.data;
       if (!token) return { success: false, message: 'Respuesta del servidor inválida.' };
 
       localStorage.setItem('token', token);
