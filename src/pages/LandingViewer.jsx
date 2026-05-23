@@ -570,7 +570,7 @@ const LandingViewer = () => {
                 Descubre todo lo que obtienes con nosotros
               </p>
             </div>
-            <div className="features-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:24 }}>
+            <div className="features-grid" style={{ display:'grid', gridTemplateColumns: d.features.length === 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap:24 }}>
               {d.features.map((f, i) => (
                 <div key={i} className={`sr sr-delay-${(i%3)+1} card${f.highlight ? ' feature-highlight' : ''}`}>
                   <div style={{ fontSize:'2.2rem', marginBottom:16 }}>{f.icon}</div>
