@@ -387,7 +387,7 @@ const LandingViewer = () => {
         heroImageUrl: designPreferences?.heroImageUrl || null,
         logoImageUrl: designPreferences?.logoImageUrl || null,
       };
-      const cleanHtml = generateIndexHTML(landingData, currentTheme, projectName, images);
+      const cleanHtml = generateIndexHTML(landingData, currentTheme, projectName, images, true);
       const blob      = new Blob([cleanHtml], { type: 'text/html;charset=utf-8' });
       const url       = URL.createObjectURL(blob);
       const a         = document.createElement('a');

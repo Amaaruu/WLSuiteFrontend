@@ -53,7 +53,7 @@ function getBtnRadius(shape) {
   return { cuadrado:'6px', redondeado:'12px', pildora:'9999px' }[shape] || '12px';
 }
 
-export function generateIndexHTML(landingData, theme, projectName, images = {}) {
+export function generateIndexHTML(landingData, theme, projectName, images = {}, inlineAssets = false) {
   const d = landingData;
   const { heroImageUrl = null, logoImageUrl = null } = images;
   const steps        = d.howItWorks?.steps || [];
@@ -344,6 +344,14 @@ export function generateIndexHTML(landingData, theme, projectName, images = {}) 
     </footer>
   ` : '';
 
+  const cssTag = inlineAssets 
+    ? `<style>\n${generateStylesCSS(theme, images)}\n</style>`
+    : `<link rel="stylesheet" href="styles.css" />`;
+
+  const jsTag = inlineAssets
+    ? `<script>\n${generateScriptJS()}\n</script>`
+    : `<script src="script.js"></script>`;
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -354,7 +362,7 @@ export function generateIndexHTML(landingData, theme, projectName, images = {}) 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="${theme.fontImport}" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  ${cssTag}
 </head>
 <body>
 ${navHTML}
@@ -367,7 +375,7 @@ ${faqHTML}
 ${urgencyHTML}
 ${ctaHTML}
 ${footerHTML}
-  <script src="script.js"></script>
+  ${jsTag}
 </body>
 </html>`;
 }
@@ -716,7 +724,7 @@ export function generateScriptJS() {
   }
 
   function initSmoothScroll() {
-    document.querySelectorAll('.nav-floating a[href^="#"], .hero-section a[href^="#"], .cta-buttons a[href^="#"]').forEach(function (anchor) {
+    document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
       anchor.addEventListener('click', function (e) {
         var targetId = anchor.getAttribute('href');
         if (targetId === '#') return;
