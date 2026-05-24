@@ -31,14 +31,14 @@ const Footer = () => {
             <h4 className="font-bold text-white mb-6 uppercase text-xs tracking-[0.2em]">Producto</h4>
             <ul className="space-y-3 text-sm text-sapphire-100/60">
               <li><Link to="/templates" className="hover:text-blue-400 transition-colors">Plantillas IA</Link></li>
-              <li><Link to="/planes" className="hover:text-blue-400 transition-colors">Planes de Precios</Link></li>
+              <li><Link to="/plans" className="hover:text-blue-400 transition-colors">Planes de Precios</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold text-white mb-6 uppercase text-xs tracking-[0.2em]">Soporte</h4>
             <ul className="space-y-3 text-sm text-sapphire-100/60">
               <li><button className="hover:text-blue-400 transition-colors">Documentación</button></li>
-              <li><Link to="/soporte" className="hover:text-blue-400 transition-colors">Soporte</Link></li>
+              <li><Link to="/support" className="hover:text-blue-400 transition-colors">Soporte</Link></li>
             </ul>
           </div>
           <div>
