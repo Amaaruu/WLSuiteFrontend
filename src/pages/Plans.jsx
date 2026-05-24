@@ -1,4 +1,3 @@
-// src/pages/Plans.jsx
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/organisms/Navbar';
 import PricingCard from '../components/organisms/PricingCard';
@@ -6,14 +5,15 @@ import Footer from '../components/organisms/Footer';
 import api from '../services/api';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
-const RevealOnScroll = ({ children, className = '', delay = '' }) => {
+const RevealOnScroll = ({ children, className = '', style = {} }) => {
   const [ref, isVisible] = useScrollReveal();
   return (
     <div
       ref={ref}
+      style={style}
       className={`transition-all duration-700 ease-out ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-      } ${delay} ${className}`}
+      } ${className}`}
     >
       {children}
     </div>
@@ -59,8 +59,6 @@ const Plans = () => {
       <Navbar />
 
       <main className="flex-grow">
-
-        {/* ── Hero de precios ───────────────────────────────────────────── */}
         <section className="pt-36 pb-16 px-4 text-center relative overflow-hidden">
           <div
             aria-hidden="true"
@@ -87,7 +85,6 @@ const Plans = () => {
           </RevealOnScroll>
         </section>
 
-        {/* ── Grid de planes ────────────────────────────────────────────── */}
         <section className="px-4 pb-20">
           {isLoading ? (
             <div className="flex flex-col justify-center items-center py-24 gap-4">
@@ -107,7 +104,7 @@ const Plans = () => {
                   return (
                     <RevealOnScroll
                       key={plan.planId}
-                      delay={`delay-[${idx * 120}ms]`}
+                      style={{ transitionDelay: `${idx * 120}ms` }}
                       className={isPopular ? 'md:-mt-4' : ''}
                     >
                       <PricingCard plan={plan} isPopular={isPopular} />
@@ -126,7 +123,6 @@ const Plans = () => {
           )}
         </section>
 
-        {/* ── Comparador de planes ──────────────────────────────────────── */}
         {!isLoading && !error && plans.length > 0 && (
           <section className="px-4 pb-20">
             <RevealOnScroll className="max-w-4xl mx-auto">
@@ -165,7 +161,6 @@ const Plans = () => {
             </RevealOnScroll>
           </section>
         )}
-
       </main>
 
       <Footer />

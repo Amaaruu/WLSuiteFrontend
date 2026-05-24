@@ -1,11 +1,8 @@
-// src/components/organisms/CheckoutForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreditCard from '../molecules/CreditCard';
 import OrderSummary from '../molecules/OrderSummary';
 import api from '../../services/api';
-
-// ── Helpers de formato ──────────────────────────────────────────────────────
 
 function formatCardNumber(value) {
   const digits = value.replace(/\D/g, '').slice(0, 16);
@@ -46,8 +43,6 @@ function validateExpiry(value) {
   return exp >= new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-// ── Pantalla de procesando ─────────────────────────────────────────────────
-
 const ProcessingScreen = () => (
   <div style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -74,8 +69,6 @@ const ProcessingScreen = () => (
     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>
 );
-
-// ── Pantalla de éxito ──────────────────────────────────────────────────────
 
 const SuccessScreen = ({ planName }) => (
   <div style={{
@@ -114,8 +107,6 @@ const SuccessScreen = ({ planName }) => (
     `}</style>
   </div>
 );
-
-// ── Pantalla de error ──────────────────────────────────────────────────────
 
 const ErrorScreen = ({ message, onRetry }) => (
   <div style={{
@@ -161,12 +152,10 @@ const ErrorScreen = ({ message, onRetry }) => (
   </div>
 );
 
-// ── Componente principal ───────────────────────────────────────────────────
-
 const CheckoutForm = ({ plan }) => {
   const navigate = useNavigate();
 
-  const [step, setStep]   = useState('form'); // 'form' | 'processing' | 'success' | 'error'
+  const [step, setStep]   = useState('form'); 
   const [errMsg, setErrMsg] = useState('');
 
   const [fields, setFields] = useState({
@@ -180,8 +169,10 @@ const CheckoutForm = ({ plan }) => {
   const [touched, setTouched]   = useState({});
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Validación en tiempo real
+  const isFree = Number(plan?.price) === 0;
+
   useEffect(() => {
+    if (isFree) return;
     const newErrors = {};
     if (touched.number) {
       const raw = fields.number.replace(/\s/g, '');
@@ -202,7 +193,7 @@ const CheckoutForm = ({ plan }) => {
       else if (fields.cvv.length < 3) newErrors.cvv = 'CVV inválido';
     }
     setErrors(newErrors);
-  }, [fields, touched]);
+  }, [fields, touched, isFree]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -225,6 +216,7 @@ const CheckoutForm = ({ plan }) => {
   };
 
   const isFormValid = () => {
+    if (isFree) return true;
     const raw = fields.number.replace(/\s/g, '');
     return (
       raw.length === 16 &&
@@ -237,18 +229,19 @@ const CheckoutForm = ({ plan }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setTouched({ number: true, name: true, expiry: true, cvv: true });
+    if (!isFree) {
+      setTouched({ number: true, name: true, expiry: true, cvv: true });
+    }
     if (!isFormValid()) return;
 
     setStep('processing');
 
-    // Simula delay de procesamiento bancario (1.5s - 2.5s)
     await new Promise(res => setTimeout(res, 1500 + Math.random() * 1000));
 
     try {
       const response = await api.post('/transactions', {
         planId:        plan.planId,
-        paymentMethod: 'online',
+        paymentMethod: isFree ? 'gratis' : 'online',
         status:        'completado',
       });
       const transactionId = response.data.transactionId;
@@ -268,13 +261,9 @@ const CheckoutForm = ({ plan }) => {
     }
   };
 
-  // ── Render de estados ────────────────────────────────────────────────────
-
   if (step === 'processing') return <ProcessingScreen />;
   if (step === 'success')    return <SuccessScreen planName={plan?.name} />;
   if (step === 'error')      return <ErrorScreen message={errMsg} onRetry={() => setStep('form')} />;
-
-  // ── Estilos de campo ─────────────────────────────────────────────────────
 
   const fieldStyle = (name) => ({
     width: '100%',
@@ -314,7 +303,6 @@ const CheckoutForm = ({ plan }) => {
 
   return (
     <div>
-      {/* Layout: 2 columnas en desktop */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 0.9fr)',
@@ -322,161 +310,179 @@ const CheckoutForm = ({ plan }) => {
         alignItems: 'start',
       }} className="checkout-grid">
 
-        {/* ── Columna izquierda: Formulario ── */}
         <div>
-          {/* Tarjeta visual */}
-          <div style={{ marginBottom: 28 }}>
-            <CreditCard
-              number={fields.number}
-              name={fields.name}
-              expiry={fields.expiry}
-              cvv={fields.cvv}
-              isFlipped={isFlipped}
-            />
-          </div>
-
-          {/* Formulario */}
-          <form onSubmit={handleSubmit} noValidate>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-              {/* Número */}
-              <div>
-                <label style={labelStyle}>Número de tarjeta</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    name="number"
-                    value={fields.number}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    onFocus={handleFocus}
-                    placeholder="1234 5678 9012 3456"
-                    inputMode="numeric"
-                    autoComplete="cc-number"
-                    style={fieldStyle('number')}
-                  />
-                  {/* Ícono de red */}
-                  <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: '#94a3b8' }}>
-                    💳
-                  </div>
-                </div>
-                {errors.number && touched.number && (
-                  <p style={errorStyle}>⚠ {errors.number}</p>
-                )}
-              </div>
-
-              {/* Nombre */}
-              <div>
-                <label style={labelStyle}>Nombre en la tarjeta</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={fields.name}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  onFocus={handleFocus}
-                  placeholder="NOMBRE APELLIDO"
-                  autoComplete="cc-name"
-                  style={fieldStyle('name')}
-                />
-                {errors.name && touched.name && (
-                  <p style={errorStyle}>⚠ {errors.name}</p>
-                )}
-              </div>
-
-              {/* Vencimiento + CVV */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>Vencimiento</label>
-                  <input
-                    type="text"
-                    name="expiry"
-                    value={fields.expiry}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    onFocus={handleFocus}
-                    placeholder="MM/AA"
-                    inputMode="numeric"
-                    autoComplete="cc-exp"
-                    style={fieldStyle('expiry')}
-                  />
-                  {errors.expiry && touched.expiry && (
-                    <p style={errorStyle}>⚠ {errors.expiry}</p>
-                  )}
-                </div>
-                <div>
-                  <label style={labelStyle}>CVV</label>
-                  <input
-                    type="text"
-                    name="cvv"
-                    value={fields.cvv}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    onFocus={handleFocus}
-                    placeholder="•••"
-                    inputMode="numeric"
-                    autoComplete="cc-csc"
-                    style={fieldStyle('cvv')}
-                  />
-                  {errors.cvv && touched.cvv && (
-                    <p style={errorStyle}>⚠ {errors.cvv}</p>
-                  )}
-                </div>
-              </div>
-              {/* Botón de pago */}
+          {isFree ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', background: '#f8fafc', borderRadius: 20, border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 16 }}>🎉</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Plan Gratuito</h3>
+              <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: 24 }}>No necesitas ingresar tu tarjeta de crédito para comenzar con el plan básico.</p>
               <button
-                type="submit"
-                disabled={!isFormValid()}
+                onClick={handleSubmit}
                 style={{
                   width: '100%',
                   padding: '16px 24px',
-                  background: isFormValid()
-                    ? 'linear-gradient(135deg, #1d4ed8, #1e40af)'
-                    : '#e2e8f0',
-                  color: isFormValid() ? '#fff' : '#94a3b8',
+                  background: 'linear-gradient(135deg, #1d4ed8, #1e40af)',
+                  color: '#fff',
                   border: 'none',
                   borderRadius: 14,
                   fontSize: '1rem',
                   fontWeight: 800,
-                  cursor: isFormValid() ? 'pointer' : 'not-allowed',
+                  cursor: 'pointer',
                   fontFamily: 'inherit',
-                  transition: 'all 0.2s',
-                  boxShadow: isFormValid() ? '0 8px 24px rgba(29,78,216,0.35)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  letterSpacing: '-0.01em',
+                  boxShadow: '0 8px 24px rgba(29,78,216,0.35)',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                Pagar ${Number(plan?.price || 0).toLocaleString('en-US')} USD
+                Comenzar gratis ahora
               </button>
-
-              {/* Seguridad */}
-              <p style={{
-                textAlign: 'center',
-                fontSize: '0.73rem',
-                color: '#94a3b8',
-                margin: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-              }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                Encriptado SSL · Pago seguro · No guardamos datos de tarjeta
-              </p>
             </div>
-          </form>
+          ) : (
+            <>
+              <div style={{ marginBottom: 28 }}>
+                <CreditCard
+                  number={fields.number}
+                  name={fields.name}
+                  expiry={fields.expiry}
+                  cvv={fields.cvv}
+                  isFlipped={isFlipped}
+                />
+              </div>
+
+              <form onSubmit={handleSubmit} noValidate>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+                  <div>
+                    <label style={labelStyle}>Número de tarjeta</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        name="number"
+                        value={fields.number}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        onFocus={handleFocus}
+                        placeholder="1234 5678 9012 3456"
+                        inputMode="numeric"
+                        autoComplete="cc-number"
+                        style={fieldStyle('number')}
+                      />
+                      <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: '#94a3b8' }}>
+                        💳
+                      </div>
+                    </div>
+                    {errors.number && touched.number && (
+                      <p style={errorStyle}>⚠ {errors.number}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Nombre en la tarjeta</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={fields.name}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      onFocus={handleFocus}
+                      placeholder="NOMBRE APELLIDO"
+                      autoComplete="cc-name"
+                      style={fieldStyle('name')}
+                    />
+                    {errors.name && touched.name && (
+                      <p style={errorStyle}>⚠ {errors.name}</p>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div>
+                      <label style={labelStyle}>Vencimiento</label>
+                      <input
+                        type="text"
+                        name="expiry"
+                        value={fields.expiry}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        onFocus={handleFocus}
+                        placeholder="MM/AA"
+                        inputMode="numeric"
+                        autoComplete="cc-exp"
+                        style={fieldStyle('expiry')}
+                      />
+                      {errors.expiry && touched.expiry && (
+                        <p style={errorStyle}>⚠ {errors.expiry}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label style={labelStyle}>CVV</label>
+                      <input
+                        type="text"
+                        name="cvv"
+                        value={fields.cvv}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        onFocus={handleFocus}
+                        placeholder="•••"
+                        inputMode="numeric"
+                        autoComplete="cc-csc"
+                        style={fieldStyle('cvv')}
+                      />
+                      {errors.cvv && touched.cvv && (
+                        <p style={errorStyle}>⚠ {errors.cvv}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!isFormValid()}
+                    style={{
+                      width: '100%',
+                      padding: '16px 24px',
+                      background: isFormValid()
+                        ? 'linear-gradient(135deg, #1d4ed8, #1e40af)'
+                        : '#e2e8f0',
+                      color: isFormValid() ? '#fff' : '#94a3b8',
+                      border: 'none',
+                      borderRadius: 14,
+                      fontSize: '1rem',
+                      fontWeight: 800,
+                      cursor: isFormValid() ? 'pointer' : 'not-allowed',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.2s',
+                      boxShadow: isFormValid() ? '0 8px 24px rgba(29,78,216,0.35)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 10,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Pagar ${Number(plan?.price || 0).toLocaleString('en-US')} USD
+                  </button>
+
+                  <p style={{
+                    textAlign: 'center',
+                    fontSize: '0.73rem',
+                    color: '#94a3b8',
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    Encriptado SSL · Pago seguro · No guardamos datos de tarjeta
+                  </p>
+                </div>
+              </form>
+            </>
+          )}
         </div>
 
-        {/* ── Columna derecha: Resumen ── */}
         <div style={{
           background: '#fff',
           border: '1px solid #e2e8f0',
@@ -492,7 +498,6 @@ const CheckoutForm = ({ plan }) => {
         </div>
       </div>
 
-      {/* Responsive: en mobile el resumen queda debajo */}
       <style>{`
         @media (max-width: 768px) {
           .checkout-grid {

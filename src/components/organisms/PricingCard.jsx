@@ -1,14 +1,14 @@
-// src/components/organisms/PricingCard.jsx
-// CAMBIO: handleSelectPlan redirige a /checkout en lugar de crear la transacción aquí
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import PlanFeatureItem from '../molecules/PlanFeatureItem';
 import { getPlanConfig } from '../../config/plansConfig';
+import api from '../../services/api';
 
 const PricingCard = ({ plan, isPopular }) => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const config   = getPlanConfig(plan.name);
   const features = config.features.length > 0
@@ -16,14 +16,32 @@ const PricingCard = ({ plan, isPopular }) => {
     : (plan.features || []).map(f => ({ text: f, included: true, highlight: false }));
 
   const isPremium = plan.name?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'premium';
+  const isFree = Number(plan.price) === 0;
 
-  // ── Redirige al checkout con el plan seleccionado ──────────────────────
-  const handleSelectPlan = () => {
+  const handleSelectPlan = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
-    navigate('/checkout', { state: { selectedPlan: plan } });
+
+    if (isFree) {
+      setIsProcessing(true);
+      try {
+        const response = await api.post('/transactions', {
+          planId: plan.planId,
+          paymentMethod: 'gratis',
+          status: 'completado',
+        });
+        navigate('/create-landing', {
+          state: { transactionId: response.data.transactionId, selectedPlan: plan },
+        });
+      } catch (err) {
+        console.error('Error al procesar el plan gratuito:', err);
+        setIsProcessing(false);
+      }
+    } else {
+      navigate('/checkout', { state: { selectedPlan: plan } });
+    }
   };
 
   return (
@@ -39,7 +57,6 @@ const PricingCard = ({ plan, isPopular }) => {
         }
       `}
     >
-      {/* Badge superior */}
       {config.badge && (
         <div className="absolute -top-4 left-0 right-0 flex justify-center">
           <span
@@ -56,7 +73,6 @@ const PricingCard = ({ plan, isPopular }) => {
         </div>
       )}
 
-      {/* Cabecera */}
       <div className={`px-8 pb-6 ${config.badge ? 'pt-10' : 'pt-8'}`}>
         <div className="flex items-center gap-3 mb-3">
           <span className="text-2xl" aria-hidden="true">{config.icon}</span>
@@ -91,15 +107,17 @@ const PricingCard = ({ plan, isPopular }) => {
               isPremium ? 'text-white' : isPopular ? 'text-sapphire-700' : 'text-gray-900'
             }`}
           >
-            ${Number(plan.price).toLocaleString('en-US')}
+            {isFree ? 'Gratis' : `$${Number(plan.price).toLocaleString('en-US')}`}
           </span>
-          <span
-            className={`text-sm font-medium ${
-              isPremium ? 'text-sapphire-400' : 'text-gray-400'
-            }`}
-          >
-            USD / único
-          </span>
+          {!isFree && (
+            <span
+              className={`text-sm font-medium ${
+                isPremium ? 'text-sapphire-400' : 'text-gray-400'
+              }`}
+            >
+              USD / único
+            </span>
+          )}
         </div>
 
         {config.idealFor && (
@@ -113,10 +131,8 @@ const PricingCard = ({ plan, isPopular }) => {
         )}
       </div>
 
-      {/* Separador */}
       <div className={`mx-8 h-px ${isPremium ? 'bg-sapphire-700' : 'bg-gray-100'}`} />
 
-      {/* Features */}
       <div className="px-8 py-6 flex-1">
         <ul className="space-y-3">
           {features.map((feat, index) => (
@@ -128,10 +144,10 @@ const PricingCard = ({ plan, isPopular }) => {
         </ul>
       </div>
 
-      {/* CTA */}
       <div className="px-8 pb-8">
         <button
           onClick={handleSelectPlan}
+          disabled={isProcessing}
           className={`
             w-full py-4 rounded-xl text-base font-bold transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-offset-2
@@ -141,9 +157,10 @@ const PricingCard = ({ plan, isPopular }) => {
                 ? 'bg-gradient-to-r from-sapphire-600 to-sapphire-700 text-white hover:from-sapphire-500 hover:to-sapphire-600 focus:ring-sapphire-500 shadow-lg shadow-sapphire-600/25'
                 : 'bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-700'
             }
+            ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}
           `}
         >
-          {config.ctaLabel}
+          {isProcessing ? 'Procesando...' : isFree ? 'Comenzar Gratis' : config.ctaLabel}
         </button>
       </div>
     </div>
