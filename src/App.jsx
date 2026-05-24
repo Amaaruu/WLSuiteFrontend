@@ -64,8 +64,8 @@ function App() {
           <Routes>
             <Route path="/"          element={<Home />} />
             <Route path="/about"     element={<About />} />
-            <Route path="/soporte"   element={<Support />} />
-            <Route path="/planes"    element={<Plans />} />
+            <Route path="/support"   element={<Support />} />
+            <Route path="/plans"     element={<Plans />} />
             <Route path="/login"     element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
             <Route path="/register"  element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
             <Route path="/templates" element={<Templates />} />
@@ -87,7 +87,7 @@ function App() {
             <Route path="/admin/projects" element={<AdminRoute><AdminProjects /></AdminRoute>} />
             <Route path="/admin/logs"     element={<AdminRoute><AdminLogs /></AdminRoute>} />
             <Route path="/admin/support"  element={<AdminRoute><AdminSupport /></AdminRoute>} />
-            <Route path="/admin/planes"   element={<AdminRoute><AdminPlans /></AdminRoute>} />
+            <Route path="/admin/plans"    element={<AdminRoute><AdminPlans /></AdminRoute>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

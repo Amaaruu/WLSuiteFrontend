@@ -1,4 +1,3 @@
-// src/config/plansConfig.js
 export const PLAN_CONFIG = {
   basico: {
     tagline: 'Tu primera presencia profesional en la web',
