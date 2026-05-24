@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { LayoutDashboard, Users, FolderOpen, ScrollText, LogOut, Home, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Users, FolderOpen, ScrollText, LogOut, Home, CreditCard, MessageSquare } from 'lucide-react';
 
 const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -17,7 +17,8 @@ const Sidebar = () => {
     { label: 'Panel General',    path: '/admin',         icon: LayoutDashboard },
     { label: 'Usuarios',         path: '/admin/users',   icon: Users           },
     { label: 'Proyectos',        path: '/admin/projects', icon: FolderOpen     },
-    { label: 'Planes',           path: '/admin/planes',  icon: CreditCard      },
+    { label: 'Planes',           path: '/admin/plans',   icon: CreditCard      },
+    { label: 'Soporte',          path: '/admin/support', icon: MessageSquare   },
     { label: 'Logs del Sistema', path: '/admin/logs',    icon: ScrollText      },
   ];
 

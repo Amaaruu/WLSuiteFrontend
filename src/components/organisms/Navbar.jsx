@@ -23,13 +23,11 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu,     setShowUserMenu]     = useState(false);
 
-  // Cierra los menús si el usuario cambia de página
   useEffect(() => {
     setShowUserMenu(false);
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Cierra el menú de usuario si hace clic afuera
   useEffect(() => {
     if (!showUserMenu) return;
     const handler = (e) => {
@@ -52,17 +50,15 @@ const Navbar = () => {
     { name: 'Inicio',     path: '/' },
     { name: 'Plantillas', path: '/templates' },
     { name: 'Nosotros',   path: '/about' },
-    { name: 'Planes',     path: '/planes' },
-    { name: 'Soporte',    path: '/soporte' },
+    { name: 'Planes',     path: '/plans' },
+    { name: 'Soporte',    path: '/support' },
   ];
 
   return (
-    // AQUÍ ESTÁ EL FONDO AZUL OSCURO ORIGINAL (bg-sapphire-950) SÓLIDO
     <nav className="fixed top-0 left-0 w-full z-50 bg-sapphire-950 shadow-md text-white transition-all duration-300 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
-          {/* LOGO */}
           <Link to="/" className="flex items-center gap-3 group cursor-pointer">
             <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center p-1.5 group-hover:bg-white/20 transition-all duration-300">
               <img src={logo} alt="WebLandingSuite Logo" className="w-full h-full object-contain" />
@@ -72,7 +68,6 @@ const Navbar = () => {
             </span>
           </Link>
           
-          {/* LINKS DE ESCRITORIO */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
               <Link
@@ -92,7 +87,6 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* BOTONES DE ACCIÓN (ESCRITORIO) */}
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <div id="user-menu-wrapper" className="relative">
@@ -121,7 +115,6 @@ const Navbar = () => {
                   </svg>
                 </button>
                 
-                {/* DROPDOWN DEL USUARIO (Estilo Claro Profesional) */}
                 {showUserMenu && (
                   <div className="absolute right-0 top-full mt-2 w-60 rounded-2xl bg-white border border-slate-100 shadow-xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
@@ -164,7 +157,7 @@ const Navbar = () => {
                         </Link>
                       )}
                       <Link
-                        to="/planes"
+                        to="/plans"
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-sapphire-700 hover:bg-sapphire-50 transition-all"
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
@@ -205,7 +198,6 @@ const Navbar = () => {
             )}
           </div>
           
-          {/* TOGGLE MÓVIL */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -217,7 +209,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* MENÚ MÓVIL DESPLEGABLE */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-sapphire-950 border-t border-white/10 shadow-xl">
           <div className="px-4 pt-2 pb-6 space-y-1">
