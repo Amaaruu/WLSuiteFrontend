@@ -119,7 +119,7 @@ const UserProjects = () => {
                   : 'Historial de todas tus landing pages generadas.'}
               </p>
             </div>
-            <Link to="/planes">
+            <Link to="/plans">
               <Button variant="primary">+ Nueva landing</Button>
             </Link>
           </div>
@@ -141,7 +141,7 @@ const UserProjects = () => {
             <EmptyState
               message="No tienes proyectos todavía."
               actionLabel="Crear mi primera landing"
-              actionTo="/planes"
+              actionTo="/plans"
             />
           )}
 
