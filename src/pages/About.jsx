@@ -68,7 +68,7 @@ const About = () => {
               {/* Estadísticas Rápidas */}
               <motion.div variants={fadeUpVariant} className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t border-slate-200/60 max-w-4xl mx-auto">
                 {[
-                  { label: "Velocidad de carga", value: "< 1s" },
+                  { label: "Velocidad de carga", value: "< 15s" },
                   { label: "Ahorro de tiempo", value: "95%" },
                   { label: "Código limpio", value: "100%" },
                   { label: "Integración de IA", value: "Nativa" },
