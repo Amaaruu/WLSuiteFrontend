@@ -230,7 +230,7 @@ const Home = () => {
                     </div>
                     <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-300">
                       <button className="w-full py-2.5 bg-white text-sapphire-900 font-bold text-sm rounded-xl hover:bg-sapphire-50 transition-colors shadow-lg">
-                        Ver demostración
+                        Proximamente....
                       </button>
                     </div>
                   </div>

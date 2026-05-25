@@ -39,7 +39,7 @@ const UserDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link to="/planes">
+            <Link to="/plans">
               <div className="bg-blue-600 hover:bg-blue-700 transition-colors text-white p-6 rounded-2xl cursor-pointer h-full">
                 <p className="text-sm font-medium opacity-80 mb-1">Crear nueva</p>
                 <p className="text-xl font-bold">+ Nueva landing page</p>
@@ -70,7 +70,7 @@ const UserDashboard = () => {
               <EmptyState
                 message="Todavía no tienes proyectos."
                 actionLabel="Crear mi primera landing"
-                actionTo="/planes"
+                actionTo="/plans"
               />
             )}
           </div>
