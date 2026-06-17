@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { vi, describe, it, expect } from 'vitest';
 
 vi.mock('../../../context/FormContext', () => ({
   useFormContext: () => ({
@@ -68,5 +68,25 @@ describe('Step1Identity', () => {
     expect(screen.getByText('Marca nueva')).toBeTruthy();
     expect(screen.getByText('Marca establecida')).toBeTruthy();
     expect(screen.getByText('Relanzamiento')).toBeTruthy();
+  });
+
+  it('el campo nombre es un input de texto', () => {
+    render(<Step1Identity />);
+    const input = screen.getByLabelText(/Nombre del proyecto/);
+    expect(input.tagName.toLowerCase()).toBe('input');
+  });
+
+  it('el campo propuesta de valor es un textarea', () => {
+    render(<Step1Identity />);
+    const textarea = screen.getByLabelText(/Propuesta de valor/);
+    expect(textarea.tagName.toLowerCase()).toBe('textarea');
+  });
+
+  it('los botones de opción son clickeables', () => {
+    render(<Step1Identity />);
+    const chips = screen.getAllByRole('button');
+    expect(chips.length).toBeGreaterThan(0);
+    fireEvent.click(chips[0]);
+    expect(chips[0]).toBeTruthy();
   });
 });

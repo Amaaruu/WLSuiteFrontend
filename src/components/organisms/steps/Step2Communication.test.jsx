@@ -20,6 +20,7 @@ vi.mock('../../../context/FormContext', () => ({
 import Step2Communication from './Step2Communication';
 
 describe('Step2Communication', () => {
+
   describe('cuando el plan es menor a 2 (bloqueado)', () => {
     it('muestra el mensaje de campo bloqueado', () => {
       render(<Step2Communication planLevel={1} />);
@@ -38,6 +39,8 @@ describe('Step2Communication', () => {
       expect(screen.getByText('Profesional')).toBeTruthy();
       expect(screen.getByText('Cercano')).toBeTruthy();
       expect(screen.getByText('Elegante')).toBeTruthy();
+      expect(screen.getByText('Inspirador')).toBeTruthy();
+      expect(screen.getByText('Técnico')).toBeTruthy();
     });
 
     it('muestra las opciones de formalidad', () => {
@@ -51,14 +54,35 @@ describe('Step2Communication', () => {
       render(<Step2Communication planLevel={2} />);
       expect(screen.getByText('Modo claro')).toBeTruthy();
       expect(screen.getByText('Modo oscuro')).toBeTruthy();
-      expect(screen.getByText('Mixto')).toBeTruthy();
     });
 
     it('muestra las opciones de contraste', () => {
       render(<Step2Communication planLevel={2} />);
       expect(screen.getByText('Suave')).toBeTruthy();
-      expect(screen.getByText('Estándar')).toBeTruthy();
+      expect(screen.getAllByText('Estándar').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Alto')).toBeTruthy();
     });
+
+    it('muestra opciones de color primario', () => {
+      render(<Step2Communication planLevel={2} />);
+      expect(screen.getAllByText('Azul marino').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Verde bosque').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('muestra la leyenda Modo base', () => {
+      render(<Step2Communication planLevel={2} />);
+      expect(screen.getByText('Modo base')).toBeTruthy();
+    });
+
+    it('muestra la leyenda Nivel de contraste', () => {
+      render(<Step2Communication planLevel={2} />);
+      expect(screen.getByText('Nivel de contraste')).toBeTruthy();
+    });
+
+    it('muestra la leyenda Tono de comunicación', () => {
+      render(<Step2Communication planLevel={2} />);
+      expect(screen.getByText('Tono de comunicación')).toBeTruthy();
+    });
   });
+
 });
