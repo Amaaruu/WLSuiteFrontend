@@ -211,10 +211,25 @@ describe('FormContext', () => {
     it('NO incluye heroImageUrl en el payload si es null', () => {
       let ctx;
       renderContext((c) => { ctx = c; });
-
       const payload = ctx.buildPayload('tx-abc');
       expect(payload.designPreferences.heroImageUrl).toBeUndefined();
     });
+
+    it('incluye logoImageUrl en el payload cuando está definida', () => {
+      let ctx;
+      renderContext((c) => { ctx = c; });
+      act(() => { ctx.updateField('logoImageUrl', 'https://img.com/logo.png'); });
+      const payload = ctx.buildPayload('tx-logo');
+      expect(payload.designPreferences.logoImageUrl).toBe('https://img.com/logo.png');
+    });
+
+    it('NO incluye logoImageUrl en el payload si es null', () => {
+      let ctx;
+      renderContext((c) => { ctx = c; });
+      const payload = ctx.buildPayload('tx-logo');
+      expect(payload.designPreferences.logoImageUrl).toBeUndefined();
+    });
+
   });
 
   // ── useFormContext fuera del Provider ────────────────────────────────────────
