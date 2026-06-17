@@ -1,3 +1,4 @@
+// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { useContext, Suspense, lazy } from 'react';
@@ -28,27 +29,27 @@ const PageLoader = () => (
   </div>
 );
 
-const UserOnlyRoute = ({ children }) => {
+export const UserOnlyRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
   return children;
 };
 
-const AdminRoute = ({ children }) => {
+export const AdminRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 };
 
-const ProtectedRoute = ({ children }) => {
+export const ProtectedRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   if (!user) return <Navigate to="/login" replace />;
   return children;
 };
 
-const PublicOnlyRoute = ({ children }) => {
+export const PublicOnlyRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   if (user) {
     return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
