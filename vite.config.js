@@ -15,6 +15,7 @@ export default defineConfig({
         'src/main.jsx',
         'src/**/*.test.{js,jsx}',
         'src/setupTests.js',
+        'src/components/organisms/steps/mockFormContext.jsx',
       ],
     },
   },
