@@ -178,7 +178,7 @@ describe('Página: Checkout', () => {
       if (form) {
         fireEvent.submit(form);
         await waitFor(() => {
-          const errorEl = screen.queryByText(/rechazado|error|fallido|inténtalo/i);
+          const errorEl = screen.getByText('Error al procesar el pago');
           const postWasCalled = apiPost.mock.calls.length > 0;
           expect(errorEl !== null || postWasCalled).toBe(true);
         }, { timeout: 3000 });

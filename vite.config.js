@@ -7,6 +7,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/setupTests.js',
+    
+    exclude: [
+      'node_modules/**',
+      'dist/**',
+      'tests/**'
+    ],
+
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
@@ -15,7 +22,7 @@ export default defineConfig({
         'src/main.jsx',
         'src/**/*.test.{js,jsx}',
         'src/setupTests.js',
-        'src/components/organisms/steps/mockFormContext.jsx',
+        'src/components/organisms/steps/mockFormContext.jsx'
       ],
     },
   },
