@@ -7,10 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencias y Build
 node_modules
 dist
 dist-ssr
 *.local
+
+#Archivos de Entorno y Secretos
+.env
+.env.*
+!.env.example
+
+# Reportes de Testing (Vitest)
+coverage/
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +31,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

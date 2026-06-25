@@ -1,5 +1,9 @@
 let jsZipPromise = null;
 
+export function __resetJSZipCache() {
+  jsZipPromise = null;
+}
+
 function loadJSZip() {
   if (jsZipPromise) return jsZipPromise;
 
