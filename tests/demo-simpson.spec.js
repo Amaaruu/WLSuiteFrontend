@@ -100,7 +100,7 @@ test('Flujo E2E: Registro, Compra, Landing de Simpsons Burguer y Soporte', async
   await page.getByRole('switch').nth(4).click();
 
   await page.locator('input[type="file"]').first().setInputFiles('tests/portada.jpg');
-  await page.locator('input[type="file"]').nth(1).setInputFiles('tests/logo.jpg');
+  await page.locator('input[type="file"]').nth(1).setInputFiles('tests/Logo.jpg');
   
   await page.getByRole('button', { name: 'Continuar →' }).click();
 
